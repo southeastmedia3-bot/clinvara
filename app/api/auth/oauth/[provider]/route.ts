@@ -3,8 +3,14 @@ import { NextResponse } from "next/server";
 type Props = { params: { provider: string } };
 
 function originOf(request: Request) {
-  if (process.env.AUTH_BASE_URL) return process.env.AUTH_BASE_URL;
-  return new URL(request.url).origin;
+  if (process.env.NODE_ENV === "production" && process.env.AUTH_BASE_URL) {
+    return process.env.AUTH_BASE_URL;
+  }
+  const url = new URL(request.url);
+  if (url.hostname === "localhost") {
+    url.hostname = "127.0.0.1";
+  }
+  return url.origin;
 }
 
 export async function GET(request: Request, { params }: Props) {

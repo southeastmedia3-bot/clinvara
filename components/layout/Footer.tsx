@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Facebook, Instagram, Youtube } from "lucide-react";
+import { BrandLogo } from "@/components/shared/BrandLogo";
 
 export function Footer() {
   return (
@@ -11,13 +12,15 @@ export function Footer() {
 
       <div className="mx-auto grid max-w-[1440px] gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-5 lg:px-8">
         <div className="lg:col-span-1">
-          <p className="font-display text-xl font-bold">CLINVARA</p>
+          <Link href="/" aria-label="CLINVARA home" className="inline-flex h-20 w-36">
+            <BrandLogo className="h-full w-full" />
+          </Link>
           <p className="mt-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
             Science-backed skincare formulated with clinical transparency. Every
-            formula lists what matters—and nothing you don&apos;t need.
+            formula lists what matters-and nothing you don&apos;t need.
           </p>
           <p className="mt-4 text-xs font-medium text-[var(--brand-text-muted)]">
-            Dermatologist Tested · Vegan · Cruelty Free
+            Dermatologist Tested - Vegan - Cruelty Free
           </p>
         </div>
 
@@ -25,27 +28,27 @@ export function Footer() {
           <p className="mb-3 text-sm font-semibold">Company</p>
           <ul className="space-y-2 text-sm text-[var(--brand-text-muted)]">
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/about-us" className="hover:text-black">
                 About Us
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/our-values" className="hover:text-black">
                 Our Values
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/privacy-policy" className="hover:text-black">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/terms-and-conditions" className="hover:text-black">
                 Terms &amp; Conditions
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/sustainability" className="hover:text-black">
                 Sustainability
               </Link>
             </li>
@@ -61,17 +64,17 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/faqs" className="hover:text-black">
                 FAQs
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/shipping-policy" className="hover:text-black">
                 Shipping Policy
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/return-refund-policy" className="hover:text-black">
                 Return &amp; Refund Policy
               </Link>
             </li>
@@ -81,7 +84,7 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-black">
+              <Link href="/careers" className="hover:text-black">
                 Careers
               </Link>
             </li>
@@ -113,7 +116,7 @@ export function Footer() {
             href="/contact"
             className="mt-3 inline-block text-sm font-semibold underline"
           >
-            Fill out our Contact Form →
+            Fill out our Contact Form -&gt;
           </Link>
         </div>
 
@@ -155,7 +158,7 @@ export function Footer() {
       <div className="border-t border-[var(--brand-border)]">
         <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-4 py-6 text-xs text-[var(--brand-text-muted)] md:flex-row lg:px-8">
           <p>
-            © 2026 <strong className="font-bold text-black">CLINVARA</strong>.
+            Copyright 2026 <strong className="font-bold text-black">CLINVARA</strong>.
             All rights reserved.
           </p>
           <div className="flex items-center gap-3" aria-label="Payment methods">

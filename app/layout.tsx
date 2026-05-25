@@ -29,11 +29,17 @@ export const metadata: Metadata = {
   },
   description:
     "Science-backed, ingredient-transparent skincare. Dermatologist-tested formulas inspired by clinical simplicity.",
+  icons: {
+    icon: "/images/brand/clinvara-logo.png",
+    apple: "/images/brand/clinvara-logo.png",
+  },
+  manifest: "/manifest.json",
   openGraph: {
     title: "CLINVARA",
     description: "Clinical skincare with transparent ingredients.",
     siteName: "CLINVARA",
     type: "website",
+    images: ["/images/brand/clinvara-logo.png"],
   },
 };
 
