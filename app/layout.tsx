@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
-import "@/styles/globals.css";
+import "../styles/globals.css";
 
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Navbar } from "@/components/layout/Navbar";
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
     "Science-backed, ingredient-transparent skincare. Dermatologist-tested formulas inspired by clinical simplicity.",
 
   icons: {
-    icon: "/images/favicon.png",
-    apple: "/images/favicon.png",
+    icon: "/images/favicon",
+    apple: "/images/favicon",
   },
 
   manifest: "/manifest.json",
@@ -46,15 +46,7 @@ export const metadata: Metadata = {
     description: "Clinical skincare with transparent ingredients.",
     siteName: "CLINVARA",
     type: "website",
-
-    images: [
-      {
-        url: "/images/favicon.png",
-        width: 512,
-        height: 512,
-        alt: "CLINVARA",
-      },
-    ],
+    images: ["/images/favicon"],
   },
 };
 
