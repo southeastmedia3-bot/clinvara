@@ -1,38 +1,60 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
+
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import {
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
 import { heroSlides } from "@/lib/data/heroSlides";
+
 import { SafeImage } from "@/components/shared/SafeImage";
+
 import { Badge } from "@/components/ui/Badge";
 
 const AUTO_MS = 5000;
 
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
+
   const [paused, setPaused] = useState(false);
 
   const next = useCallback(() => {
-    setIndex((i) => (i + 1) % heroSlides.length);
+    setIndex(
+      (i) => (i + 1) % heroSlides.length,
+    );
   }, []);
 
   const prev = useCallback(() => {
-    setIndex((i) => (i - 1 + heroSlides.length) % heroSlides.length);
+    setIndex(
+      (i) =>
+        (i - 1 + heroSlides.length) %
+        heroSlides.length,
+    );
   }, []);
 
   useEffect(() => {
     if (paused) return;
-    const id = window.setInterval(next, AUTO_MS);
-    return () => window.clearInterval(id);
+
+    const id = window.setInterval(
+      next,
+      AUTO_MS,
+    );
+
+    return () =>
+      window.clearInterval(id);
   }, [next, paused, index]);
 
   const slide = heroSlides[index];
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-[var(--brand-off-white)] md:h-[520px]"
+      className="relative w-full overflow-hidden bg-[var(--brand-off-white)] md:h-[620px]"
       aria-label="Featured products"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -41,51 +63,77 @@ export function HeroCarousel() {
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.href}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{
+              opacity: 0,
+              x: 40,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            exit={{
+              opacity: 0,
+              x: -40,
+            }}
+            transition={{
+              duration: 0.5,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="grid items-stretch md:h-full md:grid-cols-2"
           >
             <div
-              className="order-2 flex flex-col justify-center px-6 py-10 md:order-1 md:px-12 lg:px-16"
-              style={{ backgroundColor: slide.bgColor }}
+              className="order-2 flex flex-col justify-center px-6 py-12 md:order-1 md:px-14 lg:px-20"
+              style={{
+                backgroundColor: slide.bgColor,
+              }}
             >
-              <Badge className="mb-4 w-fit bg-white">{slide.badge}</Badge>
-              <h1 className="font-display text-4xl font-semibold leading-[1.15] tracking-[-0.02em] md:text-[52px]">
+              <Badge className="mb-5 w-fit border border-black bg-white px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-black">
+                {slide.badge}
+              </Badge>
+
+              <h1 className="font-display text-[42px] font-semibold leading-[1.05] tracking-[-0.03em] text-black md:text-[64px]">
                 {slide.title}
               </h1>
-              <p className="mt-4 max-w-md text-[15px] text-[var(--brand-text-muted)]">
+
+              <p className="mt-5 max-w-md text-[15px] leading-relaxed tracking-[0.01em] text-zinc-600">
                 {slide.subtitle}
               </p>
-              <div className="mt-5 flex flex-wrap gap-2">
+
+              <div className="mt-7 flex flex-wrap gap-3">
                 {slide.benefits.map((b) => (
                   <span
                     key={b}
-                    className="rounded-full border border-[#DDDDDD] px-3 py-1 text-xs font-medium"
+                    className="rounded-full border border-zinc-300 bg-white/80 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-700 backdrop-blur-sm"
                   >
                     {b}
                   </span>
                 ))}
               </div>
+
               <Link
                 href={slide.href}
-                className="mt-8 inline-flex h-12 w-[160px] items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+                className="mt-10 inline-flex h-12 w-[190px] items-center justify-center border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black"
               >
                 {slide.cta}
               </Link>
             </div>
 
             <div
-              className="order-1 relative flex h-[240px] items-center justify-center md:order-2 md:h-full md:min-h-[420px]"
+              className="order-1 relative flex h-[280px] items-center justify-center md:order-2 md:h-full md:min-h-[520px]"
               style={{
                 background: `radial-gradient(circle at center, #ffffff 0%, ${slide.bgColor} 70%)`,
               }}
             >
               <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="relative h-[200px] w-full max-w-lg md:h-[380px]"
+                animate={{
+                  y: [0, -12, 0],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="relative h-[240px] w-full max-w-xl md:h-[460px]"
               >
                 <SafeImage
                   src={slide.image}
@@ -108,12 +156,13 @@ export function HeroCarousel() {
             prev();
             setPaused(true);
           }}
-          className="group absolute left-4 top-1/2 hidden -translate-y-1/2 md:block"
+          className="group absolute left-6 top-1/2 hidden -translate-y-1/2 md:block"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white opacity-0 shadow transition-opacity group-hover:opacity-100">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm transition-all duration-300 group-hover:border-black">
             <ChevronLeft className="h-5 w-5 text-black" />
           </span>
         </button>
+
         <button
           type="button"
           aria-label="Next slide"
@@ -121,14 +170,14 @@ export function HeroCarousel() {
             next();
             setPaused(true);
           }}
-          className="group absolute right-4 top-1/2 hidden -translate-y-1/2 md:block"
+          className="group absolute right-6 top-1/2 hidden -translate-y-1/2 md:block"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white opacity-0 shadow transition-opacity group-hover:opacity-100">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm transition-all duration-300 group-hover:border-black">
             <ChevronRight className="h-5 w-5 text-black" />
           </span>
         </button>
 
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+        <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2">
           {heroSlides.map((_, i) => (
             <button
               key={i}
@@ -138,8 +187,10 @@ export function HeroCarousel() {
                 setIndex(i);
                 setPaused(true);
               }}
-              className={`h-2.5 w-2.5 rounded-full border border-black ${
-                i === index ? "bg-black" : "bg-transparent"
+              className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                i === index
+                  ? "bg-black"
+                  : "bg-black/20"
               }`}
             />
           ))}

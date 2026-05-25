@@ -10,15 +10,20 @@ export function ProductGrid({
 }) {
   if (mobileScroll) {
     return (
-      <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible lg:grid-cols-4">
+      <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:gap-8 md:overflow-visible lg:grid-cols-4">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} layout="scroll" />
+          <ProductCard
+            key={p.id}
+            product={p}
+            layout="scroll"
+          />
         ))}
       </div>
     );
   }
+
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 md:gap-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       {products.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}

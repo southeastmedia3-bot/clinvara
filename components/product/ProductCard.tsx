@@ -20,14 +20,18 @@ export function ProductCard({
 }) {
   const [hover, setHover] = useState(false);
   const [flying, setFlying] = useState(false);
+
   const addItem = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggle);
   const hasWish = useWishlistStore((s) => s.has(product.id));
+
   const { showToast } = useToast();
+
   const size = product.sizes[0] ?? "30ml";
 
   const onAdd = () => {
     setFlying(true);
+
     addItem({
       productId: product.id,
       slug: product.slug,
@@ -37,31 +41,46 @@ export function ProductCard({
       price: product.price,
       quantity: 1,
     });
-    showToast({ message: "Added to cart!", variant: "success" });
+
+    showToast({
+      message: "Added to cart!",
+      variant: "success",
+    });
+
     window.setTimeout(() => setFlying(false), 650);
   };
 
   return (
     <div
-      className={`group relative border border-[var(--brand-border)] bg-white transition-transform hover:z-10 hover:scale-[1.01] hover:border-[var(--brand-primary)] ${
-        layout === "scroll" ? "min-w-[72vw] snap-start sm:min-w-0" : ""
+      className={`group relative border border-zinc-200 bg-white transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:border-black ${
+        layout === "scroll"
+          ? "min-w-[72vw] snap-start sm:min-w-0"
+          : ""
       }`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
       {product.badge && (
-        <span className="absolute left-2 top-2 z-10 bg-[var(--brand-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+        <span className="absolute left-3 top-3 z-10 border border-black bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
           {product.badge}
         </span>
       )}
+
       <button
         type="button"
-        aria-label={hasWish ? "Remove from wishlist" : "Add to wishlist"}
-        className={`absolute right-2 top-2 z-10 rounded-full bg-white/90 p-1 shadow transition-opacity ${
-          hover || hasWish ? "opacity-100" : "opacity-0"
+        aria-label={
+          hasWish
+            ? "Remove from wishlist"
+            : "Add to wishlist"
+        }
+        className={`absolute right-3 top-3 z-10 rounded-full bg-white p-2 shadow-sm transition-opacity ${
+          hover || hasWish
+            ? "opacity-100"
+            : "opacity-0"
         }`}
         onClick={() => {
           toggleWishlist(product.id);
+
           showToast({
             message: hasWish
               ? "Removed from wishlist"
@@ -71,14 +90,16 @@ export function ProductCard({
         }}
       >
         <Star
-          className={`h-5 w-5 ${
-            hasWish ? "fill-[var(--brand-star)] text-[var(--brand-star)]" : ""
+          className={`h-4 w-4 ${
+            hasWish
+              ? "fill-[var(--brand-star)] text-[var(--brand-star)]"
+              : "text-zinc-700"
           }`}
         />
       </button>
 
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-square bg-white p-3">
+        <div className="relative aspect-square bg-[#fafafa] p-6">
           <SafeImage
             src={hover ? product.imageHover : product.image}
             alt={product.name}
@@ -87,6 +108,7 @@ export function ProductCard({
             sizes="(max-width:768px) 72vw, 25vw"
             className="object-contain transition-opacity duration-300"
           />
+
           {flying && (
             <motion.span
               layoutId={`fly-${product.id}`}
@@ -102,23 +124,31 @@ export function ProductCard({
         </div>
       </Link>
 
-      <div className="space-y-2 px-3 pb-4 pt-2">
+      <div className="space-y-3 px-5 pb-5 pt-4">
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug hover:underline">
+          <h3 className="line-clamp-2 text-[15px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 hover:underline">
             {product.name}
           </h3>
         </Link>
-        <p className="text-xs text-[var(--brand-mid-gray)]">{product.concern}</p>
+
+        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+          {product.concern}
+        </p>
+
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-bold">{formatINR(product.price)}</span>
-          <span className="text-sm text-[var(--brand-mid-gray)] line-through">
+          <span className="text-[15px] font-semibold tracking-tight text-black">
+            {formatINR(product.price)}
+          </span>
+
+          <span className="text-sm text-zinc-400 line-through">
             {formatINR(product.mrp)}
           </span>
         </div>
+
         <button
           type="button"
           onClick={onAdd}
-          className="flex h-[42px] w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+          className="flex h-[44px] w-full items-center justify-center border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black"
         >
           Add to Cart
         </button>

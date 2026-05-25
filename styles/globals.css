@@ -11,7 +11,7 @@
   --brand-star: #f59e0b;
 
   --font-display: "Cormorant Garamond", serif;
-  --font-body: "DM Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
 
   --radius-none: 0px;
   --radius-pill: 999px;
@@ -34,6 +34,30 @@ body {
   font-family: var(--font-body);
   color: var(--brand-primary);
   background: var(--brand-white);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.03em;
+}
+
+p {
+  line-height: 1.7;
+}
+
+button {
+  letter-spacing: 0.08em;
+}
+
+::selection {
+  background: black;
+  color: white;
 }
 
 .nav-link-underline {
@@ -59,6 +83,7 @@ body {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -71,7 +96,9 @@ body {
     #f5f5f5 37%,
     #eeeeee 63%
   );
+
   background-size: 400% 100%;
+
   animation: shimmer 1.2s ease-in-out infinite;
 }
 
@@ -80,8 +107,14 @@ body {
     transform: translate(0, 0) scale(1);
     opacity: 1;
   }
+
   100% {
-    transform: translate(var(--fly-x, 120px), var(--fly-y, -80px)) scale(0.2);
+    transform: translate(
+        var(--fly-x, 120px),
+        var(--fly-y, -80px)
+      )
+      scale(0.2);
+
     opacity: 0;
   }
 }
