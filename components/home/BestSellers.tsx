@@ -23,7 +23,7 @@ export function BestSellers() {
       </header>
 
       {!ready ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3 border border-[var(--brand-border)] p-3">
               <div className="aspect-square skeleton" />
@@ -34,7 +34,7 @@ export function BestSellers() {
           ))}
         </div>
       ) : (
-        <ProductGrid products={bestSellers} mobileScroll />
+        <ProductGrid products={bestSellers}  />
       )}
 
       <div className="mt-6 flex justify-end">
