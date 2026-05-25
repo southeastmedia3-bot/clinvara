@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "@/styles/globals.css";
+
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
+
 import { ChatBot } from "@/components/ui/ChatBot";
 
 const display = Cormorant_Garamond({
@@ -27,19 +30,31 @@ export const metadata: Metadata = {
     default: "CLINVARA | Clinical Skincare",
     template: "%s | CLINVARA",
   },
+
   description:
     "Science-backed, ingredient-transparent skincare. Dermatologist-tested formulas inspired by clinical simplicity.",
+
   icons: {
-    icon: "/images/brand/clinvara-logo.png",
-    apple: "/images/brand/clinvara-logo.png",
+    icon: "/images/favicon.png",
+    apple: "/images/favicon.png",
   },
+
   manifest: "/manifest.json",
+
   openGraph: {
     title: "CLINVARA",
     description: "Clinical skincare with transparent ingredients.",
     siteName: "CLINVARA",
     type: "website",
-    images: ["/images/brand/clinvara-logo.png"],
+
+    images: [
+      {
+        url: "/images/favicon.png",
+        width: 512,
+        height: 512,
+        alt: "CLINVARA",
+      },
+    ],
   },
 };
 
@@ -57,11 +72,16 @@ export default function RootLayout({
         >
           Skip to content
         </a>
+
         <ToastProvider>
           <ClientBootstrap>
             <AnnouncementBar />
             <Navbar />
-            <main id="main-content">{children}</main>
+
+            <main id="main-content">
+              {children}
+            </main>
+
             <ChatBot />
             <Footer />
           </ClientBootstrap>
