@@ -34,14 +34,6 @@ export const metadata: Metadata = {
   description:
     "Science-backed, ingredient-transparent skincare. Dermatologist-tested formulas inspired by clinical simplicity.",
 
-  icons: {
-    icon: "/images/favicon.ico",
-  },
-
-  metadataBase: new URL(
-    "https://clinvara-backend--clinvara-f6235.asia-east1.hosted.app",
-  ),
-
   manifest: "/manifest.json",
 
   openGraph: {
@@ -49,7 +41,6 @@ export const metadata: Metadata = {
     description: "Clinical skincare with transparent ingredients.",
     siteName: "CLINVARA",
     type: "website",
-    images: ["/images/favicon.ico"],
   },
 };
 
@@ -73,7 +64,9 @@ export default function RootLayout({
             <AnnouncementBar />
             <Navbar />
 
-            <main id="main-content">{children}</main>
+            <main id="main-content">
+              {children}
+            </main>
 
             <ChatBot />
             <Footer />
