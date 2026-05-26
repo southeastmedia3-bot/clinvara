@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { clearSessionCookie, getCurrentSession } from "@/lib/auth/session";
 
 export async function GET() {
-  const session = cookies().get("session")?.value ?? null;
+  return NextResponse.json({ user: getCurrentSession() });
+}
 
-  return NextResponse.json({
-    user: session ? { id: session } : null,
-  });
+export async function DELETE() {
+  clearSessionCookie();
+  return NextResponse.json({ ok: true });
 }

@@ -6,43 +6,21 @@
       "ignore": [
         "node_modules",
         ".git",
+        ".next",
+        ".env",
+        ".env.*",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "functions"
+        "frontend",
+        "backend",
+        "legacy-root-app"
       ]
-    },
+    }
+  ],
+  "functions": [
     {
-      "backendId": "clinvara-backend",
-      "rootDir": "/",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "clinvara-backend",
-      "rootDir": ".",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "clinvara-backend",
-      "rootDir": ".",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
+      "source": "backend",
+      "codebase": "backend"
     }
   ]
 }

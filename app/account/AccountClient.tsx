@@ -1,73 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-
 import {
   Heart,
+  LogOut,
   MapPin,
   Package,
+  Pencil,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  Trash2,
   UserRound,
 } from "lucide-react";
-
 import { useAuthStore } from "@/lib/store/authStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
-import { useCartStore } from "@/lib/store/cartStore";
-
+import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
-
 import { ProductCard } from "@/components/product/ProductCard";
+import { apiUrl } from "@/lib/api/client";
+
+type Address = {
+  id: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pincode: string;
+};
+
+const emptyAddress: Address = {
+  id: "",
+  label: "Home",
+  fullName: "",
+  phone: "",
+  line1: "",
+  line2: "",
+  city: "",
+  state: "",
+  pincode: "",
+};
+
+function addressSummary(address: Address) {
+  return [
+    address.line1,
+    address.line2,
+    address.city,
+    address.state,
+    address.pincode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
 
 export default function AccountClient() {
   const isAuth = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
-
+  const setAuthenticated = useAuthStore((s) => s.setAuthenticated);
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const setRegisterOpen = useAuthStore((s) => s.setRegisterModalOpen);
-
   const wishIds = useWishlistStore((s) => s.productIds);
   const cartItems = useCartStore((s) => s.items);
 
-  const [hash, setHash] = useState("");
-  const [authError, setAuthError] = useState(false);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [editing, setEditing] = useState<Address | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setHash(window.location.hash);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("authError")) setLoginOpen(true);
+  }, [setLoginOpen]);
 
-    const onHash = () => setHash(window.location.hash);
-
-    window.addEventListener("hashchange", onHash);
-
-    return () =>
-      window.removeEventListener("hashchange", onHash);
+  useEffect(() => {
+    const saved = window.localStorage.getItem("clinvara-addresses");
+    if (saved) setAddresses(JSON.parse(saved));
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(
-      window.location.search
-    );
+    if (!loaded) return;
+    window.localStorage.setItem("clinvara-addresses", JSON.stringify(addresses));
+  }, [addresses, loaded]);
 
-    if (params.get("authError")) {
-      setAuthError(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (authError) {
-      setLoginOpen(true);
-    }
-  }, [authError, setLoginOpen]);
-
-  const wishlistProducts = allProducts.filter((p) =>
-    wishIds.includes(p.id)
+  const wishlistProducts = useMemo(
+    () => allProducts.filter((product) => wishIds.includes(product.id)),
+    [wishIds],
   );
-
   const displayName =
-    user?.firstName ||
+    user?.name ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||
     "CLINVARA member";
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const saveAddress = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editing) return;
+    const next = editing.id ? editing : { ...editing, id: crypto.randomUUID() };
+    setAddresses((current) => {
+      const without = current.filter((address) => address.id !== next.id);
+      return [...without, next].slice(0, 2);
+    });
+    setEditing(null);
+  };
+
+  const logout = async () => {
+    await fetch(apiUrl("/api/auth/session"), {
+      method: "DELETE",
+      credentials: "include",
+    }).catch(() => undefined);
+    setAuthenticated(false);
+  };
 
   if (!isAuth) {
     return (
@@ -77,16 +129,13 @@ export default function AccountClient() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
               CLINVARA Account
             </p>
-
             <h1 className="mt-4 font-display text-5xl font-semibold leading-tight">
               Sign in for a more personal skincare ritual.
             </h1>
-
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--brand-text-muted)]">
               View orders, save formulas, manage profile details, and keep your
               routine close across devices.
             </p>
-
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
@@ -95,7 +144,6 @@ export default function AccountClient() {
               >
                 Sign In
               </button>
-
               <button
                 type="button"
                 className="h-12 rounded-full border border-black px-8 text-sm font-semibold"
@@ -105,29 +153,15 @@ export default function AccountClient() {
               </button>
             </div>
           </section>
-
           <aside className="bg-[var(--brand-off-white)] p-8 sm:p-10 lg:p-14">
             <div className="space-y-5">
               {[
-                [
-                  "Faster checkout",
-                  "Save details for a quieter purchase flow.",
-                ],
-                [
-                  "Wishlist access",
-                  "Return to products you are considering.",
-                ],
-                [
-                  "Routine notes",
-                  "Keep your preferred formulas easy to find.",
-                ],
+                ["Faster checkout", "Save details for a quieter purchase flow."],
+                ["Wishlist access", "Return to products you are considering."],
+                ["Routine notes", "Keep your preferred formulas easy to find."],
               ].map(([title, body]) => (
-                <div
-                  key={title}
-                  className="rounded-xl bg-white p-5"
-                >
+                <div key={title} className="rounded-xl bg-white p-5">
                   <p className="font-semibold">{title}</p>
-
                   <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
                     {body}
                   </p>
@@ -141,166 +175,280 @@ export default function AccountClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-10 lg:px-8">
+    <main className="mx-auto max-w-[1440px] px-4 py-10 lg:px-8">
       <section className="rounded-2xl bg-[var(--brand-off-white)] p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
-          Account Dashboard
-        </p>
-
-        <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <h1 className="font-display text-5xl font-semibold">
-              Welcome, {displayName}
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-sm text-[var(--brand-text-muted)]">
-              Manage your CLINVARA profile, wishlist, orders, and skincare
-              preferences.
-            </p>
+        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+          <div className="flex items-center gap-5">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-black font-semibold text-white">
+              {initials}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+                Account Dashboard
+              </p>
+              <h1 className="mt-2 font-display text-4xl font-semibold">
+                Welcome, {displayName}
+              </h1>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                {user?.email || user?.phone || "Profile details can be updated at checkout."}
+              </p>
+            </div>
           </div>
-
-          <Link
-            href="/shop"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-black px-8 text-sm font-semibold text-white"
-          >
-            Continue Shopping
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/shop"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+            >
+              Continue Shopping
+            </Link>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-black px-5 text-sm font-semibold"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          </div>
         </div>
       </section>
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
-          {
-            icon: UserRound,
-            label: "Profile",
-            value: user?.email || "Email not added",
-          },
-          {
-            icon: Package,
-            label: "Orders",
-            value: "No orders yet",
-          },
-          {
-            icon: Heart,
-            label: "Wishlist",
-            value: `${wishlistProducts.length} saved products`,
-          },
-          {
-            icon: MapPin,
-            label: "Country",
-            value: "India",
-          },
+          { icon: UserRound, label: "Login Method", value: user?.provider || "Account" },
+          { icon: Package, label: "Orders", value: "0 completed orders" },
+          { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} saved products` },
+          { icon: MapPin, label: "Addresses", value: `${addresses.length}/2 saved` },
         ].map((item) => (
-          <div
+          <article
             key={item.label}
             className="rounded-2xl border border-[var(--brand-border)] bg-white p-5"
           >
             <item.icon className="h-5 w-5" />
-
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
               {item.label}
             </p>
-
-            <p className="mt-2 text-sm font-semibold">
-              {item.value}
-            </p>
-          </div>
+            <p className="mt-2 text-sm font-semibold capitalize">{item.value}</p>
+          </article>
         ))}
       </section>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[0.72fr_0.28fr]">
-        <section className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
-          <div className="flex items-center justify-between gap-4">
+      <section className="mt-8 grid gap-8 xl:grid-cols-[0.64fr_0.36fr]">
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <h2 className="font-display text-3xl font-semibold">
-                Recent Orders
+                Shipping Addresses
               </h2>
-
               <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-                Orders will appear here after checkout is connected.
+                Save up to two addresses for faster checkout.
               </p>
             </div>
-
-            <Link
-              href="/track-order"
-              className="text-sm font-semibold underline"
+            <button
+              type="button"
+              disabled={addresses.length >= 2}
+              onClick={() => setEditing(emptyAddress)}
+              className="h-11 rounded-full border border-black px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
             >
+              Add Address
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {addresses.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-[var(--brand-border)] p-6 text-sm text-[var(--brand-text-muted)] md:col-span-2">
+                No saved addresses yet. Add a home or work address to speed up
+                checkout.
+              </div>
+            ) : (
+              addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className="rounded-xl border border-[var(--brand-border)] p-5"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                        {address.label}
+                      </p>
+                      <p className="mt-2 font-semibold">{address.fullName}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        aria-label="Edit address"
+                        onClick={() => setEditing(address)}
+                        className="rounded-full p-2 hover:bg-[var(--brand-off-white)]"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Remove address"
+                        onClick={() =>
+                          setAddresses((current) =>
+                            current.filter((item) => item.id !== address.id),
+                          )
+                        }
+                        className="rounded-full p-2 hover:bg-[var(--brand-off-white)]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                    {addressSummary(address)}
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+                    {address.phone}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+
+          {editing && (
+            <form
+              onSubmit={saveAddress}
+              className="mt-6 grid gap-4 rounded-xl bg-[var(--brand-off-white)] p-5 sm:grid-cols-2"
+            >
+              {[
+                ["label", "Label", "Home"],
+                ["fullName", "Full Name", "Ananya Sharma"],
+                ["phone", "Mobile Number", "9876543210"],
+                ["line1", "Address Line 1", "House / flat / building"],
+                ["line2", "Address Line 2", "Area / landmark"],
+                ["city", "City", "Mumbai"],
+                ["state", "State", "Maharashtra"],
+                ["pincode", "PIN Code", "400001"],
+              ].map(([key, label, placeholder]) => (
+                <label key={key} className="block text-sm font-medium">
+                  <span className="mb-2 block text-[var(--brand-text-muted)]">
+                    {label}
+                  </span>
+                  <input
+                    required={key !== "line2"}
+                    value={String(editing[key as keyof Address])}
+                    placeholder={placeholder}
+                    onChange={(event) =>
+                      setEditing({ ...editing, [key]: event.target.value })
+                    }
+                    className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black"
+                  />
+                </label>
+              ))}
+              <div className="flex gap-3 sm:col-span-2">
+                <button
+                  type="submit"
+                  className="h-11 rounded-full bg-black px-6 text-sm font-semibold text-white"
+                >
+                  Save Address
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="h-11 rounded-full border border-black px-6 text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </article>
+
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+          <ShoppingBag className="h-5 w-5" />
+          <h2 className="mt-5 font-display text-3xl font-semibold">
+            Checkout Snapshot
+          </h2>
+          <div className="mt-5 space-y-3 text-sm">
+            <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
+              <span className="text-[var(--brand-text-muted)]">Cart items</span>
+              <strong>{cartCount(cartItems)}</strong>
+            </div>
+            <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
+              <span className="text-[var(--brand-text-muted)]">Cart value</span>
+              <strong>INR {cartTotal(cartItems).toLocaleString("en-IN")}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--brand-text-muted)]">Saved addresses</span>
+              <strong>{addresses.length}</strong>
+            </div>
+          </div>
+          <Link
+            href="/cart"
+            className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-black text-sm font-semibold text-white"
+          >
+            View Cart
+          </Link>
+        </article>
+      </section>
+
+      <section className="mt-8 grid gap-8 xl:grid-cols-[0.64fr_0.36fr]">
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-semibold">Past Orders</h2>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                Your order history, invoices, and return status will appear here.
+              </p>
+            </div>
+            <Link href="/track-order" className="text-sm font-semibold underline">
               Track Order
             </Link>
           </div>
-
           <div className="mt-6 rounded-xl border border-dashed border-[var(--brand-border)] p-8 text-center">
             <ShieldCheck className="mx-auto h-8 w-8 text-[var(--brand-text-muted)]" />
-
-            <p className="mt-3 font-semibold">
-              No purchases yet
-            </p>
-
+            <p className="mt-3 font-semibold">No purchases yet</p>
             <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-              Your order history and invoice details will be available here.
+              Once checkout is connected, completed orders and invoices will be
+              listed in this section.
             </p>
           </div>
-        </section>
+        </article>
 
-        <aside className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
           <Sparkles className="h-5 w-5" />
-
-          <h2 className="mt-5 font-display text-2xl font-semibold">
-            Routine Snapshot
+          <h2 className="mt-5 font-display text-3xl font-semibold">
+            Routine Notes
           </h2>
-
-          <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
-            {cartItems.length > 0
-              ? `${cartItems.length} item type is currently in your cart.`
-              : "Build a routine by saving or adding products to your cart."}
+          <p className="mt-2 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+            Keep your routine simple: cleanse, treat, moisturize, and protect.
+            Saved products and cart items help shape this space.
           </p>
-
-          <Link
-            href="/routines"
-            className="mt-5 inline-flex text-sm font-semibold underline"
-          >
+          <Link href="/routines" className="mt-5 inline-flex text-sm font-semibold underline">
             View Routines
           </Link>
-        </aside>
-      </div>
+        </article>
+      </section>
 
       <section
         id="wishlist"
-        className={`mt-10 rounded-2xl border border-[var(--brand-border)] bg-white p-6 ${
-          hash === "#wishlist" ? "scroll-mt-24" : ""
-        }`}
+        className="mt-10 scroll-mt-24 rounded-2xl border border-[var(--brand-border)] bg-white p-6"
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-3xl font-semibold">
-              Wishlist
-            </h2>
-
+            <h2 className="font-display text-3xl font-semibold">Wishlist</h2>
             <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
               Your saved formulas for later review.
             </p>
           </div>
-
-          <Link
-            href="/shop"
-            className="text-sm font-semibold underline"
-          >
+          <Link href="/shop" className="text-sm font-semibold underline">
             Browse Shop
           </Link>
         </div>
-
         {wishlistProducts.length === 0 ? (
           <p className="mt-6 rounded-xl bg-[var(--brand-off-white)] p-5 text-sm text-[var(--brand-text-muted)]">
             No saved products yet.
           </p>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {wishlistProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {wishlistProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }

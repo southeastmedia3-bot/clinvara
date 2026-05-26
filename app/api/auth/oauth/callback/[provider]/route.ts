@@ -3,12 +3,18 @@ import { setSessionCookie } from "@/lib/auth/session";
 
 type Props = { params: { provider: string } };
 
+const PRODUCTION_ORIGIN =
+  "https://clinvara.global";
+
 function originOf(request: Request) {
-  if (process.env.NODE_ENV === "production" && process.env.AUTH_BASE_URL) {
+  if (process.env.AUTH_BASE_URL) {
     return process.env.AUTH_BASE_URL;
   }
+  if (process.env.NODE_ENV === "production") {
+    return PRODUCTION_ORIGIN;
+  }
   const url = new URL(request.url);
-  if (url.hostname === "localhost") {
+  if (url.hostname === "localhost" || url.hostname === "0.0.0.0") {
     url.hostname = "127.0.0.1";
   }
   return url.origin;

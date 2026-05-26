@@ -64,3 +64,7 @@ export function setSessionCookie(user: Omit<SessionUser, "id"> & { id?: string }
 export function getCurrentSession() {
   return readSessionToken(cookies().get(COOKIE_NAME)?.value);
 }
+
+export function clearSessionCookie() {
+  cookies().delete(COOKIE_NAME);
+}

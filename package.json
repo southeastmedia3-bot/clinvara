@@ -9,7 +9,7 @@
     "lint": "next lint",
     "firebase:login": "firebase login",
     "firebase:backend:create": "firebase apphosting:backends:create --project clinvara-f6235 --backend clinvara-backend --primary-region asia-east1 --app 1:869907183409:web:314562ee99980ae27c2210 --root-dir .",
-    "firebase:deploy": "firebase apphosting:rollouts:create clinvara-backend --project clinvara-f6235 --git-branch main --force",
+    "firebase:deploy": "firebase deploy --only apphosting:clinvara-backend --project clinvara-f6235",
     "backend:serve": "npm --prefix backend run serve",
     "backend:deploy": "npm --prefix backend run deploy"
   },

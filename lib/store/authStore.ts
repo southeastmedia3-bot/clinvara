@@ -3,7 +3,9 @@ import { create } from "zustand";
 export type AuthUser = {
   firstName?: string;
   lastName?: string;
+  name?: string;
   email?: string;
+  phone?: string;
   provider?: "email" | "google" | "facebook" | "apple" | "otp";
 };
 
