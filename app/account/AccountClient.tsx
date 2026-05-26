@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+
 import {
   Heart,
   MapPin,
@@ -15,12 +15,12 @@ import {
 import { useAuthStore } from "@/lib/store/authStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { useCartStore } from "@/lib/store/cartStore";
+
 import { allProducts } from "@/lib/data/products";
+
 import { ProductCard } from "@/components/product/ProductCard";
 
 export default function AccountClient() {
-  const searchParams = useSearchParams();
-
   const isAuth = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
 
@@ -31,6 +31,7 @@ export default function AccountClient() {
   const cartItems = useCartStore((s) => s.items);
 
   const [hash, setHash] = useState("");
+  const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
     setHash(window.location.hash);
@@ -39,14 +40,25 @@ export default function AccountClient() {
 
     window.addEventListener("hashchange", onHash);
 
-    return () => window.removeEventListener("hashchange", onHash);
+    return () =>
+      window.removeEventListener("hashchange", onHash);
   }, []);
 
   useEffect(() => {
-    if (searchParams.get("authError")) {
+    const params = new URLSearchParams(
+      window.location.search
+    );
+
+    if (params.get("authError")) {
+      setAuthError(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authError) {
       setLoginOpen(true);
     }
-  }, [searchParams, setLoginOpen]);
+  }, [authError, setLoginOpen]);
 
   const wishlistProducts = allProducts.filter((p) =>
     wishIds.includes(p.id)
