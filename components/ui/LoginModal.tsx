@@ -14,6 +14,11 @@ import {
 } from "@/lib/firebase/client";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { apiUrl } from "@/lib/api/client";
+import {
+  profileToAuthUser,
+  readMobileProfile,
+  saveMobileProfile,
+} from "@/lib/customerProfile";
 
 function GoogleMark() {
   return (
@@ -178,6 +183,10 @@ export function LoginModal() {
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [mobileProfileRequired, setMobileProfileRequired] = useState(false);
+  const [mobileProfileName, setMobileProfileName] = useState("");
+  const [mobileProfilePincode, setMobileProfilePincode] = useState("");
+  const [verifiedMobileNumber, setVerifiedMobileNumber] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -230,6 +239,17 @@ export function LoginModal() {
     setLoginOpen(true);
   };
 
+  const sanitizeOtpError = (error: unknown) => {
+    const code =
+      typeof error === "object" && error && "code" in error
+        ? String((error as { code?: string }).code)
+        : "";
+    if (code.includes("invalid-verification-code") || code.includes("code-expired")) {
+      return "Incorrect or expired OTP. Please try again.";
+    }
+    return "Unable to verify OTP. Please request a new code.";
+  };
+
   const requestMobileOtp = async (target: "signin" | "register") => {
     const activePhone = target === "signin" ? phone : registerPhone;
     const activeCode = target === "signin" ? countryCode : registerCountryCode;
@@ -238,6 +258,13 @@ export function LoginModal() {
       return;
     }
     const setLoading = target === "signin" ? setOtpLoading : setRegisterOtpLoading;
+    if (target === "signin") {
+      setOtpSent(true);
+      setMobileProfileRequired(false);
+      setVerifiedMobileNumber("");
+    } else {
+      setRegisterOtpSent(true);
+    }
     setLoading(true);
     try {
       await sendFirebaseOtp(`${activeCode}${activePhone}`, "firebase-recaptcha");
@@ -250,12 +277,12 @@ export function LoginModal() {
         variant: "error",
         durationMs: 5000,
       });
+      if (target === "signin") setOtpSent(false);
+      else setRegisterOtpSent(false);
       setLoading(false);
       return;
     }
     setLoading(false);
-    if (target === "signin") setOtpSent(true);
-    else setRegisterOtpSent(true);
     showToast({ message: "OTP sent!", variant: "success" });
   };
 
@@ -273,10 +300,7 @@ export function LoginModal() {
       await verifyFirebaseOtp(activeOtp);
     } catch (error) {
       showToast({
-        message:
-          error instanceof Error
-            ? error.message
-            : "Invalid or expired OTP.",
+        message: sanitizeOtpError(error),
         variant: "error",
         durationMs: 5000,
       });
@@ -317,9 +341,38 @@ export function LoginModal() {
 
   const signInWithMobile = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (mobileProfileRequired) {
+      if (!mobileProfileName.trim() || !/^\d{6}$/.test(mobileProfilePincode)) {
+        showToast({
+          message: "Enter your name and a valid 6-digit PIN code.",
+          variant: "error",
+        });
+        return;
+      }
+      const profile = saveMobileProfile({
+        name: mobileProfileName.trim(),
+        pincode: mobileProfilePincode,
+        phone: verifiedMobileNumber,
+      });
+      if (profile) setAuthenticated(true, profileToAuthUser(profile));
+      close();
+      showToast({ message: "Welcome to CLINVARA!", variant: "success" });
+      return;
+    }
     const ok = await verifyMobileOtp("signin");
     if (!ok) return;
-    setAuthenticated(true, { provider: "otp" });
+    const mobileNumber = `${countryCode}${phone}`;
+    const profile = readMobileProfile(mobileNumber);
+    if (!profile) {
+      setVerifiedMobileNumber(mobileNumber);
+      setMobileProfileRequired(true);
+      showToast({
+        message: "Add your name and PIN code to finish signing in.",
+        variant: "info",
+      });
+      return;
+    }
+    setAuthenticated(true, profileToAuthUser(profile));
     close();
     showToast({ message: "Welcome back!", variant: "success" });
   };
@@ -389,12 +442,20 @@ export function LoginModal() {
         },
       ]),
     );
+    const mobileProfile = saveMobileProfile({
+      name: `${firstName} ${lastName}`.trim(),
+      email: registerEmail,
+      phone: `${registerCountryCode}${registerPhone}`,
+      pincode,
+    });
     setAuthenticated(true, {
       firstName,
       lastName,
       email: registerEmail,
       phone: `${registerCountryCode}${registerPhone}`,
+      pincode,
       provider: "otp",
+      ...(mobileProfile ? profileToAuthUser(mobileProfile) : {}),
     });
     close();
     showToast({ message: "Account created. We sent a verification email.", variant: "success" });
@@ -500,6 +561,28 @@ export function LoginModal() {
                         {otpLoading ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
                       </button>
                     </div>
+                    {mobileProfileRequired && (
+                      <div className="grid gap-4 rounded-xl bg-[var(--brand-off-white)] p-4 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                          <p className="text-sm font-semibold">Complete your profile</p>
+                          <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                            Name and PIN code are required once for mobile sign in.
+                          </p>
+                        </div>
+                        <Field
+                          label="Full Name"
+                          value={mobileProfileName}
+                          onChange={setMobileProfileName}
+                          autoComplete="name"
+                        />
+                        <Field
+                          label="PIN Code"
+                          value={mobileProfilePincode}
+                          onChange={(value) => setMobileProfilePincode(value.replace(/\D/g, "").slice(0, 6))}
+                          autoComplete="postal-code"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
                 <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -520,7 +603,7 @@ export function LoginModal() {
                   type="submit"
                   className="h-12 w-full rounded-full bg-black text-sm font-semibold text-white transition hover:bg-black/85"
                 >
-                  {signInMode === "email" ? "Sign In" : "Verify & Sign In"}
+                  {signInMode === "email" ? "Sign In" : mobileProfileRequired ? "Complete Sign In" : "Verify & Sign In"}
                 </button>
               </form>
 

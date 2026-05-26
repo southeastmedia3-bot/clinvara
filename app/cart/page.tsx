@@ -6,12 +6,35 @@ import { useCartStore, cartTotal } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
+import { readCheckoutEmail } from "@/lib/customerProfile";
+
+type CheckoutAddress = {
+  fullName?: string;
+  phone?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+};
+
+function hasCompleteAddress(address: CheckoutAddress) {
+  return Boolean(
+    address.fullName?.trim() &&
+      address.phone?.trim() &&
+      address.line1?.trim() &&
+      address.city?.trim() &&
+      address.state?.trim() &&
+      address.pincode &&
+      /^\d{6}$/.test(address.pincode),
+  );
+}
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const { showToast } = useToast();
   const subtotal = cartTotal(items);
@@ -112,6 +135,28 @@ export default function CartPage() {
                   message: "Please sign in before checkout.",
                   variant: "info",
                 });
+                return;
+              }
+              const checkoutEmail = readCheckoutEmail(user);
+              const savedAddresses = JSON.parse(
+                window.localStorage.getItem("clinvara-addresses") || "[]",
+              ) as CheckoutAddress[];
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail)) {
+                showToast({
+                  message: "Add a valid checkout email in your account before payment.",
+                  variant: "error",
+                  durationMs: 5000,
+                });
+                window.location.href = "/account?checkout=details";
+                return;
+              }
+              if (!savedAddresses.some(hasCompleteAddress)) {
+                showToast({
+                  message: "Add a complete shipping address in your account before payment.",
+                  variant: "error",
+                  durationMs: 5000,
+                });
+                window.location.href = "/account?checkout=details";
                 return;
               }
               alert("Payment will be enabled after Razorpay is connected.");

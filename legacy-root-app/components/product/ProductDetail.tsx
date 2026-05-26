@@ -1,0 +1,310 @@
+"use client";
+
+import { useState } from "react";
+import { Star } from "lucide-react";
+import type { Product } from "@/lib/types";
+import { formatINR } from "@/lib/utils";
+import { SafeImage } from "@/components/shared/SafeImage";
+import { StarRating } from "@/components/shared/StarRating";
+import { SizeSelector } from "@/components/product/SizeSelector";
+import { useCartStore } from "@/lib/store/cartStore";
+import { useWishlistStore } from "@/lib/store/wishlistStore";
+import { useToast } from "@/components/providers/ToastProvider";
+import { reviewsForProductSlug } from "@/lib/data/reviews";
+import { ProductGrid } from "@/components/product/ProductGrid";
+import { allProducts } from "@/lib/data/products";
+import { BackButton } from "@/components/ui/BackButton";
+
+export function ProductDetail({ product }: { product: Product }) {
+  const gallery = product.gallery ?? [product.image, product.imageHover];
+  const [activeImage, setActiveImage] = useState(gallery[0]);
+  const [size, setSize] = useState(product.sizes[0] ?? "30ml");
+  const [qty, setQty] = useState(1);
+  const [openSection, setOpenSection] = useState<string | null>("ingredients");
+  const [showFullInci, setShowFullInci] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
+  const toggleWish = useWishlistStore((s) => s.toggle);
+  const hasWish = useWishlistStore((s) => s.has(product.id));
+  const { showToast } = useToast();
+
+  const productReviews = reviewsForProductSlug(product.slug);
+  const related = allProducts
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 4);
+
+  const highlights = [
+    {
+      name: "Niacinamide",
+      benefit: "Balances oil and refines the look of pores.",
+    },
+    {
+      name: "Zinc PCA",
+      benefit: "Supports clarity without stripping the skin.",
+    },
+    {
+      name: "Hyaluronic Acid",
+      benefit: "Draws moisture for a comfortable, hydrated feel.",
+    },
+  ];
+
+  return (
+    <div className="mx-auto max-w-[1440px] px-4 py-8 lg:px-8">
+      <div className="mb-6">
+        <BackButton fallbackHref="/shop" label="Back to Shop" />
+      </div>
+      <div className="grid gap-10 lg:grid-cols-2">
+        <div>
+          <div className="relative aspect-square bg-white p-6">
+            <SafeImage
+              src={activeImage}
+              alt={product.name}
+              label={product.name}
+              fill
+              priority
+              sizes="(max-width:1024px) 100vw, 50vw"
+              className="object-contain"
+            />
+          </div>
+          <div className="mt-4 flex gap-2 overflow-x-auto">
+            {gallery.map((src) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setActiveImage(src)}
+                className={`relative h-20 w-20 shrink-0 border-2 bg-white p-1 ${
+                  activeImage === src
+                    ? "border-black"
+                    : "border-[var(--brand-border)]"
+                }`}
+              >
+                <SafeImage
+                  src={src}
+                  alt=""
+                  label=""
+                  fill
+                  sizes="80px"
+                  className="object-contain"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          {product.badge && (
+            <span className="mb-2 inline-block bg-[var(--brand-accent)] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+              {product.badge}
+            </span>
+          )}
+          <h1 className="font-display text-3xl font-semibold md:text-[32px]">
+            {product.name}
+          </h1>
+          <button
+            type="button"
+            className="mt-2 flex items-center gap-2"
+            onClick={() =>
+              document
+                .getElementById("product-reviews")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            <StarRating rating={product.rating} size={14} />
+            <span className="text-sm text-[var(--brand-text-muted)] underline">
+              {product.reviewCount.toLocaleString()} reviews
+            </span>
+          </button>
+          <p className="mt-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+            {product.description}
+          </p>
+          <div className="mt-4 flex items-baseline gap-3">
+            <span className="text-xl font-bold">{formatINR(product.price)}</span>
+            <span className="text-sm text-[var(--brand-mid-gray)] line-through">
+              {formatINR(product.mrp)}
+            </span>
+          </div>
+
+          <div className="mt-6">
+            <p className="mb-2 text-sm font-semibold">Size</p>
+            <SizeSelector sizes={product.sizes} value={size} onChange={setSize} />
+          </div>
+
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex items-center border border-[var(--brand-border)]">
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                className="h-12 w-12 text-lg"
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+              >
+                −
+              </button>
+              <span className="w-10 text-center text-sm">{qty}</span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                className="h-12 w-12 text-lg"
+                onClick={() => setQty((q) => Math.min(10, q + 1))}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+            onClick={() => {
+              addItem({
+                productId: product.id,
+                slug: product.slug,
+                name: product.name,
+                image: product.image,
+                size,
+                price: product.price,
+                quantity: qty,
+              });
+              showToast({ message: "Added to cart!", variant: "success" });
+            }}
+          >
+            Add to Cart
+          </button>
+
+          <button
+            type="button"
+            className="mt-3 flex w-full items-center justify-center gap-2 border border-[var(--brand-border)] py-3 text-sm font-semibold"
+            onClick={() => {
+              toggleWish(product.id);
+              showToast({
+                message: hasWish
+                  ? "Removed from wishlist"
+                  : "Saved to wishlist",
+                variant: hasWish ? "success" : "info",
+              });
+            }}
+          >
+            <Star
+              className={`h-5 w-5 ${
+                hasWish ? "fill-[var(--brand-star)] text-[var(--brand-star)]" : ""
+              }`}
+            />
+            {hasWish ? "In Wishlist" : "Add to Wishlist"}
+          </button>
+
+          <div className="mt-8 space-y-2 border-t border-[var(--brand-border)] pt-6">
+            {[
+              { id: "ingredients", title: "Key Ingredients" },
+              { id: "howto", title: "How to Use" },
+              { id: "inci", title: "Full Ingredients List" },
+            ].map((sec) => (
+              <div key={sec.id} className="border-b border-[var(--brand-border)]">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between py-3 text-left text-sm font-semibold"
+                  onClick={() =>
+                    setOpenSection((s) => (s === sec.id ? null : sec.id))
+                  }
+                >
+                  {sec.title}
+                  <span>{openSection === sec.id ? "−" : "+"}</span>
+                </button>
+                {openSection === sec.id && sec.id === "ingredients" && (
+                  <ul className="space-y-2 pb-4 text-sm text-[var(--brand-text-muted)]">
+                    {highlights.map((h) => (
+                      <li key={h.name}>
+                        <strong className="text-black">{h.name}:</strong>{" "}
+                        {h.benefit}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {openSection === sec.id && sec.id === "howto" && (
+                  <p className="pb-4 text-sm text-[var(--brand-text-muted)]">
+                    Apply a few drops to clean, dry skin AM and/or PM. Follow with
+                    moisturizer and always use SPF in the morning when using actives.
+                  </p>
+                )}
+                {openSection === sec.id && sec.id === "inci" && (
+                  <div className="pb-4">
+                    <p
+                      className={`font-mono text-xs leading-relaxed text-[var(--brand-text-muted)] ${
+                        showFullInci ? "" : "line-clamp-3"
+                      }`}
+                    >
+                      {product.ingredients}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-2 text-xs font-semibold underline"
+                      onClick={() => setShowFullInci((v) => !v)}
+                    >
+                      {showFullInci ? "Show less" : "Show full list"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <p className="mb-4 text-sm font-semibold">What&apos;s Inside</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {highlights.map((h) => (
+                <div
+                  key={h.name}
+                  className="border border-[var(--brand-border)] p-4 text-center"
+                >
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-off-white)] text-lg">
+                    ✦
+                  </div>
+                  <p className="text-sm font-semibold">{h.name}</p>
+                  <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                    {h.benefit}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="product-reviews" className="mt-16 border-t border-[var(--brand-border)] pt-12">
+        <h2 className="font-display text-2xl font-semibold">Customer Reviews</h2>
+        {productReviews.length === 0 ? (
+          <p className="mt-4 text-sm text-[var(--brand-text-muted)]">
+            No reviews yet. Be the first to share your experience.
+          </p>
+        ) : (
+          <ul className="mt-6 space-y-4">
+            {productReviews.map((r) => (
+              <li
+                key={r.name + r.date}
+                className="border border-[var(--brand-border)] p-4"
+              >
+                <div className="flex justify-between">
+                  <span className="font-semibold">{r.name}</span>
+                  <span className="text-xs text-[var(--brand-mid-gray)]">
+                    {r.date}
+                  </span>
+                </div>
+                <StarRating rating={r.rating} className="mt-2" />
+                <p className="mt-2 text-sm font-bold">{r.title}</p>
+                <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                  {r.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {related.length > 0 && (
+        <section className="mt-16">
+          <h2 className="mb-6 font-display text-2xl font-semibold">
+            You Might Also Like
+          </h2>
+          <ProductGrid products={related} />
+        </section>
+      )}
+    </div>
+  );
+}

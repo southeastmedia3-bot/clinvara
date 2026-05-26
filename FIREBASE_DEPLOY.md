@@ -1,7 +1,10 @@
 # Firebase App Hosting Deployment
 
-This is a full-stack Next.js app, so deploy it with Firebase App Hosting rather
-than static Firebase Hosting.
+The active frontend lives in `frontend/`, and the active backend lives in
+`backend/`.
+
+Deploy the frontend with Firebase App Hosting and the backend with Firebase
+Functions.
 
 ## One-time setup
 
@@ -35,6 +38,12 @@ App Hosting deploys from GitHub. Push `main`, then run:
 
 ```bash
 npm run firebase:deploy
+```
+
+Deploy backend Functions:
+
+```bash
+npm run backend:deploy
 ```
 
 ## Domain

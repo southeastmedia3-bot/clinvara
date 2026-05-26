@@ -7,6 +7,7 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { apiUrl } from "@/lib/api/client";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
+import { profileToAuthUser, readMobileProfile } from "@/lib/customerProfile";
 
 export function ClientBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -28,11 +29,14 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       if (!user) return;
       const provider = user.phoneNumber ? "otp" : "email";
+      const mobileProfile = readMobileProfile(user.phoneNumber);
       useAuthStore.getState().setAuthenticated(true, {
-        name: user.displayName ?? undefined,
-        email: user.email ?? undefined,
+        ...(mobileProfile ? profileToAuthUser(mobileProfile) : {}),
+        name: mobileProfile?.name ?? user.displayName ?? undefined,
+        email: user.email ?? mobileProfile?.email ?? undefined,
         phone: user.phoneNumber ?? undefined,
         provider,
+        pincode: mobileProfile?.pincode,
       });
     });
     return unsubscribe;

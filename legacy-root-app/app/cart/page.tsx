@@ -1,0 +1,115 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { useCartStore, cartTotal } from "@/lib/store/cartStore";
+import { formatINR } from "@/lib/utils";
+
+export default function CartPage() {
+  const items = useCartStore((s) => s.items);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
+  const subtotal = cartTotal(items);
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
+      <h1 className="font-display text-4xl font-semibold">Your Cart</h1>
+      {items.length === 0 ? (
+        <p className="mt-6 text-sm text-[var(--brand-text-muted)]">
+          Your cart is empty.{" "}
+          <Link href="/shop" className="font-semibold underline">
+            Continue shopping
+          </Link>
+        </p>
+      ) : (
+        <>
+          <ul className="mt-8 space-y-4">
+            {items.map((item) => (
+              <li
+                key={`${item.productId}-${item.size}`}
+                className="flex gap-4 border-b border-[var(--brand-border)] pb-4"
+              >
+                <div className="relative h-20 w-20 shrink-0 bg-[var(--brand-off-white)]">
+                  <Image
+                    src={item.image}
+                    alt=""
+                    fill
+                    className="object-contain p-1"
+                    sizes="80px"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Link
+                    href={`/shop/${item.slug}`}
+                    className="font-medium hover:underline"
+                  >
+                    {item.name}
+                  </Link>
+                  <p className="text-xs text-[var(--brand-mid-gray)]">
+                    {item.size}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="h-8 w-8 border"
+                      onClick={() =>
+                        updateQuantity(
+                          item.productId,
+                          item.size,
+                          item.quantity - 1,
+                        )
+                      }
+                    >
+                      −
+                    </button>
+                    <span>{item.quantity}</span>
+                    <button
+                      type="button"
+                      className="h-8 w-8 border"
+                      onClick={() =>
+                        updateQuantity(
+                          item.productId,
+                          item.size,
+                          item.quantity + 1,
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="ml-auto text-sm underline"
+                      onClick={() =>
+                        removeItem(item.productId, item.size)
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <p className="font-semibold">
+                  {formatINR(item.price * item.quantity)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 flex items-center justify-between border-t border-[var(--brand-border)] pt-6">
+            <span className="font-semibold">Subtotal</span>
+            <span className="text-lg font-bold">{formatINR(subtotal)}</span>
+          </div>
+          <button
+            type="button"
+            className="mt-6 h-12 w-full bg-black text-sm font-semibold text-white"
+            onClick={() =>
+              alert(
+                "Checkout is a demo — connect your payment provider to go live.",
+              )
+            }
+          >
+            Proceed to Checkout
+          </button>
+        </>
+      )}
+    </div>
+  );
+}

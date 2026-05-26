@@ -6,6 +6,7 @@ export type AuthUser = {
   name?: string;
   email?: string;
   phone?: string;
+  pincode?: string;
   provider?: "email" | "google" | "facebook" | "apple" | "otp";
 };
 

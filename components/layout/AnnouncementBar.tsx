@@ -36,7 +36,7 @@ export function AnnouncementBar() {
         type="button"
         aria-label="Previous offer"
         onClick={() => prev()}
-        className="absolute left-3 hidden opacity-80 transition-opacity hover:opacity-100 md:inline-flex"
+        className="absolute left-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
       >
         <ChevronLeft className="h-[18px] w-[18px]" />
       </button>
@@ -64,7 +64,7 @@ export function AnnouncementBar() {
         type="button"
         aria-label="Next offer"
         onClick={() => next()}
-        className="absolute right-3 hidden opacity-80 transition-opacity hover:opacity-100 md:inline-flex"
+        className="absolute right-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
       >
         <ChevronRight className="h-[18px] w-[18px]" />
       </button>

@@ -20,6 +20,7 @@ import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { apiUrl } from "@/lib/api/client";
+import { checkoutEmailKey, readCheckoutEmail } from "@/lib/customerProfile";
 
 type Address = {
   id: string;
@@ -68,6 +69,7 @@ export default function AccountClient() {
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editing, setEditing] = useState<Address | null>(null);
+  const [checkoutEmail, setCheckoutEmail] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
 
@@ -95,13 +97,19 @@ export default function AccountClient() {
   useEffect(() => {
     const saved = window.localStorage.getItem("clinvara-addresses");
     if (saved) setAddresses(JSON.parse(saved));
+    setCheckoutEmail(readCheckoutEmail(user));
     setLoaded(true);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!loaded) return;
     window.localStorage.setItem("clinvara-addresses", JSON.stringify(addresses));
   }, [addresses, loaded]);
+
+  useEffect(() => {
+    if (!loaded || user?.email) return;
+    window.localStorage.setItem(checkoutEmailKey, checkoutEmail);
+  }, [checkoutEmail, loaded, user?.email]);
 
   const wishlistProducts = useMemo(
     () => allProducts.filter((product) => wishIds.includes(product.id)),
@@ -249,11 +257,11 @@ export default function AccountClient() {
       </section>
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
+        {[ 
           { icon: UserRound, label: "Login Method", value: user?.provider || "Account" },
           { icon: Package, label: "Orders", value: "0 completed orders" },
           { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} saved products` },
-          { icon: MapPin, label: "Addresses", value: `${addresses.length}/2 saved` },
+          { icon: MapPin, label: "PIN Code", value: user?.pincode || "Add before checkout" },
         ].map((item) => (
           <article
             key={item.label}
@@ -391,32 +399,56 @@ export default function AccountClient() {
           )}
         </article>
 
-        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
-          <ShoppingBag className="h-5 w-5" />
-          <h2 className="mt-5 font-display text-3xl font-semibold">
-            Checkout Snapshot
-          </h2>
-          <div className="mt-5 space-y-3 text-sm">
-            <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
-              <span className="text-[var(--brand-text-muted)]">Cart items</span>
-              <strong>{cartCount(cartItems)}</strong>
+        <div className="space-y-8">
+          <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+            <UserRound className="h-5 w-5" />
+            <h2 className="mt-5 font-display text-3xl font-semibold">
+              Contact Details
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+              Email and a complete shipping address are required only when you
+              proceed to checkout.
+            </p>
+            <label className="mt-5 block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">Checkout Email</span>
+              <input
+                type="email"
+                value={user?.email || checkoutEmail}
+                disabled={Boolean(user?.email)}
+                onChange={(event) => setCheckoutEmail(event.target.value)}
+                placeholder="you@example.com"
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black disabled:bg-[var(--brand-off-white)]"
+              />
+            </label>
+          </article>
+
+          <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+            <ShoppingBag className="h-5 w-5" />
+            <h2 className="mt-5 font-display text-3xl font-semibold">
+              Checkout Snapshot
+            </h2>
+            <div className="mt-5 space-y-3 text-sm">
+              <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
+                <span className="text-[var(--brand-text-muted)]">Cart items</span>
+                <strong>{cartCount(cartItems)}</strong>
+              </div>
+              <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
+                <span className="text-[var(--brand-text-muted)]">Cart value</span>
+                <strong>INR {cartTotal(cartItems).toLocaleString("en-IN")}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--brand-text-muted)]">Saved addresses</span>
+                <strong>{addresses.length}</strong>
+              </div>
             </div>
-            <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
-              <span className="text-[var(--brand-text-muted)]">Cart value</span>
-              <strong>INR {cartTotal(cartItems).toLocaleString("en-IN")}</strong>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[var(--brand-text-muted)]">Saved addresses</span>
-              <strong>{addresses.length}</strong>
-            </div>
-          </div>
-          <Link
-            href="/cart"
-            className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-black text-sm font-semibold text-white"
-          >
-            View Cart
-          </Link>
-        </article>
+            <Link
+              href="/cart"
+              className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-black text-sm font-semibold text-white"
+            >
+              View Cart
+            </Link>
+          </article>
+        </div>
       </section>
 
       <section className="mt-8 grid gap-8 xl:grid-cols-[0.64fr_0.36fr]">

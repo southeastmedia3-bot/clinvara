@@ -1,0 +1,37 @@
+{
+  "name": "clinvara-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "firebase:login": "firebase login",
+    "firebase:backend:create": "firebase apphosting:backends:create --project clinvara-f6235 --backend clinvara-frontend --primary-region asia-south1 --app 1:869907183409:web:314562ee99980ae27c2210 --root-dir .",
+    "firebase:deploy": "firebase apphosting:rollouts:create clinvara-frontend --project clinvara-f6235 --git-branch main --force"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "firebase": "^11.10.0",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.18",
+    "firebase-tools": "^15.18.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.5.4"
+  }
+}
