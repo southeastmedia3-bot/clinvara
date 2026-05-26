@@ -5,6 +5,8 @@ import { useCartStore } from "@/lib/store/cartStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { apiUrl } from "@/lib/api/client";
+import { firebaseAuth } from "@/lib/firebase/client";
+import { onAuthStateChanged } from "firebase/auth";
 
 export function ClientBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -23,6 +25,17 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => undefined);
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      if (!user) return;
+      const provider = user.phoneNumber ? "otp" : "email";
+      useAuthStore.getState().setAuthenticated(true, {
+        name: user.displayName ?? undefined,
+        email: user.email ?? undefined,
+        phone: user.phoneNumber ?? undefined,
+        provider,
+      });
+    });
+    return unsubscribe;
   }, []);
   return <>{children}</>;
 }

@@ -6,7 +6,12 @@ import { Eye, EyeOff, X } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
-import { sendFirebaseOtp, verifyFirebaseOtp } from "@/lib/firebase/client";
+import {
+  createFirebaseEmailAccount,
+  sendFirebaseOtp,
+  signInFirebaseEmail,
+  verifyFirebaseOtp,
+} from "@/lib/firebase/client";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { apiUrl } from "@/lib/api/client";
 
@@ -183,6 +188,8 @@ export function LoginModal() {
   const [registerOtpLoading, setRegisterOtpLoading] = useState(false);
   const [registerEmail, setRegisterEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [city, setCity] = useState("");
@@ -280,14 +287,32 @@ export function LoginModal() {
     return true;
   };
 
-  const signIn = (event: React.FormEvent) => {
+  const signIn = async (event: React.FormEvent) => {
     event.preventDefault();
-    showToast({
-      message:
-        "Email/password sign in is not enabled yet. Please use Google, Facebook, or mobile OTP.",
-      variant: "error",
-      durationMs: 5000,
-    });
+    try {
+      const credential = await signInFirebaseEmail(email, password);
+      if (!credential.user.emailVerified) {
+        showToast({
+          message: "Please verify your email before signing in.",
+          variant: "error",
+          durationMs: 5000,
+        });
+        return;
+      }
+      setAuthenticated(true, {
+        name: credential.user.displayName ?? undefined,
+        email: credential.user.email ?? email,
+        provider: "email",
+      });
+      close();
+      showToast({ message: keepLoggedIn ? "Welcome back!" : "Signed in for this session.", variant: "success" });
+    } catch {
+      showToast({
+        message: "Invalid email or password. Please use a registered account.",
+        variant: "error",
+        durationMs: 5000,
+      });
+    }
   };
 
   const signInWithMobile = async (event: React.FormEvent) => {
@@ -305,6 +330,18 @@ export function LoginModal() {
       showToast({ message: "Email addresses do not match.", variant: "error" });
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerEmail)) {
+      showToast({ message: "Enter a valid email address.", variant: "error" });
+      return;
+    }
+    if (registerPassword.length < 8) {
+      showToast({ message: "Password must be at least 8 characters.", variant: "error" });
+      return;
+    }
+    if (registerPassword !== confirmPassword) {
+      showToast({ message: "Passwords do not match.", variant: "error" });
+      return;
+    }
     if (!/^\d{10}$/.test(registerPhone)) {
       showToast({ message: "Enter a valid mobile number.", variant: "error" });
       return;
@@ -319,6 +356,23 @@ export function LoginModal() {
     }
     const ok = await verifyMobileOtp("register");
     if (!ok) return;
+    try {
+      await createFirebaseEmailAccount({
+        email: registerEmail,
+        password: registerPassword,
+        displayName: `${firstName} ${lastName}`.trim(),
+      });
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error && error.message.includes("email-already-in-use")
+            ? "This email is already registered. Please sign in instead."
+            : "Unable to create this email account. Please check the details and try again.",
+        variant: "error",
+        durationMs: 5000,
+      });
+      return;
+    }
     window.localStorage.setItem(
       "clinvara-addresses",
       JSON.stringify([
@@ -343,7 +397,7 @@ export function LoginModal() {
       provider: "otp",
     });
     close();
-    showToast({ message: "Account created. Welcome to CLINVARA.", variant: "success" });
+    showToast({ message: "Account created. We sent a verification email.", variant: "success" });
   };
 
   return (
@@ -408,11 +462,6 @@ export function LoginModal() {
               <form className="mt-5 space-y-4" onSubmit={signInMode === "email" ? signIn : signInWithMobile}>
                 {signInMode === "email" ? (
                   <>
-                    <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
-                      Email/password login is disabled for production until a
-                      secure customer database is connected. Use Google,
-                      Facebook, or mobile OTP for verified sign in.
-                    </div>
                     <Field
                       label="Email"
                       type="email"
@@ -573,10 +622,12 @@ export function LoginModal() {
                   )}
                   <Field label="Email" type="email" value={registerEmail} onChange={setRegisterEmail} autoComplete="email" />
                   <Field label="Confirm Email" type="email" value={confirmEmail} onChange={setConfirmEmail} autoComplete="email" />
+                  <PasswordField label="Password" value={registerPassword} onChange={setRegisterPassword} autoComplete="new-password" />
+                  <PasswordField label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
                   <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
-                    Account creation is verified by mobile OTP. Password-based
-                    accounts will be enabled only after a secure customer
-                    database is connected.
+                    Account creation requires mobile OTP verification and a
+                    verification email. Google and Facebook sign-in use the
+                    provider's verified account flow.
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field

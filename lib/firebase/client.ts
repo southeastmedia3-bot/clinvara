@@ -2,9 +2,13 @@
 
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
+  createUserWithEmailAndPassword,
   getAuth,
   RecaptchaVerifier,
+  sendEmailVerification,
   signInWithPhoneNumber,
+  signInWithEmailAndPassword,
+  updateProfile,
   type ConfirmationResult,
 } from "firebase/auth";
 
@@ -49,4 +53,29 @@ export async function verifyFirebaseOtp(otp: string) {
     throw new Error("Please request an OTP first.");
   }
   return window.confirmationResult.confirm(otp);
+}
+
+export async function signInFirebaseEmail(email: string, password: string) {
+  return signInWithEmailAndPassword(firebaseAuth, email, password);
+}
+
+export async function createFirebaseEmailAccount({
+  email,
+  password,
+  displayName,
+}: {
+  email: string;
+  password: string;
+  displayName: string;
+}) {
+  const credential = await createUserWithEmailAndPassword(
+    firebaseAuth,
+    email,
+    password,
+  );
+  if (displayName) {
+    await updateProfile(credential.user, { displayName });
+  }
+  await sendEmailVerification(credential.user);
+  return credential;
 }

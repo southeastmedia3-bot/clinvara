@@ -69,11 +69,28 @@ export default function AccountClient() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editing, setEditing] = useState<Address | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("authError")) setLoginOpen(true);
-  }, [setLoginOpen]);
+    void fetch(apiUrl("/api/auth/session"), { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.user) {
+          setAuthenticated(true, {
+            name: data.user.name,
+            email: data.user.email,
+            phone: data.user.phone,
+            provider: data.user.provider,
+          });
+          if (params.get("login") === "success") {
+            window.history.replaceState(null, "", "/account");
+          }
+        }
+      })
+      .finally(() => setCheckingSession(false));
+  }, [setAuthenticated, setLoginOpen]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("clinvara-addresses");
@@ -120,6 +137,24 @@ export default function AccountClient() {
     }).catch(() => undefined);
     setAuthenticated(false);
   };
+
+  if (checkingSession) {
+    return (
+      <div className="mx-auto max-w-[1180px] px-4 py-12 lg:px-8">
+        <div className="rounded-2xl border border-[var(--brand-border)] bg-white p-10 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+            CLINVARA Account
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-semibold">
+            Completing sign in...
+          </h1>
+          <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+            We are verifying your secure session.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuth) {
     return (
