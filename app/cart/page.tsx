@@ -3,12 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore, cartTotal } from "@/lib/store/cartStore";
+import { useAuthStore } from "@/lib/store/authStore";
+import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
+  const { showToast } = useToast();
   const subtotal = cartTotal(items);
 
   return (
@@ -100,11 +105,17 @@ export default function CartPage() {
           <button
             type="button"
             className="mt-6 h-12 w-full bg-black text-sm font-semibold text-white"
-            onClick={() =>
-              alert(
-                "Checkout is a demo — connect your payment provider to go live.",
-              )
-            }
+            onClick={() => {
+              if (!isAuthenticated) {
+                setLoginOpen(true);
+                showToast({
+                  message: "Please sign in before checkout.",
+                  variant: "info",
+                });
+                return;
+              }
+              alert("Payment will be enabled after Razorpay is connected.");
+            }}
           >
             Proceed to Checkout
           </button>

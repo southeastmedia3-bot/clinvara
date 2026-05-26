@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { sendFirebaseOtp, verifyFirebaseOtp } from "@/lib/firebase/client";
+import { BrandLogo } from "@/components/shared/BrandLogo";
+import { apiUrl } from "@/lib/api/client";
 
 function GoogleMark() {
   return (
@@ -138,14 +140,14 @@ function SocialButtons() {
   return (
     <div className="space-y-3">
       <a
-        href="/api/auth/oauth/google"
+        href={apiUrl("/api/auth/oauth/google")}
         className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-black text-sm font-semibold text-white transition hover:bg-black/85"
       >
         <GoogleMark />
         Continue with Google
       </a>
       <a
-        href="/api/auth/oauth/facebook"
+        href={apiUrl("/api/auth/oauth/facebook")}
         className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#1877F2] text-sm font-semibold text-white transition hover:bg-[#166fe5]"
       >
         <FacebookMark />
@@ -181,8 +183,11 @@ export function LoginModal() {
   const [registerOtpLoading, setRegisterOtpLoading] = useState(false);
   const [registerEmail, setRegisterEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [city, setCity] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [pincode, setPincode] = useState("");
   const [updates, setUpdates] = useState(true);
 
   const anyOpen = loginOpen || registerOpen;
@@ -277,9 +282,12 @@ export function LoginModal() {
 
   const signIn = (event: React.FormEvent) => {
     event.preventDefault();
-    setAuthenticated(true, { email, provider: "email" });
-    close();
-    showToast({ message: keepLoggedIn ? "Welcome back!" : "Signed in for this session.", variant: "success" });
+    showToast({
+      message:
+        "Email/password sign in is not enabled yet. Please use Google, Facebook, or mobile OTP.",
+      variant: "error",
+      durationMs: 5000,
+    });
   };
 
   const signInWithMobile = async (event: React.FormEvent) => {
@@ -297,23 +305,42 @@ export function LoginModal() {
       showToast({ message: "Email addresses do not match.", variant: "error" });
       return;
     }
-    if (registerPassword !== confirmPassword) {
-      showToast({ message: "Passwords do not match.", variant: "error" });
-      return;
-    }
     if (!/^\d{10}$/.test(registerPhone)) {
       showToast({ message: "Enter a valid mobile number.", variant: "error" });
       return;
     }
-    if (registerOtpSent) {
-      const ok = await verifyMobileOtp("register");
-      if (!ok) return;
+    if (!registerOtpSent) {
+      showToast({ message: "Verify your mobile number before creating an account.", variant: "error" });
+      return;
     }
+    if (!addressLine1.trim() || !city.trim() || !stateName.trim() || !/^\d{6}$/.test(pincode)) {
+      showToast({ message: "Enter your complete address and a valid 6-digit PIN code.", variant: "error" });
+      return;
+    }
+    const ok = await verifyMobileOtp("register");
+    if (!ok) return;
+    window.localStorage.setItem(
+      "clinvara-addresses",
+      JSON.stringify([
+        {
+          id: crypto.randomUUID(),
+          label: "Home",
+          fullName: `${firstName} ${lastName}`.trim(),
+          phone: `${registerCountryCode}${registerPhone}`,
+          line1: addressLine1,
+          line2: addressLine2,
+          city,
+          state: stateName,
+          pincode,
+        },
+      ]),
+    );
     setAuthenticated(true, {
       firstName,
       lastName,
       email: registerEmail,
-      provider: "email",
+      phone: `${registerCountryCode}${registerPhone}`,
+      provider: "otp",
     });
     close();
     showToast({ message: "Account created. Welcome to CLINVARA.", variant: "success" });
@@ -353,7 +380,7 @@ export function LoginModal() {
               >
                 <X className="h-5 w-5" />
               </button>
-              <p className="font-display text-2xl font-semibold">CLINVARA</p>
+              <BrandLogo className="h-16 w-28" />
               <h2 id="signin-title" className="mt-6 font-display text-4xl font-semibold">
                 Sign In
               </h2>
@@ -381,6 +408,11 @@ export function LoginModal() {
               <form className="mt-5 space-y-4" onSubmit={signInMode === "email" ? signIn : signInWithMobile}>
                 {signInMode === "email" ? (
                   <>
+                    <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                      Email/password login is disabled for production until a
+                      secure customer database is connected. Use Google,
+                      Facebook, or mobile OTP for verified sign in.
+                    </div>
                     <Field
                       label="Email"
                       type="email"
@@ -484,7 +516,7 @@ export function LoginModal() {
 
               <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
                 <section className="bg-[var(--brand-off-white)] p-6 sm:p-8 lg:p-10">
-                  <p className="font-display text-2xl font-semibold">CLINVARA</p>
+                  <BrandLogo className="h-16 w-28" />
                   <h2 id="register-title" className="mt-8 font-display text-4xl font-semibold">
                     Create Account
                   </h2>
@@ -505,8 +537,8 @@ export function LoginModal() {
                   </label>
                   <p className="mt-6 text-xs leading-relaxed text-[var(--brand-text-muted)]">
                     By creating an account, you agree to the{" "}
-                    <Link href="/contact" className="underline">Terms</Link> and{" "}
-                    <Link href="/contact" className="underline">Privacy Policy</Link>.
+                    <Link href="/terms-and-conditions" className="underline">Terms</Link> and{" "}
+                    <Link href="/privacy-policy" className="underline">Privacy Policy</Link>.
                   </p>
                 </section>
 
@@ -541,8 +573,36 @@ export function LoginModal() {
                   )}
                   <Field label="Email" type="email" value={registerEmail} onChange={setRegisterEmail} autoComplete="email" />
                   <Field label="Confirm Email" type="email" value={confirmEmail} onChange={setConfirmEmail} autoComplete="email" />
-                  <PasswordField label="Password" value={registerPassword} onChange={setRegisterPassword} autoComplete="new-password" />
-                  <PasswordField label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
+                  <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                    Account creation is verified by mobile OTP. Password-based
+                    accounts will be enabled only after a secure customer
+                    database is connected.
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field
+                      label="Address Line 1"
+                      value={addressLine1}
+                      onChange={setAddressLine1}
+                      autoComplete="address-line1"
+                    />
+                    <Field
+                      label="Address Line 2"
+                      value={addressLine2}
+                      onChange={setAddressLine2}
+                      autoComplete="address-line2"
+                      required={false}
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Field label="City" value={city} onChange={setCity} autoComplete="address-level2" />
+                    <Field label="State" value={stateName} onChange={setStateName} autoComplete="address-level1" />
+                    <Field
+                      label="PIN Code"
+                      value={pincode}
+                      onChange={(value) => setPincode(value.replace(/\D/g, "").slice(0, 6))}
+                      autoComplete="postal-code"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className="h-12 w-full rounded-full bg-black text-sm font-semibold text-white transition hover:bg-black/85"

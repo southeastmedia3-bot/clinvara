@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import { cartTotal, cartCount } from "@/lib/store/cartStore";
+import { useAuthStore } from "@/lib/store/authStore";
+import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
 
 const FREE_SHIPPING = 999;
@@ -17,6 +19,9 @@ export function CartDrawer() {
   const closeCart = useCartStore((s) => s.closeCart);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
+  const { showToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
   const firstFocusable = useRef<HTMLButtonElement>(null);
 
@@ -185,13 +190,30 @@ export function CartDrawer() {
                   Add {formatINR(remaining)} more for free shipping.
                 </p>
               )}
-              <Link
-                href="/cart"
-                className="mb-3 flex h-12 w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
-                onClick={() => closeCart()}
-              >
-                Proceed to Checkout
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/cart"
+                  className="mb-3 flex h-12 w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+                  onClick={() => closeCart()}
+                >
+                  Proceed to Checkout
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="mb-3 flex h-12 w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+                  onClick={() => {
+                    closeCart();
+                    setLoginOpen(true);
+                    showToast({
+                      message: "Please sign in before checkout.",
+                      variant: "info",
+                    });
+                  }}
+                >
+                  Proceed to Checkout
+                </button>
+              )}
               <button
                 type="button"
                 className="w-full text-center text-sm underline"
