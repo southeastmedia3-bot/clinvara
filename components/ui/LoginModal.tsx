@@ -250,6 +250,32 @@ export function LoginModal() {
     return "Unable to verify OTP. Please request a new code.";
   };
 
+  const firebaseEmailErrorMessage = (error: unknown) => {
+    const code =
+      typeof error === "object" && error && "code" in error
+        ? String((error as { code?: string }).code)
+        : "";
+    if (code.includes("email-already-in-use")) {
+      return "This email is already registered. Please sign in instead.";
+    }
+    if (code.includes("operation-not-allowed")) {
+      return "Email/password sign up is not enabled in Firebase Authentication.";
+    }
+    if (code.includes("weak-password")) {
+      return "Use a stronger password with at least 8 characters.";
+    }
+    if (code.includes("invalid-email")) {
+      return "Enter a valid email address.";
+    }
+    if (code.includes("network-request-failed")) {
+      return "Network error. Please check your connection and try again.";
+    }
+    if (code.includes("too-many-requests")) {
+      return "Too many attempts. Please wait a few minutes and try again.";
+    }
+    return "Unable to create this email account. Please check Firebase Auth settings and try again.";
+  };
+
   const requestMobileOtp = async (target: "signin" | "register") => {
     const activePhone = target === "signin" ? phone : registerPhone;
     const activeCode = target === "signin" ? countryCode : registerCountryCode;
@@ -409,20 +435,19 @@ export function LoginModal() {
     }
     const ok = await verifyMobileOtp("register");
     if (!ok) return;
+    let verificationEmailSent = false;
     try {
-      await createFirebaseEmailAccount({
+      const result = await createFirebaseEmailAccount({
         email: registerEmail,
         password: registerPassword,
         displayName: `${firstName} ${lastName}`.trim(),
       });
+      verificationEmailSent = result.verificationEmailSent;
     } catch (error) {
       showToast({
-        message:
-          error instanceof Error && error.message.includes("email-already-in-use")
-            ? "This email is already registered. Please sign in instead."
-            : "Unable to create this email account. Please check the details and try again.",
+        message: firebaseEmailErrorMessage(error),
         variant: "error",
-        durationMs: 5000,
+        durationMs: 7000,
       });
       return;
     }
@@ -458,7 +483,13 @@ export function LoginModal() {
       ...(mobileProfile ? profileToAuthUser(mobileProfile) : {}),
     });
     close();
-    showToast({ message: "Account created. We sent a verification email.", variant: "success" });
+    showToast({
+      message: verificationEmailSent
+        ? "Account created. We sent a verification email."
+        : "Account created. Sign in later to resend the verification email.",
+      variant: "success",
+      durationMs: 6000,
+    });
   };
 
   return (

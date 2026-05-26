@@ -76,6 +76,11 @@ export async function createFirebaseEmailAccount({
   if (displayName) {
     await updateProfile(credential.user, { displayName });
   }
-  await sendEmailVerification(credential.user);
-  return credential;
+  let verificationEmailSent = true;
+  try {
+    await sendEmailVerification(credential.user);
+  } catch {
+    verificationEmailSent = false;
+  }
+  return { credential, verificationEmailSent };
 }
