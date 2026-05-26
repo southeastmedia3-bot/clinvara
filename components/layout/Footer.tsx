@@ -2,12 +2,10 @@ import Link from "next/link";
 
 import {
   Mail,
-  Facebook,
-  Instagram,
-  Youtube,
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
+import { socialLinks } from "@/lib/data/socialLinks";
 
 export function Footer() {
   return (
@@ -166,29 +164,18 @@ export function Footer() {
               <Mail className="h-5 w-5" />
             </a>
 
-            <a
-              href="https://facebook.com"
-              aria-label="Facebook"
-              className="text-white/60 transition hover:text-white"
-            >
-              <Facebook className="h-5 w-5" />
-            </a>
-
-            <a
-              href="https://instagram.com"
-              aria-label="Instagram"
-              className="text-white/60 transition hover:text-white"
-            >
-              <Instagram className="h-5 w-5" />
-            </a>
-
-            <a
-              href="https://youtube.com"
-              aria-label="YouTube"
-              className="text-white/60 transition hover:text-white"
-            >
-              <Youtube className="h-5 w-5" />
-            </a>
+            {socialLinks.map((social) => (
+              <a
+                key={social.platform}
+                href={social.href}
+                aria-label={social.platform}
+                className="text-white/60 transition hover:text-white"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <social.icon className="h-5 w-5" />
+              </a>
+            ))}
           </div>
         </div>
       </div>

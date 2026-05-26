@@ -4,6 +4,7 @@ import { CategoryFilter } from "@/components/home/CategoryFilter";
 import { ConcernFilter } from "@/components/home/ConcernFilter";
 import { RoutineStrip } from "@/components/home/RoutineStrip";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
+import { SocialFeedStrip } from "@/components/home/SocialFeedStrip";
 import { BlogPreview } from "@/components/home/BlogPreview";
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
       <ConcernFilter />
       <RoutineStrip />
       <ReviewsSection />
+      <SocialFeedStrip />
       <BlogPreview />
     </>
   );
