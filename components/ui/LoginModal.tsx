@@ -627,7 +627,7 @@ export function LoginModal() {
                   <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
                     Account creation requires mobile OTP verification and a
                     verification email. Google and Facebook sign-in use the
-                    provider's verified account flow.
+                    provider&apos;s verified account flow.
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field
