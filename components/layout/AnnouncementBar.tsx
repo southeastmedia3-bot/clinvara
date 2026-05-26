@@ -28,7 +28,7 @@ export function AnnouncementBar() {
 
   return (
     <div
-      className="relative z-[110] flex h-10 w-full items-center justify-center bg-[var(--brand-accent)] text-white"
+      className="relative z-[110] flex h-10 w-full items-center justify-center bg-[var(--brand-accent)] text-black"
       role="region"
       aria-label="Promotional announcements"
     >
