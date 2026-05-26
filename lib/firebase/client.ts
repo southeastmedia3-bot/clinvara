@@ -1,13 +1,17 @@
 "use client";
 
 import { getApp, getApps, initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 import {
   createUserWithEmailAndPassword,
+  FacebookAuthProvider,
   getAuth,
+  GoogleAuthProvider,
   RecaptchaVerifier,
   sendEmailVerification,
   signInWithPhoneNumber,
   signInWithEmailAndPassword,
+  signInWithPopup,
   updateProfile,
   type ConfirmationResult,
 } from "firebase/auth";
@@ -25,6 +29,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const firebaseAuth = getAuth(app);
+export const firebaseDb = getFirestore(app);
 firebaseAuth.useDeviceLanguage();
 
 declare global {
@@ -57,6 +62,14 @@ export async function verifyFirebaseOtp(otp: string) {
 
 export async function signInFirebaseEmail(email: string, password: string) {
   return signInWithEmailAndPassword(firebaseAuth, email, password);
+}
+
+export async function signInFirebaseGoogle() {
+  return signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+}
+
+export async function signInFirebaseFacebook() {
+  return signInWithPopup(firebaseAuth, new FacebookAuthProvider());
 }
 
 export async function createFirebaseEmailAccount({

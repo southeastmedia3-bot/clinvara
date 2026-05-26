@@ -22,5 +22,8 @@
       "source": "backend",
       "codebase": "backend"
     }
-  ]
+  ],
+  "firestore": {
+    "rules": "firestore.rules"
+  }
 }

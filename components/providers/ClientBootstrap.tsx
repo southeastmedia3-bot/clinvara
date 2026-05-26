@@ -7,7 +7,11 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { apiUrl } from "@/lib/api/client";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
-import { profileToAuthUser, readMobileProfile } from "@/lib/customerProfile";
+import {
+  customerToAuthUser,
+  ensureCustomerFromFirebaseUser,
+  readCustomerProfile,
+} from "@/lib/firebase/customerData";
 
 export function ClientBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -28,16 +32,20 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
       .catch(() => undefined);
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       if (!user) return;
-      const provider = user.phoneNumber ? "otp" : "email";
-      const mobileProfile = readMobileProfile(user.phoneNumber);
-      useAuthStore.getState().setAuthenticated(true, {
-        ...(mobileProfile ? profileToAuthUser(mobileProfile) : {}),
-        name: mobileProfile?.name ?? user.displayName ?? undefined,
-        email: user.email ?? mobileProfile?.email ?? undefined,
-        phone: user.phoneNumber ?? undefined,
-        provider,
-        pincode: mobileProfile?.pincode,
-      });
+      void readCustomerProfile(user.uid)
+        .then((profile) => profile ?? ensureCustomerFromFirebaseUser(user))
+        .then((profile) => {
+          useAuthStore.getState().setAuthenticated(true, customerToAuthUser(profile));
+        })
+        .catch(() => {
+          useAuthStore.getState().setAuthenticated(true, {
+            uid: user.uid,
+            name: user.displayName ?? undefined,
+            email: user.email ?? undefined,
+            phone: user.phoneNumber ?? undefined,
+            provider: user.phoneNumber ? "otp" : "email",
+          });
+        });
     });
     return unsubscribe;
   }, []);

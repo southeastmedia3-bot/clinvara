@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 export type AuthUser = {
+  uid?: string;
   firstName?: string;
   lastName?: string;
   name?: string;

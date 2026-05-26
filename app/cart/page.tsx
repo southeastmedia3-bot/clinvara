@@ -6,7 +6,7 @@ import { useCartStore, cartTotal } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
-import { readCheckoutEmail } from "@/lib/customerProfile";
+import { readCustomerProfile } from "@/lib/firebase/customerData";
 
 type CheckoutAddress = {
   fullName?: string;
@@ -128,7 +128,7 @@ export default function CartPage() {
           <button
             type="button"
             className="mt-6 h-12 w-full bg-black text-sm font-semibold text-white"
-            onClick={() => {
+            onClick={async () => {
               if (!isAuthenticated) {
                 setLoginOpen(true);
                 showToast({
@@ -137,10 +137,9 @@ export default function CartPage() {
                 });
                 return;
               }
-              const checkoutEmail = readCheckoutEmail(user);
-              const savedAddresses = JSON.parse(
-                window.localStorage.getItem("clinvara-addresses") || "[]",
-              ) as CheckoutAddress[];
+              const customer = await readCustomerProfile(user?.uid);
+              const checkoutEmail = user?.email || customer?.checkoutEmail || customer?.email || "";
+              const savedAddresses = (customer?.addresses ?? []) as CheckoutAddress[];
               if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail)) {
                 showToast({
                   message: "Add a valid checkout email in your account before payment.",

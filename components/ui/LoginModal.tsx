@@ -8,17 +8,20 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import {
   createFirebaseEmailAccount,
+  firebaseAuth,
   sendFirebaseOtp,
+  signInFirebaseFacebook,
   signInFirebaseEmail,
+  signInFirebaseGoogle,
   verifyFirebaseOtp,
 } from "@/lib/firebase/client";
 import { BrandLogo } from "@/components/shared/BrandLogo";
-import { apiUrl } from "@/lib/api/client";
 import {
-  profileToAuthUser,
-  readMobileProfile,
-  saveMobileProfile,
-} from "@/lib/customerProfile";
+  customerToAuthUser,
+  ensureCustomerFromFirebaseUser,
+  readCustomerProfile,
+  saveCustomerProfile,
+} from "@/lib/firebase/customerData";
 
 function GoogleMark() {
   return (
@@ -146,23 +149,29 @@ function PasswordField({
   );
 }
 
-function SocialButtons() {
+function SocialButtons({
+  onSocialSignIn,
+}: {
+  onSocialSignIn: (provider: "google" | "facebook") => void;
+}) {
   return (
     <div className="space-y-3">
-      <a
-        href={apiUrl("/api/auth/oauth/google")}
+      <button
+        type="button"
+        onClick={() => onSocialSignIn("google")}
         className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-black text-sm font-semibold text-white transition hover:bg-black/85"
       >
         <GoogleMark />
         Continue with Google
-      </a>
-      <a
-        href={apiUrl("/api/auth/oauth/facebook")}
+      </button>
+      <button
+        type="button"
+        onClick={() => onSocialSignIn("facebook")}
         className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#1877F2] text-sm font-semibold text-white transition hover:bg-[#166fe5]"
       >
         <FacebookMark />
         Continue with Facebook
-      </a>
+      </button>
     </div>
   );
 }
@@ -276,6 +285,37 @@ export function LoginModal() {
     return "Unable to create this email account. Please check Firebase Auth settings and try again.";
   };
 
+  const socialSignIn = async (provider: "google" | "facebook") => {
+    try {
+      const result =
+        provider === "google"
+          ? await signInFirebaseGoogle()
+          : await signInFirebaseFacebook();
+      const profile = await saveCustomerProfile(result.user.uid, {
+        name: result.user.displayName ?? undefined,
+        email: result.user.email ?? undefined,
+        phone: result.user.phoneNumber ?? undefined,
+        checkoutEmail: result.user.email ?? undefined,
+        provider,
+      });
+      setAuthenticated(true, customerToAuthUser(profile));
+      close();
+      showToast({ message: "Welcome back!", variant: "success" });
+    } catch (error) {
+      const code =
+        typeof error === "object" && error && "code" in error
+          ? String((error as { code?: string }).code)
+          : "";
+      showToast({
+        message: code.includes("popup-closed-by-user")
+          ? "Sign in was cancelled."
+          : `${provider === "google" ? "Google" : "Facebook"} sign in is unavailable. Check Firebase provider settings.`,
+        variant: "error",
+        durationMs: 6000,
+      });
+    }
+  };
+
   const requestMobileOtp = async (target: "signin" | "register") => {
     const activePhone = target === "signin" ? phone : registerPhone;
     const activeCode = target === "signin" ? countryCode : registerCountryCode;
@@ -350,9 +390,12 @@ export function LoginModal() {
         return;
       }
       setAuthenticated(true, {
-        name: credential.user.displayName ?? undefined,
-        email: credential.user.email ?? email,
-        provider: "email",
+        ...customerToAuthUser(
+          await ensureCustomerFromFirebaseUser(credential.user, {
+            email: credential.user.email ?? email,
+            provider: "email",
+          }),
+        ),
       });
       close();
       showToast({ message: keepLoggedIn ? "Welcome back!" : "Signed in for this session.", variant: "success" });
@@ -375,12 +418,18 @@ export function LoginModal() {
         });
         return;
       }
-      const profile = saveMobileProfile({
+      const currentUser = firebaseAuth.currentUser;
+      if (!currentUser) {
+        showToast({ message: "Unable to finish mobile sign in. Please try again.", variant: "error" });
+        return;
+      }
+      const profile = await saveCustomerProfile(currentUser.uid, {
         name: mobileProfileName.trim(),
         pincode: mobileProfilePincode,
         phone: verifiedMobileNumber,
+        provider: "otp",
       });
-      if (profile) setAuthenticated(true, profileToAuthUser(profile));
+      setAuthenticated(true, customerToAuthUser(profile));
       close();
       showToast({ message: "Welcome to CLINVARA!", variant: "success" });
       return;
@@ -388,7 +437,8 @@ export function LoginModal() {
     const ok = await verifyMobileOtp("signin");
     if (!ok) return;
     const mobileNumber = `${countryCode}${phone}`;
-    const profile = readMobileProfile(mobileNumber);
+    const currentUser = firebaseAuth.currentUser;
+    const profile = await readCustomerProfile(currentUser?.uid);
     if (!profile) {
       setVerifiedMobileNumber(mobileNumber);
       setMobileProfileRequired(true);
@@ -398,7 +448,7 @@ export function LoginModal() {
       });
       return;
     }
-    setAuthenticated(true, profileToAuthUser(profile));
+    setAuthenticated(true, customerToAuthUser(profile));
     close();
     showToast({ message: "Welcome back!", variant: "success" });
   };
@@ -443,6 +493,31 @@ export function LoginModal() {
         displayName: `${firstName} ${lastName}`.trim(),
       });
       verificationEmailSent = result.verificationEmailSent;
+      const profile = await saveCustomerProfile(result.credential.user.uid, {
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        email: registerEmail,
+        phone: `${registerCountryCode}${registerPhone}`,
+        pincode,
+        checkoutEmail: registerEmail,
+        provider: "email",
+        marketingOptIn: updates,
+        addresses: [
+          {
+            id: crypto.randomUUID(),
+            label: "Home",
+            fullName: `${firstName} ${lastName}`.trim(),
+            phone: `${registerCountryCode}${registerPhone}`,
+            line1: addressLine1,
+            line2: addressLine2,
+            city,
+            state: stateName,
+            pincode,
+          },
+        ],
+      });
+      setAuthenticated(true, customerToAuthUser(profile));
     } catch (error) {
       showToast({
         message: firebaseEmailErrorMessage(error),
@@ -451,37 +526,6 @@ export function LoginModal() {
       });
       return;
     }
-    window.localStorage.setItem(
-      "clinvara-addresses",
-      JSON.stringify([
-        {
-          id: crypto.randomUUID(),
-          label: "Home",
-          fullName: `${firstName} ${lastName}`.trim(),
-          phone: `${registerCountryCode}${registerPhone}`,
-          line1: addressLine1,
-          line2: addressLine2,
-          city,
-          state: stateName,
-          pincode,
-        },
-      ]),
-    );
-    const mobileProfile = saveMobileProfile({
-      name: `${firstName} ${lastName}`.trim(),
-      email: registerEmail,
-      phone: `${registerCountryCode}${registerPhone}`,
-      pincode,
-    });
-    setAuthenticated(true, {
-      firstName,
-      lastName,
-      email: registerEmail,
-      phone: `${registerCountryCode}${registerPhone}`,
-      pincode,
-      provider: "otp",
-      ...(mobileProfile ? profileToAuthUser(mobileProfile) : {}),
-    });
     close();
     showToast({
       message: verificationEmailSent
@@ -646,7 +690,7 @@ export function LoginModal() {
                 <div className="h-px flex-1 bg-[var(--brand-border)]" />
               </div>
 
-              <SocialButtons />
+              <SocialButtons onSocialSignIn={(provider) => void socialSignIn(provider)} />
 
               <p className="mt-6 text-center text-sm text-[var(--brand-text-muted)]">
                 New to CLINVARA?{" "}
@@ -687,7 +731,7 @@ export function LoginModal() {
                     Join for faster checkout, skin routine notes, wishlist access, and early product updates.
                   </p>
                   <div className="mt-8">
-                    <SocialButtons />
+                    <SocialButtons onSocialSignIn={(provider) => void socialSignIn(provider)} />
                   </div>
                   <label className="mt-6 flex items-start gap-3 text-sm text-[var(--brand-text-muted)]">
                     <input

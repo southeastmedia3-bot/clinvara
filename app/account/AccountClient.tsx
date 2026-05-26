@@ -20,9 +20,16 @@ import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { apiUrl } from "@/lib/api/client";
-import { checkoutEmailKey, readCheckoutEmail } from "@/lib/customerProfile";
+import {
+  customerToAuthUser,
+  readCustomerProfile,
+  saveCustomerAddresses,
+  saveCustomerCheckoutEmail,
+  type CustomerAddress,
+} from "@/lib/firebase/customerData";
 
-type Address = {
+type Address = CustomerAddress;
+/*
   id: string;
   label: string;
   fullName: string;
@@ -32,7 +39,7 @@ type Address = {
   city: string;
   state: string;
   pincode: string;
-};
+}; */
 
 const emptyAddress: Address = {
   id: "",
@@ -95,21 +102,28 @@ export default function AccountClient() {
   }, [setAuthenticated, setLoginOpen]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("clinvara-addresses");
-    if (saved) setAddresses(JSON.parse(saved));
-    setCheckoutEmail(readCheckoutEmail(user));
+    if (user?.uid) {
+      void readCustomerProfile(user.uid).then((profile) => {
+        if (!profile) return;
+        setAddresses(profile.addresses ?? []);
+        setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
+        setAuthenticated(true, customerToAuthUser(profile));
+      });
+    } else {
+      setCheckoutEmail(user?.email ?? "");
+    }
     setLoaded(true);
-  }, [user]);
+  }, [setAuthenticated, user]);
 
   useEffect(() => {
-    if (!loaded) return;
-    window.localStorage.setItem("clinvara-addresses", JSON.stringify(addresses));
-  }, [addresses, loaded]);
+    if (!loaded || !user?.uid) return;
+    void saveCustomerAddresses(user.uid, addresses);
+  }, [addresses, loaded, user?.uid]);
 
   useEffect(() => {
-    if (!loaded || user?.email) return;
-    window.localStorage.setItem(checkoutEmailKey, checkoutEmail);
-  }, [checkoutEmail, loaded, user?.email]);
+    if (!loaded || !user?.uid || user?.email) return;
+    void saveCustomerCheckoutEmail(user.uid, checkoutEmail);
+  }, [checkoutEmail, loaded, user?.email, user?.uid]);
 
   const wishlistProducts = useMemo(
     () => allProducts.filter((product) => wishIds.includes(product.id)),
