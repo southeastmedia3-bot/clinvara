@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  collection,
+  addDoc,
   doc,
   getDoc,
   serverTimestamp,
@@ -10,6 +12,7 @@ import {
 import type { User } from "firebase/auth";
 import { firebaseDb } from "@/lib/firebase/client";
 import type { AuthUser } from "@/lib/store/authStore";
+import type { CartItem } from "@/lib/types";
 
 export type CustomerAddress = {
   id: string;
@@ -43,6 +46,20 @@ function customerRef(uid: string) {
   return doc(firebaseDb, "customers", uid);
 }
 
+export function providerFromFirebaseUser(user: User): AuthUser["provider"] {
+  if (user.phoneNumber) return "otp";
+  const providerIds = user.providerData.map((provider) => provider.providerId);
+  if (providerIds.includes("google.com")) return "google";
+  if (providerIds.includes("facebook.com")) return "facebook";
+  return "email";
+}
+
+function withoutEmpty<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== ""),
+  ) as Partial<T>;
+}
+
 export async function readCustomerProfile(uid?: string | null) {
   if (!uid) return null;
   const snapshot = await getDoc(customerRef(uid));
@@ -53,7 +70,7 @@ export async function readCustomerProfile(uid?: string | null) {
 export async function saveCustomerProfile(uid: string, profile: Omit<CustomerProfile, "uid">) {
   const existing = await readCustomerProfile(uid);
   const next = {
-    ...profile,
+    ...withoutEmpty(profile),
     uid,
     createdAt: existing?.createdAt ?? serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -70,15 +87,49 @@ export async function saveCustomerCheckoutEmail(uid: string, checkoutEmail: stri
   await saveCustomerProfile(uid, { checkoutEmail });
 }
 
+export async function createPendingOrder({
+  uid,
+  items,
+  checkoutEmail,
+  address,
+  subtotal,
+}: {
+  uid: string;
+  items: CartItem[];
+  checkoutEmail: string;
+  address: CustomerAddress;
+  subtotal: number;
+}) {
+  const order = {
+    uid,
+    items,
+    checkoutEmail,
+    shippingAddress: address,
+    subtotal,
+    currency: "INR",
+    status: "pending_payment",
+    paymentStatus: "not_connected",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  const rootRef = await addDoc(collection(firebaseDb, "orders"), order);
+  await setDoc(doc(firebaseDb, "customers", uid, "orders", rootRef.id), {
+    ...order,
+    orderId: rootRef.id,
+  });
+  return rootRef.id;
+}
+
 export async function ensureCustomerFromFirebaseUser(
   user: User,
   extras: Omit<CustomerProfile, "uid"> = {},
 ) {
-  const provider = user.phoneNumber ? "otp" : "email";
+  const provider = extras.provider ?? providerFromFirebaseUser(user);
+  const existing = await readCustomerProfile(user.uid);
   return saveCustomerProfile(user.uid, {
-    name: user.displayName ?? extras.name,
-    email: user.email ?? extras.email,
-    phone: user.phoneNumber ?? extras.phone,
+    name: user.displayName ?? extras.name ?? existing?.name,
+    email: user.email ?? extras.email ?? existing?.email,
+    phone: user.phoneNumber ?? extras.phone ?? existing?.phone,
     provider,
     ...extras,
   });
@@ -89,10 +140,13 @@ export function customerToAuthUser(profile: CustomerProfile): AuthUser {
     uid: profile.uid,
     firstName: profile.firstName,
     lastName: profile.lastName,
-    name: profile.name,
+    name:
+      profile.name ||
+      [profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+      profile.email,
     email: profile.email ?? profile.checkoutEmail,
     phone: profile.phone,
     pincode: profile.pincode,
-    provider: profile.provider,
+    provider: profile.provider || "email",
   };
 }

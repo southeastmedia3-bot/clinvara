@@ -218,7 +218,9 @@ export function Navbar() {
             >
               <Star className="h-[22px] w-[22px]" />
               {wishCount > 0 && (
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--brand-accent)]" />
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand-accent)] px-1 text-[10px] font-bold text-white">
+                  {wishCount > 99 ? "99+" : wishCount}
+                </span>
               )}
             </Link>
             <button
@@ -455,6 +457,16 @@ export function Navbar() {
                 }}
               >
                 Account
+              </button>
+              <button
+                type="button"
+                className="mt-3 w-full border border-black bg-black py-2 text-sm font-semibold text-white"
+                onClick={() => {
+                  openCart();
+                  setMobileOpen(false);
+                }}
+              >
+                Cart {cartCount > 0 ? `(${cartCount})` : ""}
               </button>
               <Link
                 href="/account#wishlist"

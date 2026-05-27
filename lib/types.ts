@@ -18,6 +18,8 @@ export interface Product {
   concerns: string[];
   description?: string;
   ingredients?: string;
+  keyIngredients?: { name: string; benefit: string }[];
+  howToUse?: string;
   gallery?: string[];
 }
 

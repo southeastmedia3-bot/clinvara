@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { bestSellers } from "@/lib/data/products";
+import { allProducts, bestSellers } from "@/lib/data/products";
 import { ProductGrid } from "@/components/product/ProductGrid";
 
 export function BestSellers() {
   const [ready, setReady] = useState(false);
+  const products = bestSellers.length ? bestSellers : allProducts.slice(0, 4);
 
   useEffect(() => {
     const t = window.setTimeout(() => setReady(true), 800);
@@ -34,7 +35,13 @@ export function BestSellers() {
           ))}
         </div>
       ) : (
-        <ProductGrid products={bestSellers} />
+        products.length > 0 ? (
+          <ProductGrid products={products} />
+        ) : (
+          <div className="rounded-xl border border-[var(--brand-border)] p-6 text-sm text-[var(--brand-text-muted)]">
+            Products are being prepared. Please visit the shop again shortly.
+          </div>
+        )
       )}
 
       <div className="mt-6 flex justify-end">

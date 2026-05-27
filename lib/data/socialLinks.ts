@@ -54,9 +54,9 @@ export const socialFeed = [
   },
   {
     platform: "Instagram" as const,
-    title: "New posts appear here",
-    body: "Connect platform API credentials to make this strip update automatically.",
+    title: "Follow CLINVARA",
+    body: "Follow CLINVARA for routine tips and launch updates.",
     href: socialLinks[0].href,
-    cta: "View latest",
+    cta: "Follow now",
   },
 ];

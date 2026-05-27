@@ -33,7 +33,7 @@ export function ReviewsSection() {
           What Our Customers Say
         </h2>
         <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
-          4.8★ Average · Over 50,000 Reviews
+          Early customer feedback from verified CLINVARA orders
         </p>
       </header>
 

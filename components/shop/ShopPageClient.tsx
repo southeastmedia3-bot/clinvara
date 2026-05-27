@@ -107,6 +107,7 @@ export function ShopPageClient() {
     sort,
   ]);
 
+  const catalog = allProducts.length ? allProducts : [];
   const visible = filtered.slice(0, visibleCount);
   const { ref: sentinelRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
     rootMargin: "200px",
@@ -268,7 +269,7 @@ export function ShopPageClient() {
         <div>
           <h1 className="font-display text-4xl font-semibold">Shop</h1>
           <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-            {filtered.length} products
+            {ready ? filtered.length : catalog.length} products
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -324,7 +325,7 @@ export function ShopPageClient() {
               <div key={i} className="aspect-square skeleton" />
             ))}
           </div>
-        ) : (
+        ) : filtered.length > 0 ? (
           <div>
             <ProductGrid products={visible} />
             <div ref={sentinelRef} className="h-8" />
@@ -333,6 +334,22 @@ export function ShopPageClient() {
                 Loading more…
               </p>
             )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-[var(--brand-border)] bg-white p-8 text-center">
+            <h2 className="font-display text-3xl font-semibold">
+              No products found
+            </h2>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Try clearing filters or browsing all CLINVARA products.
+            </p>
+            <button
+              type="button"
+              className="mt-5 h-11 rounded-full bg-black px-6 text-sm font-semibold text-white"
+              onClick={() => router.push("/shop")}
+            >
+              Clear Filters
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { blogs, getBlogBySlug } from "@/lib/data/blogs";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { BackButton } from "@/components/ui/BackButton";
@@ -16,7 +17,13 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title: post.title,
     description: post.excerpt,
-    openGraph: { title: post.title, description: post.excerpt, images: [post.image] },
+    alternates: { canonical: `/blog/${post.slug}` },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url: `/blog/${post.slug}`,
+      images: [post.image],
+    },
   };
 }
 
@@ -49,6 +56,11 @@ export default function BlogPostPage({ params }: Props) {
         {(post.content ?? []).map((para) => (
           <p key={para.slice(0, 24)}>{para}</p>
         ))}
+      </div>
+      <div className="mt-10 border-t border-[var(--brand-border)] pt-6">
+        <Link href="/blog" className="text-sm font-semibold underline">
+          Back to all journal articles
+        </Link>
       </div>
     </article>
   );

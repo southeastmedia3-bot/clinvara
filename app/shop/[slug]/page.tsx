@@ -15,9 +15,11 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title: product.name,
     description: product.description,
+    alternates: { canonical: `/shop/${product.slug}` },
     openGraph: {
       title: product.name,
       description: product.description,
+      url: `/shop/${product.slug}`,
       images: [product.image],
     },
   };

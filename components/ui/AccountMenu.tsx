@@ -21,6 +21,12 @@ export function AccountMenu({ open, onClose }: AccountMenuProps) {
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const setRegisterOpen = useAuthStore((s) => s.setRegisterModalOpen);
   const logout = useAuthStore((s) => s.logout);
+  const displayName =
+    user?.name ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    user?.email ||
+    user?.phone ||
+    "Signed in";
 
   const openSignIn = () => {
     onClose();
@@ -93,8 +99,9 @@ export function AccountMenu({ open, onClose }: AccountMenuProps) {
               {isAuthenticated ? (
                 <div className="mb-6 rounded-lg border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-4">
                   <p className="text-sm text-[var(--brand-text-muted)]">Signed in as</p>
-                  <p className="mt-1 font-semibold">
-                    {user?.firstName || user?.name || user?.email || user?.phone || "CLINVARA customer"}
+                  <p className="mt-1 font-semibold">{displayName}</p>
+                  <p className="mt-1 text-xs capitalize text-[var(--brand-text-muted)]">
+                    {user?.provider || "email"} sign-in
                   </p>
                 </div>
               ) : (

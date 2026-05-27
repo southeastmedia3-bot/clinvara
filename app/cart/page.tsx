@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import { useCartStore, cartTotal } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -66,7 +66,7 @@ export default function CartPage() {
                 <div className="relative h-20 w-20 shrink-0 bg-[var(--brand-off-white)]">
                   <Image
                     src={item.image}
-                    alt=""
+                    alt={item.name}
                     fill
                     className="object-contain p-1"
                     sizes="80px"
@@ -88,7 +88,8 @@ export default function CartPage() {
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
-                      className="h-8 w-8 border"
+                      aria-label={`Decrease quantity for ${item.name}`}
+                      className="h-11 w-11 border"
                       onClick={() =>
                         updateQuantity(item.productId, item.size, item.quantity - 1)
                       }
@@ -100,7 +101,8 @@ export default function CartPage() {
 
                     <button
                       type="button"
-                      className="h-8 w-8 border"
+                      aria-label={`Increase quantity for ${item.name}`}
+                      className="h-11 w-11 border"
                       onClick={() =>
                         updateQuantity(item.productId, item.size, item.quantity + 1)
                       }
@@ -195,20 +197,15 @@ export default function CartPage() {
                 });
 
                 showToast({
-                  message: `Order created successfully. Order ID: ${orderId}`,
+                  message: `Pending order created. Order ID: ${orderId}`,
                   variant: "success",
-                  durationMs: 5000,
+                  durationMs: 7000,
                 });
-
-                alert(
-                  `Order created successfully.\n\nOrder ID: ${orderId}\n\nNext step: connect Razorpay payment.`,
-                );
               } catch (error) {
                 console.error("Checkout error:", error);
                 showToast({
                   message: "Unable to create order. Please try again.",
                   variant: "error",
-                  durationMs: 5000,
                 });
               } finally {
                 setCheckoutLoading(false);

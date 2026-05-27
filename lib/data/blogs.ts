@@ -38,9 +38,12 @@ export const blogs: BlogPost[] = [
     image: "/images/blog/barr.png",
     slug: "damaged-skin-barrier-signs",
     content: [
-      "Stinging with previously tolerated products, visible flaking, and persistent redness are common barrier signals.",
-      "Focus on ceramides, panthenol, and gentle cleansing while pausing strong exfoliants for two weeks.",
-      "Reintroduce actives slowly once comfort returns.",
+      "1. Products that used to feel comfortable now sting, tingle, or burn after application.",
+      "2. Skin looks flaky, tight, or rough even after moisturizing.",
+      "3. Redness or warmth appears more often than usual, especially after cleansing.",
+      "4. Breakouts or bumps appear alongside dryness, which can be a sign of irritation rather than only acne.",
+      "5. Your skin feels shiny but dehydrated, with makeup or sunscreen sitting unevenly.",
+      "To support recovery, simplify your routine: use a gentle cleanser, a ceramide or panthenol moisturizer, and daily sunscreen. Pause strong exfoliants and introduce actives slowly once comfort returns.",
     ],
   },
 ];

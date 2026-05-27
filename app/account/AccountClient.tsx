@@ -175,6 +175,7 @@ export default function AccountClient() {
     user?.name ||
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||
+    user?.phone ||
     "CLINVARA member";
 
   const initials = displayName
@@ -324,7 +325,7 @@ export default function AccountClient() {
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
-          { icon: UserRound, label: "Login Method", value: user?.provider || "Account" },
+          { icon: UserRound, label: "Login Method", value: user?.provider || "email" },
           { icon: Package, label: "Orders", value: `${orders.length} orders` },
           { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} saved products` },
           { icon: MapPin, label: "PIN Code", value: user?.pincode || "Add before checkout" },

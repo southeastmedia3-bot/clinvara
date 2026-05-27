@@ -73,7 +73,7 @@ export function ProductCard({
             ? "Remove from wishlist"
             : "Add to wishlist"
         }
-        className={`absolute right-3 top-3 z-10 rounded-full bg-white p-2 shadow-sm transition-opacity ${
+        className={`absolute right-3 top-3 z-10 rounded-full bg-white p-2 shadow-sm transition-opacity md:${
           hover || hasWish
             ? "opacity-100"
             : "opacity-0"

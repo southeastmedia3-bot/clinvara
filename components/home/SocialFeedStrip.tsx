@@ -103,7 +103,7 @@ export function SocialFeedStrip() {
                     <div className="mb-5 aspect-video overflow-hidden rounded-md bg-[var(--brand-light-gray)]">
                       <img
                         src={item.image}
-                        alt=""
+                        alt={`${item.title} thumbnail`}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                         loading="lazy"
                       />

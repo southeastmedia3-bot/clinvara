@@ -103,7 +103,7 @@ export function CartDrawer() {
                       <div className="relative h-[60px] w-[60px] shrink-0 overflow-hidden bg-[var(--brand-off-white)]">
                         <Image
                           src={item.image}
-                          alt=""
+                          alt={item.name}
                           fill
                           className="object-contain p-1"
                           sizes="60px"
@@ -126,8 +126,8 @@ export function CartDrawer() {
                         <div className="mt-2 flex items-center gap-2">
                           <button
                             type="button"
-                            aria-label="Decrease quantity"
-                            className="h-8 w-8 border border-[var(--brand-border)] text-lg leading-none"
+                            aria-label={`Decrease quantity for ${item.name}`}
+                            className="h-11 w-11 border border-[var(--brand-border)] text-lg leading-none"
                             onClick={() =>
                               updateQuantity(
                                 item.productId,
@@ -143,8 +143,8 @@ export function CartDrawer() {
                           </span>
                           <button
                             type="button"
-                            aria-label="Increase quantity"
-                            className="h-8 w-8 border border-[var(--brand-border)] text-lg leading-none"
+                            aria-label={`Increase quantity for ${item.name}`}
+                            className="h-11 w-11 border border-[var(--brand-border)] text-lg leading-none"
                             onClick={() =>
                               updateQuantity(
                                 item.productId,

@@ -73,12 +73,13 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
           ...customerToAuthUser(profile),
           uid: user.uid,
           name:
-            profile.name ||
             user.displayName ||
+            profile.name ||
             user.email?.split("@")[0] ||
+            user.phoneNumber ||
             "CLINVARA member",
-          email: profile.email || user.email || undefined,
-          phone: profile.phone || user.phoneNumber || undefined,
+          email: user.email || profile.email || undefined,
+          phone: user.phoneNumber || profile.phone || undefined,
           provider,
           emailVerified: Boolean(user.emailVerified),
           phoneVerified: Boolean(user.phoneNumber),

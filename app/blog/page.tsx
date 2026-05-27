@@ -6,6 +6,12 @@ import { SafeImage } from "@/components/shared/SafeImage";
 export const metadata: Metadata = {
   title: "The Clinvara Journal",
   description: "Skincare guides, ingredient science, and barrier health from CLINVARA.",
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    title: "The Clinvara Journal | CLINVARA",
+    description: "Skincare guides, ingredient science, and barrier health from CLINVARA.",
+    url: "/blog",
+  },
 };
 
 export default function BlogListingPage() {

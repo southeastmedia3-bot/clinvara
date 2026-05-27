@@ -17,6 +17,7 @@ type WishlistState = {
   toggle: (productId: string) => void;
   has: (productId: string) => boolean;
   count: () => number;
+  clear: () => void;
 
   loadFromFirestore: () => Promise<void>;
   syncToFirestore: () => Promise<void>;
@@ -65,6 +66,8 @@ export const useWishlistStore = create<WishlistState>()(
       has: (productId) => get().productIds.includes(productId),
 
       count: () => get().productIds.length,
+
+      clear: () => set({ productIds: [], firestoreReady: false }),
 
       loadFromFirestore: async () => {
         const user = firebaseAuth.currentUser;

@@ -32,20 +32,15 @@ export function ProductDetail({ product }: { product: Product }) {
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  const highlights = [
-    {
-      name: "Niacinamide",
-      benefit: "Balances oil and refines the look of pores.",
-    },
-    {
-      name: "Zinc PCA",
-      benefit: "Supports clarity without stripping the skin.",
-    },
-    {
-      name: "Hyaluronic Acid",
-      benefit: "Draws moisture for a comfortable, hydrated feel.",
-    },
-  ];
+  const highlights =
+    product.keyIngredients?.length
+      ? product.keyIngredients
+      : [
+          {
+            name: "Key actives",
+            benefit: "Selected to support the product's primary skin concern.",
+          },
+        ];
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-8 lg:px-8">
@@ -79,8 +74,8 @@ export function ProductDetail({ product }: { product: Product }) {
               >
                 <SafeImage
                   src={src}
-                  alt=""
-                  label=""
+                  alt={`${product.name} thumbnail`}
+                  label={product.name}
                   fill
                   sizes="80px"
                   className="object-contain"
@@ -219,8 +214,8 @@ export function ProductDetail({ product }: { product: Product }) {
                 )}
                 {openSection === sec.id && sec.id === "howto" && (
                   <p className="pb-4 text-sm text-[var(--brand-text-muted)]">
-                    Apply a few drops to clean, dry skin AM and/or PM. Follow with
-                    moisturizer and always use SPF in the morning when using actives.
+                    {product.howToUse ||
+                      "Apply to clean skin as directed for your routine. Follow with moisturizer and use sunscreen in the morning."}
                   </p>
                 )}
                 {openSection === sec.id && sec.id === "inci" && (
@@ -230,7 +225,7 @@ export function ProductDetail({ product }: { product: Product }) {
                         showFullInci ? "" : "line-clamp-3"
                       }`}
                     >
-                      {product.ingredients}
+                      {product.ingredients || "Full ingredient list coming soon."}
                     </p>
                     <button
                       type="button"

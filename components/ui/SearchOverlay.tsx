@@ -51,7 +51,11 @@ export function SearchOverlay({ open, onClose }: Props) {
       (p) =>
         p.name.toLowerCase().includes(term) ||
         p.concerns.some((c) => c.toLowerCase().includes(term)) ||
-        p.category.toLowerCase().includes(term),
+        p.category.toLowerCase().includes(term) ||
+        (p.ingredients ?? "").toLowerCase().includes(term) ||
+        (p.keyIngredients ?? []).some((ingredient) =>
+          `${ingredient.name} ${ingredient.benefit}`.toLowerCase().includes(term),
+        ),
     );
     const concerns = Array.from(
       new Set(
@@ -122,7 +126,7 @@ export function SearchOverlay({ open, onClose }: Props) {
                     <div className="relative h-14 w-14 shrink-0 bg-[var(--brand-off-white)]">
                       <Image
                         src={p.image}
-                        alt=""
+                        alt={p.name}
                         fill
                         className="object-contain p-1"
                         sizes="56px"

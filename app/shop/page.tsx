@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   title: "Shop All Products",
   description:
     "Browse CLINVARA serums, moisturizers, sunscreens, and hair care. Filter by concern, category, and price.",
+  alternates: { canonical: "/shop" },
+  openGraph: {
+    title: "Shop All Products | CLINVARA",
+    description:
+      "Browse CLINVARA skincare products by concern, category, and price.",
+    url: "/shop",
+  },
 };
 
 export default function ShopPage() {
