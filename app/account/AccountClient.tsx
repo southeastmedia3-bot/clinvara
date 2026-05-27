@@ -105,12 +105,33 @@ export default function AccountClient() {
   useEffect(() => {
     if (user?.uid) {
       void readCustomerProfile(user.uid).then((profile) => {
-        if (!profile) return;
+  if (!profile) return;
 
-        setAddresses(profile.addresses ?? []);
-        setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
-        setAuthenticated(true, customerToAuthUser(profile));
-      });
+  setAddresses(profile.addresses ?? []);
+  setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
+
+  setAuthenticated(true, {
+    uid: user.uid,
+    name:
+      profile.name ||
+      user.name ||
+      user.email?.split("@")[0] ||
+      "CLINVARA member",
+
+    email: profile.email || user.email || undefined,
+
+    phone: profile.phone || user.phone || undefined,
+
+    provider:
+      profile.provider ||
+      user.provider ||
+      "email",
+
+    firstName: profile.firstName || user.firstName,
+    lastName: profile.lastName || user.lastName,
+    pincode: profile.pincode || user.pincode,
+  });
+});
 
       const ordersQuery = query(
         collection(firebaseDb, "orders"),
