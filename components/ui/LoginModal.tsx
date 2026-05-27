@@ -248,11 +248,13 @@ export function LoginModal() {
     setLoginOpen(true);
   };
 
+  const getFirebaseErrorCode = (error: unknown) =>
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code?: string }).code)
+      : "";
+
   const sanitizeOtpError = (error: unknown) => {
-    const code =
-      typeof error === "object" && error && "code" in error
-        ? String((error as { code?: string }).code)
-        : "";
+    const code = getFirebaseErrorCode(error);
     if (code.includes("invalid-verification-code") || code.includes("code-expired")) {
       return "Incorrect or expired OTP. Please try again.";
     }
@@ -260,10 +262,7 @@ export function LoginModal() {
   };
 
   const firebaseEmailErrorMessage = (error: unknown) => {
-    const code =
-      typeof error === "object" && error && "code" in error
-        ? String((error as { code?: string }).code)
-        : "";
+    const code = getFirebaseErrorCode(error);
     if (code.includes("email-already-in-use")) {
       return "This email is already registered. Please sign in instead.";
     }
@@ -286,11 +285,31 @@ export function LoginModal() {
   };
 
   const socialSignIn = async (provider: "google" | "facebook") => {
+    let result: Awaited<ReturnType<typeof signInFirebaseGoogle>>;
+
     try {
-      const result =
+      result =
         provider === "google"
           ? await signInFirebaseGoogle()
           : await signInFirebaseFacebook();
+    } catch (error) {
+      const code = getFirebaseErrorCode(error);
+
+      showToast({
+        message: code.includes("popup-closed-by-user")
+          ? "Sign in was cancelled."
+          : code.includes("unauthorized-domain")
+            ? "This domain is not authorized in Firebase Authentication."
+            : code.includes("operation-not-allowed")
+              ? `${provider === "google" ? "Google" : "Facebook"} sign in is not enabled in Firebase Authentication.`
+              : `${provider === "google" ? "Google" : "Facebook"} sign in failed. Please try again.`,
+        variant: "error",
+        durationMs: 6000,
+      });
+      return;
+    }
+
+    try {
       const profile = await saveCustomerProfile(result.user.uid, {
         name: result.user.displayName ?? undefined,
         email: result.user.email ?? undefined,
@@ -298,21 +317,23 @@ export function LoginModal() {
         checkoutEmail: result.user.email ?? undefined,
         provider,
       });
+
       setAuthenticated(true, customerToAuthUser(profile));
       close();
       showToast({ message: "Welcome back!", variant: "success" });
     } catch (error) {
-      const code =
-        typeof error === "object" && error && "code" in error
-          ? String((error as { code?: string }).code)
-          : "";
+      console.error("Signed in, but profile sync failed:", error);
+
+      close();
       showToast({
-        message: code.includes("popup-closed-by-user")
-          ? "Sign in was cancelled."
-          : `${provider === "google" ? "Google" : "Facebook"} sign in is unavailable. Check Firebase provider settings.`,
-        variant: "error",
-        durationMs: 6000,
+        message: "Signed in successfully.",
+        variant: "success",
+        durationMs: 2500,
       });
+
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 700);
     }
   };
 
@@ -353,8 +374,6 @@ export function LoginModal() {
   };
 
   const verifyMobileOtp = async (target: "signin" | "register") => {
-    const activePhone = target === "signin" ? phone : registerPhone;
-    const activeCode = target === "signin" ? countryCode : registerCountryCode;
     const activeOtp = target === "signin" ? otp : registerOtp;
     if (!/^\d{4,8}$/.test(activeOtp)) {
       showToast({ message: "Enter the OTP sent to your mobile number.", variant: "error" });
