@@ -9,7 +9,6 @@ import { firebaseAuth } from "@/lib/firebase/client";
 import {
   customerToAuthUser,
   ensureCustomerFromFirebaseUser,
-  readCustomerProfile,
 } from "@/lib/firebase/customerData";
 
 export function ClientBootstrap({ children }: { children: ReactNode }) {
@@ -38,11 +37,16 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
 
       const isPhoneLogin = Boolean(user.phoneNumber);
       const isVerifiedEmailLogin = Boolean(user.email && user.emailVerified);
-      const isSocialLogin = user.providerData.some((provider) =>
-        ["google.com", "facebook.com"].includes(provider.providerId),
+      const isGoogleLogin = user.providerData.some(
+        (item) => item.providerId === "google.com",
       );
+      const isFacebookLogin = user.providerData.some(
+        (item) => item.providerId === "facebook.com",
+      );
+      const isSocialLogin = isGoogleLogin || isFacebookLogin;
 
-      const isVerifiedLogin = isPhoneLogin || isVerifiedEmailLogin || isSocialLogin;
+      const isVerifiedLogin =
+        isPhoneLogin || isVerifiedEmailLogin || isSocialLogin;
 
       if (!isVerifiedLogin) {
         store.logout();
@@ -51,28 +55,44 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
 
       const provider = isPhoneLogin
         ? "otp"
-        : user.providerData.some((item) => item.providerId === "google.com")
+        : isGoogleLogin
           ? "google"
-          : user.providerData.some((item) => item.providerId === "facebook.com")
+          : isFacebookLogin
             ? "facebook"
             : "email";
 
       try {
-        const profile =
-          (await readCustomerProfile(user.uid)) ??
-          (await ensureCustomerFromFirebaseUser(user, {
-            email: user.email ?? undefined,
-            phone: user.phoneNumber ?? undefined,
-            provider,
-          }));
+        const profile = await ensureCustomerFromFirebaseUser(user, {
+          name: user.displayName ?? undefined,
+          email: user.email ?? undefined,
+          phone: user.phoneNumber ?? undefined,
+          provider,
+        });
 
-        store.setAuthenticated(true, customerToAuthUser(profile));
+        store.setAuthenticated(true, {
+          ...customerToAuthUser(profile),
+          uid: user.uid,
+          name:
+            profile.name ||
+            user.displayName ||
+            user.email?.split("@")[0] ||
+            "CLINVARA member",
+          email: profile.email || user.email || undefined,
+          phone: profile.phone || user.phoneNumber || undefined,
+          provider,
+          emailVerified: Boolean(user.emailVerified),
+          phoneVerified: Boolean(user.phoneNumber),
+        });
 
         await syncCustomerData();
       } catch {
         store.setAuthenticated(true, {
           uid: user.uid,
-          name: user.displayName ?? undefined,
+          name:
+            user.displayName ||
+            user.email?.split("@")[0] ||
+            user.phoneNumber ||
+            "CLINVARA member",
           email: user.email ?? undefined,
           phone: user.phoneNumber ?? undefined,
           provider,
