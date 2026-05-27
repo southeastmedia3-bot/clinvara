@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { useAuthStore } from "@/lib/store/authStore";
-import { apiUrl } from "@/lib/api/client";
 import { firebaseAuth } from "@/lib/firebase/client";
-import { onAuthStateChanged } from "firebase/auth";
 import {
   customerToAuthUser,
   ensureCustomerFromFirebaseUser,
@@ -17,37 +16,76 @@ export function ClientBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
     void useCartStore.persist.rehydrate();
     void useWishlistStore.persist.rehydrate();
-    void fetch(apiUrl("/api/auth/session"), { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data?.user) {
-          useAuthStore.getState().setAuthenticated(true, {
-            name: data.user.name,
-            email: data.user.email,
-            phone: data.user.phone,
-            provider: data.user.provider,
-          });
-        }
-      })
-      .catch(() => undefined);
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-      if (!user) return;
-      void readCustomerProfile(user.uid)
-        .then((profile) => profile ?? ensureCustomerFromFirebaseUser(user))
-        .then((profile) => {
-          useAuthStore.getState().setAuthenticated(true, customerToAuthUser(profile));
-        })
-        .catch(() => {
-          useAuthStore.getState().setAuthenticated(true, {
-            uid: user.uid,
-            name: user.displayName ?? undefined,
+
+    const authStore = useAuthStore.getState();
+    authStore.setAuthLoading(true);
+
+    const syncCustomerData = async () => {
+      await useCartStore.getState().syncToFirestore();
+      await useWishlistStore.getState().syncToFirestore();
+
+      await useCartStore.getState().loadFromFirestore();
+      await useWishlistStore.getState().loadFromFirestore();
+    };
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+      const store = useAuthStore.getState();
+
+      if (!user) {
+        store.logout();
+        return;
+      }
+
+      const isPhoneLogin = Boolean(user.phoneNumber);
+      const isVerifiedEmailLogin = Boolean(user.email && user.emailVerified);
+      const isSocialLogin = user.providerData.some((provider) =>
+        ["google.com", "facebook.com"].includes(provider.providerId),
+      );
+
+      const isVerifiedLogin = isPhoneLogin || isVerifiedEmailLogin || isSocialLogin;
+
+      if (!isVerifiedLogin) {
+        store.logout();
+        return;
+      }
+
+      const provider = isPhoneLogin
+        ? "otp"
+        : user.providerData.some((item) => item.providerId === "google.com")
+          ? "google"
+          : user.providerData.some((item) => item.providerId === "facebook.com")
+            ? "facebook"
+            : "email";
+
+      try {
+        const profile =
+          (await readCustomerProfile(user.uid)) ??
+          (await ensureCustomerFromFirebaseUser(user, {
             email: user.email ?? undefined,
             phone: user.phoneNumber ?? undefined,
-            provider: user.phoneNumber ? "otp" : "email",
-          });
+            provider,
+          }));
+
+        store.setAuthenticated(true, customerToAuthUser(profile));
+
+        await syncCustomerData();
+      } catch {
+        store.setAuthenticated(true, {
+          uid: user.uid,
+          name: user.displayName ?? undefined,
+          email: user.email ?? undefined,
+          phone: user.phoneNumber ?? undefined,
+          provider,
+          emailVerified: Boolean(user.emailVerified),
+          phoneVerified: Boolean(user.phoneNumber),
         });
+
+        await syncCustomerData();
+      }
     });
+
     return unsubscribe;
   }, []);
+
   return <>{children}</>;
 }

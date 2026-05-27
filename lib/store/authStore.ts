@@ -1,5 +1,12 @@
 import { create } from "zustand";
 
+export type AuthProvider =
+  | "email"
+  | "google"
+  | "facebook"
+  | "apple"
+  | "otp";
+
 export type AuthUser = {
   uid?: string;
   firstName?: string;
@@ -8,33 +15,77 @@ export type AuthUser = {
   email?: string;
   phone?: string;
   pincode?: string;
-  provider?: "email" | "google" | "facebook" | "apple" | "otp";
+  provider?: AuthProvider;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
 };
 
 type AuthState = {
   loginModalOpen: boolean;
-  setLoginModalOpen: (open: boolean) => void;
   registerModalOpen: boolean;
-  setRegisterModalOpen: (open: boolean) => void;
+
   isAuthenticated: boolean;
+  authLoading: boolean;
+
   user: AuthUser | null;
-  setAuthenticated: (v: boolean, user?: AuthUser) => void;
+
+  setLoginModalOpen: (open: boolean) => void;
+  setRegisterModalOpen: (open: boolean) => void;
+
+  setAuthLoading: (loading: boolean) => void;
+
+  setAuthenticated: (
+    value: boolean,
+    user?: AuthUser | null
+  ) => void;
+
   setUser: (user: AuthUser | null) => void;
+
   logout: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   loginModalOpen: false,
-  setLoginModalOpen: (open) => set({ loginModalOpen: open }),
   registerModalOpen: false,
-  setRegisterModalOpen: (open) => set({ registerModalOpen: open }),
+
   isAuthenticated: false,
+  authLoading: true,
+
   user: null,
-  setAuthenticated: (v, user) =>
+
+  setLoginModalOpen: (open) =>
     set({
-      isAuthenticated: v,
-      user: v ? (user ?? { provider: "email" }) : null,
+      loginModalOpen: open,
     }),
-  setUser: (user) => set({ user, isAuthenticated: Boolean(user) }),
-  logout: () => set({ isAuthenticated: false, user: null }),
+
+  setRegisterModalOpen: (open) =>
+    set({
+      registerModalOpen: open,
+    }),
+
+  setAuthLoading: (loading) =>
+    set({
+      authLoading: loading,
+    }),
+
+  setAuthenticated: (value, user) =>
+    set({
+      isAuthenticated: value,
+      user: value ? user ?? null : null,
+      authLoading: false,
+    }),
+
+  setUser: (user) =>
+    set({
+      user,
+      isAuthenticated: Boolean(user),
+      authLoading: false,
+    }),
+
+  logout: () =>
+    set({
+      isAuthenticated: false,
+      user: null,
+      authLoading: false,
+    }),
 }));

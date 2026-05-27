@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import Link from "next/link";
 import {
   Heart,
@@ -20,6 +27,7 @@ import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { apiUrl } from "@/lib/api/client";
+import { firebaseDb } from "@/lib/firebase/client";
 import {
   customerToAuthUser,
   readCustomerProfile,
@@ -29,17 +37,16 @@ import {
 } from "@/lib/firebase/customerData";
 
 type Address = CustomerAddress;
-/*
+
+type OrderRecord = {
   id: string;
-  label: string;
-  fullName: string;
-  phone: string;
-  line1: string;
-  line2: string;
-  city: string;
-  state: string;
-  pincode: string;
-}; */
+  subtotal: number;
+  status: string;
+  paymentStatus: string;
+  createdAt?: {
+    seconds: number;
+  };
+};
 
 const emptyAddress: Address = {
   id: "",
@@ -79,10 +86,12 @@ export default function AccountClient() {
   const [checkoutEmail, setCheckoutEmail] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("authError")) setLoginOpen(true);
+
     void fetch(apiUrl("/api/auth/session"), { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
@@ -93,6 +102,7 @@ export default function AccountClient() {
             phone: data.user.phone,
             provider: data.user.provider,
           });
+
           if (params.get("login") === "success") {
             window.history.replaceState(null, "", "/account");
           }
@@ -105,13 +115,31 @@ export default function AccountClient() {
     if (user?.uid) {
       void readCustomerProfile(user.uid).then((profile) => {
         if (!profile) return;
+
         setAddresses(profile.addresses ?? []);
         setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
         setAuthenticated(true, customerToAuthUser(profile));
       });
+
+      const ordersQuery = query(
+        collection(firebaseDb, "orders"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+      );
+
+      void getDocs(ordersQuery).then((snapshot) => {
+        setOrders(
+          snapshot.docs.map((orderDoc) => ({
+            id: orderDoc.id,
+            ...(orderDoc.data() as Omit<OrderRecord, "id">),
+          })),
+        );
+      });
     } else {
       setCheckoutEmail(user?.email ?? "");
+      setOrders([]);
     }
+
     setLoaded(true);
   }, [setAuthenticated, user]);
 
@@ -129,11 +157,13 @@ export default function AccountClient() {
     () => allProducts.filter((product) => wishIds.includes(product.id)),
     [wishIds],
   );
+
   const displayName =
     user?.name ||
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||
     "CLINVARA member";
+
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -144,11 +174,14 @@ export default function AccountClient() {
   const saveAddress = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editing) return;
+
     const next = editing.id ? editing : { ...editing, id: crypto.randomUUID() };
+
     setAddresses((current) => {
       const without = current.filter((address) => address.id !== next.id);
       return [...without, next].slice(0, 2);
     });
+
     setEditing(null);
   };
 
@@ -157,6 +190,7 @@ export default function AccountClient() {
       method: "DELETE",
       credentials: "include",
     }).catch(() => undefined);
+
     setAuthenticated(false);
   };
 
@@ -210,6 +244,7 @@ export default function AccountClient() {
               </button>
             </div>
           </section>
+
           <aside className="bg-[var(--brand-off-white)] p-8 sm:p-10 lg:p-14">
             <div className="space-y-5">
               {[
@@ -251,6 +286,7 @@ export default function AccountClient() {
               </p>
             </div>
           </div>
+
           <div className="flex flex-wrap gap-3">
             <Link
               href="/shop"
@@ -271,9 +307,9 @@ export default function AccountClient() {
       </section>
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[ 
+        {[
           { icon: UserRound, label: "Login Method", value: user?.provider || "Account" },
-          { icon: Package, label: "Orders", value: "0 completed orders" },
+          { icon: Package, label: "Orders", value: `${orders.length} orders` },
           { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} saved products` },
           { icon: MapPin, label: "PIN Code", value: user?.pincode || "Add before checkout" },
         ].map((item) => (
@@ -330,6 +366,7 @@ export default function AccountClient() {
                       </p>
                       <p className="mt-2 font-semibold">{address.fullName}</p>
                     </div>
+
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -353,6 +390,7 @@ export default function AccountClient() {
                       </button>
                     </div>
                   </div>
+
                   <p className="mt-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
                     {addressSummary(address)}
                   </p>
@@ -394,6 +432,7 @@ export default function AccountClient() {
                   />
                 </label>
               ))}
+
               <div className="flex gap-3 sm:col-span-2">
                 <button
                   type="submit"
@@ -423,8 +462,11 @@ export default function AccountClient() {
               Email and a complete shipping address are required only when you
               proceed to checkout.
             </p>
+
             <label className="mt-5 block text-sm font-medium">
-              <span className="mb-2 block text-[var(--brand-text-muted)]">Checkout Email</span>
+              <span className="mb-2 block text-[var(--brand-text-muted)]">
+                Checkout Email
+              </span>
               <input
                 type="email"
                 value={user?.email || checkoutEmail}
@@ -441,6 +483,7 @@ export default function AccountClient() {
             <h2 className="mt-5 font-display text-3xl font-semibold">
               Checkout Snapshot
             </h2>
+
             <div className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between border-b border-[var(--brand-border)] pb-3">
                 <span className="text-[var(--brand-text-muted)]">Cart items</span>
@@ -455,6 +498,7 @@ export default function AccountClient() {
                 <strong>{addresses.length}</strong>
               </div>
             </div>
+
             <Link
               href="/cart"
               className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-black text-sm font-semibold text-white"
@@ -478,14 +522,64 @@ export default function AccountClient() {
               Track Order
             </Link>
           </div>
-          <div className="mt-6 rounded-xl border border-dashed border-[var(--brand-border)] p-8 text-center">
-            <ShieldCheck className="mx-auto h-8 w-8 text-[var(--brand-text-muted)]" />
-            <p className="mt-3 font-semibold">No purchases yet</p>
-            <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-              Once checkout is connected, completed orders and invoices will be
-              listed in this section.
-            </p>
-          </div>
+
+          {orders.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-dashed border-[var(--brand-border)] p-8 text-center">
+              <ShieldCheck className="mx-auto h-8 w-8 text-[var(--brand-text-muted)]" />
+              <p className="mt-3 font-semibold">No purchases yet</p>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                Your future orders and invoices will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="rounded-xl border border-[var(--brand-border)] p-5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                        Order ID
+                      </p>
+                      <p className="mt-1 font-semibold">{order.id}</p>
+                      <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+                        {order.createdAt?.seconds
+                          ? new Date(order.createdAt.seconds * 1000).toLocaleString("en-IN")
+                          : "Recently placed"}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm text-[var(--brand-text-muted)]">
+                        Payment
+                      </p>
+                      <p className="font-semibold capitalize">
+                        {order.paymentStatus}
+                      </p>
+                      <p className="mt-2 text-lg font-bold">
+                        INR {order.subtotal.toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="rounded-full bg-[var(--brand-off-white)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]">
+                      {order.status}
+                    </span>
+
+                    <Link
+                      href="/track-order"
+                      className="text-sm font-semibold underline"
+                    >
+                      Track Order
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </article>
 
         <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
@@ -518,6 +612,7 @@ export default function AccountClient() {
             Browse Shop
           </Link>
         </div>
+
         {wishlistProducts.length === 0 ? (
           <p className="mt-6 rounded-xl bg-[var(--brand-off-white)] p-5 text-sm text-[var(--brand-text-muted)]">
             No saved products yet.

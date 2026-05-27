@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Globe2, LogOut, Mail, MapPin, PackageSearch, UserPlus, X } from "lucide-react";
+import { signOut } from "firebase/auth";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useCartStore } from "@/lib/store/cartStore";
+import { useWishlistStore } from "@/lib/store/wishlistStore";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 
 type AccountMenuProps = {
@@ -28,6 +32,20 @@ export function AccountMenu({ open, onClose }: AccountMenuProps) {
     onClose();
     setLoginOpen(false);
     setRegisterOpen(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(firebaseAuth);
+    } finally {
+      logout();
+      useCartStore.getState().clearCart();
+      useWishlistStore.setState({
+        productIds: [],
+        firestoreReady: false,
+      });
+      onClose();
+    }
   };
 
   return (
@@ -76,7 +94,7 @@ export function AccountMenu({ open, onClose }: AccountMenuProps) {
                 <div className="mb-6 rounded-lg border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-4">
                   <p className="text-sm text-[var(--brand-text-muted)]">Signed in as</p>
                   <p className="mt-1 font-semibold">
-                    {user?.firstName || user?.email || "CLINVARA customer"}
+                    {user?.firstName || user?.name || user?.email || user?.phone || "CLINVARA customer"}
                   </p>
                 </div>
               ) : (
@@ -144,10 +162,7 @@ export function AccountMenu({ open, onClose }: AccountMenuProps) {
                 <button
                   type="button"
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-black text-sm font-semibold hover:bg-black hover:text-white"
-                  onClick={() => {
-                    logout();
-                    onClose();
-                  }}
+                  onClick={() => void handleLogout()}
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out
