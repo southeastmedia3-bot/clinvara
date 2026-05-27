@@ -8,9 +8,11 @@ import {
   bestSellerIds,
   categoryFilters,
   concernPills,
+  getProductBySlug,
   productMatchesCategoryParam,
   productMatchesConcernSlug,
 } from "@/lib/data/products";
+import { routines } from "@/lib/data/routines";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
 import type { Product } from "@/lib/types";
@@ -27,24 +29,19 @@ type SortKey =
 export function ShopPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
   const [mobileFilters, setMobileFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const category = searchParams.get("category") ?? "";
   const concern = searchParams.get("concern") ?? "";
   const filter = searchParams.get("filter") ?? "";
+  const routine = searchParams.get("routine") ?? "";
   const sort = (searchParams.get("sort") as SortKey) ?? "relevance";
   const minPrice = Number(searchParams.get("minPrice") ?? "0");
   const maxPrice = Number(searchParams.get("maxPrice") ?? "9999");
   const minRating = Number(searchParams.get("minRating") ?? "0");
   const categoriesParam = searchParams.getAll("cat");
   const concernsParam = searchParams.getAll("c");
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 800);
-    return () => window.clearTimeout(t);
-  }, []);
 
   const updateParams = useCallback(
     (mutate: (p: URLSearchParams) => void) => {
@@ -66,6 +63,18 @@ export function ShopPageClient() {
     }
     if (concern) {
       list = list.filter((p) => productMatchesConcernSlug(p, concern));
+    }
+    if (routine) {
+      const routineProducts =
+        routines
+          .find((item) => item.id === routine)
+          ?.steps.map((step) => getProductBySlug(step.slug))
+          .filter((product): product is Product => Boolean(product)) ?? [];
+
+      if (routineProducts.length) {
+        const ids = new Set(routineProducts.map((product) => product.id));
+        list = list.filter((product) => ids.has(product.id));
+      }
     }
     if (categoriesParam.length) {
       list = list.filter((p) => categoriesParam.includes(p.category));
@@ -99,6 +108,7 @@ export function ShopPageClient() {
     filter,
     category,
     concern,
+    routine,
     categoriesParam,
     concernsParam,
     minPrice,
@@ -107,7 +117,6 @@ export function ShopPageClient() {
     sort,
   ]);
 
-  const catalog = allProducts.length ? allProducts : [];
   const visible = filtered.slice(0, visibleCount);
   const { ref: sentinelRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
     rootMargin: "200px",
@@ -128,6 +137,10 @@ export function ShopPageClient() {
         concernPills.find((c) => c.slug === concern)?.label ?? concern;
       pills.push({ key: "concern", label });
     }
+    if (routine) {
+      const label = routines.find((item) => item.id === routine)?.title ?? routine;
+      pills.push({ key: "routine", label });
+    }
     categoriesParam.forEach((c) =>
       pills.push({
         key: `cat-${c}`,
@@ -142,16 +155,17 @@ export function ShopPageClient() {
     );
     if (minRating > 0) pills.push({ key: "minRating", label: `${minRating}+ stars` });
     if (minPrice > 0 || maxPrice < 9999) {
-      pills.push({ key: "price", label: `₹${minPrice}–₹${maxPrice}` });
+      pills.push({ key: "price", label: `INR ${minPrice} - INR ${maxPrice}` });
     }
     return pills;
-  }, [filter, category, concern, categoriesParam, concernsParam, minRating, minPrice, maxPrice]);
+  }, [filter, category, concern, routine, categoriesParam, concernsParam, minRating, minPrice, maxPrice]);
 
   const removePill = (key: string) => {
     updateParams((p) => {
       if (key === "filter") p.delete("filter");
       if (key === "category") p.delete("category");
       if (key === "concern") p.delete("concern");
+      if (key === "routine") p.delete("routine");
       if (key === "minRating") p.delete("minRating");
       if (key === "price") {
         p.delete("minPrice");
@@ -228,7 +242,7 @@ export function ShopPageClient() {
       </div>
       <div>
         <p className="mb-2 font-semibold">
-          Price: ₹{minPrice} – ₹{maxPrice}
+          Price: INR {minPrice} - INR {maxPrice}
         </p>
         <input
           type="range"
@@ -269,7 +283,7 @@ export function ShopPageClient() {
         <div>
           <h1 className="font-display text-4xl font-semibold">Shop</h1>
           <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-            {ready ? filtered.length : catalog.length} products
+            {filtered.length} products
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -319,13 +333,7 @@ export function ShopPageClient() {
           {sidebar}
         </div>
 
-        {!ready ? (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-square skeleton" />
-            ))}
-          </div>
-        ) : filtered.length > 0 ? (
+        {filtered.length > 0 ? (
           <div>
             <ProductGrid products={visible} />
             <div ref={sentinelRef} className="h-8" />

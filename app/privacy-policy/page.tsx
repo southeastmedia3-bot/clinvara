@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "CLINVARA privacy policy covering account data, mobile OTP, social login, AI chat, ecommerce activity, cookies, retention, rights, and grievance contact.",
+  alternates: { canonical: "/privacy-policy" },
+  openGraph: {
+    title: "Privacy Policy | CLINVARA",
+    description:
+      "CLINVARA privacy policy covering account data, mobile OTP, social login, AI chat, ecommerce activity, cookies, retention, rights, and grievance contact.",
+    url: "/privacy-policy",
+  },
 };
 
 const sections = [

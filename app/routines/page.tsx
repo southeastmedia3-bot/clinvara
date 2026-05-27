@@ -2,36 +2,8 @@
 
 import Link from "next/link";
 import { routines } from "@/lib/data/routines";
-import { getProductBySlug } from "@/lib/data/products";
-import { useCartStore } from "@/lib/store/cartStore";
-import { useToast } from "@/components/providers/ToastProvider";
 
 export default function RoutinesPage() {
-  const addItem = useCartStore((s) => s.addItem);
-  const { showToast } = useToast();
-
-  const shopRoutine = (routineId: string) => {
-    const routine = routines.find((r) => r.id === routineId);
-    if (!routine) return;
-    routine.steps.forEach((step) => {
-      const product = getProductBySlug(step.slug);
-      if (!product) return;
-      addItem({
-        productId: product.id,
-        slug: product.slug,
-        name: product.name,
-        image: product.image,
-        size: product.sizes[0] ?? "30ml",
-        price: product.price,
-        quantity: 1,
-      });
-    });
-    showToast({
-      message: `${routine.title} added to cart!`,
-      variant: "success",
-    });
-  };
-
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-12 lg:px-8">
       <header className="mb-12 max-w-2xl text-center md:mx-auto md:text-center">
@@ -66,13 +38,12 @@ export default function RoutinesPage() {
                 </li>
               ))}
             </ol>
-            <button
-              type="button"
-              onClick={() => shopRoutine(routine.id)}
-              className="mt-6 h-11 w-full bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-black hover:ring-1 hover:ring-black"
+            <Link
+              href={`/shop?routine=${routine.id}`}
+              className="mt-6 inline-flex h-11 w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-black hover:ring-1 hover:ring-black"
             >
               Shop This Routine
-            </button>
+            </Link>
           </article>
         ))}
       </div>

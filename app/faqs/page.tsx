@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "FAQs",
   description: "Frequently asked questions about CLINVARA products, routines, accounts, shipping, returns, and support.",
+  alternates: { canonical: "/faqs" },
+  openGraph: {
+    title: "FAQs | CLINVARA",
+    description: "Frequently asked questions about CLINVARA products, routines, accounts, shipping, returns, and support.",
+    url: "/faqs",
+  },
 };
 
 const groups = [

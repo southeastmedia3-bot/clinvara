@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Shipping Policy",
   description: "CLINVARA shipping policy for processing, delivery, tracking, delays, failed delivery, and customer support.",
+  alternates: { canonical: "/shipping-policy" },
+  openGraph: {
+    title: "Shipping Policy | CLINVARA",
+    description: "CLINVARA shipping policy for processing, delivery, tracking, delays, failed delivery, and customer support.",
+    url: "/shipping-policy",
+  },
 };
 
 const sections = [

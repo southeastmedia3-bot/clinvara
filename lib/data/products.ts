@@ -16,7 +16,7 @@ export const allProducts: Product[] = [
     slug: "niacinamide-10-zinc-serum",
     badge: "BESTSELLER",
     rating: 4.7,
-    reviewCount: 28,
+    reviewCount: 24,
     category: "serums",
     description:
       "With matmarine, zinc, and acetyl glucosamine. Regulates sebum and evens tone for all skin types.",
@@ -32,8 +32,12 @@ export const allProducts: Product[] = [
         benefit: "Supports a fresh, comfortable finish for oily-prone skin.",
       },
       {
-        name: "Acetyl Glucosamine + HA",
-        benefit: "Pairs gentle tone support with light hydration.",
+        name: "Acetyl Glucosamine",
+        benefit: "Complements niacinamide for a more even-looking finish.",
+      },
+      {
+        name: "Hyaluronic Acid",
+        benefit: "Adds lightweight hydration without a heavy feel.",
       },
     ],
     howToUse:
@@ -41,6 +45,10 @@ export const allProducts: Product[] = [
     gallery: [
       "/images/products/niacinamide-serum.jpg",
       "/images/products/niacinamide-serum-alt.jpg",
+    ],
+    galleryAlt: [
+      "Niacinamide 10% Face Serum bottle",
+      "Niacinamide 10% Face Serum bottle and texture detail",
     ],
   },
   {
@@ -65,7 +73,7 @@ export const allProducts: Product[] = [
       "Aqua, Glycerin, Coco-Glucoside, Sodium Cocoyl Glutamate, Sodium Hyaluronate, Panthenol, Sodium PCA, Amino Acids, Phenoxyethanol.",
     keyIngredients: [
       {
-        name: "NMF Complex",
+        name: "Natural Moisturizing Factors",
         benefit: "Helps skin feel comfortable after cleansing.",
       },
       {
@@ -73,8 +81,16 @@ export const allProducts: Product[] = [
         benefit: "Supports a soft, hydrated feel without heaviness.",
       },
       {
-        name: "Panthenol + Amino Acids",
+        name: "Panthenol",
         benefit: "Helps maintain a gentle, non-stripping cleanse.",
+      },
+      {
+        name: "Amino Acids",
+        benefit: "Supports a soft, conditioned after-feel.",
+      },
+      {
+        name: "Gentle Surfactants",
+        benefit: "Lift daily impurities while keeping the cleanse mild.",
       },
     ],
     howToUse:
@@ -82,6 +98,10 @@ export const allProducts: Product[] = [
     gallery: [
       "/images/products/cleanser-nmf.jpg",
       "/images/products/cleanser-nmf-alt.jpg",
+    ],
+    galleryAlt: [
+      "Natural Moisturizing Factors + HA Cleanser product tube",
+      "NMF + HA Cleanser texture and product detail",
     ],
   },
   {
@@ -98,24 +118,32 @@ export const allProducts: Product[] = [
     slug: "deep-pigmentation-cream",
     badge: "NEW",
     rating: 4.5,
-    reviewCount: 16,
+    reviewCount: 12,
     category: "moisturizers",
     description:
       "Targets visible pigmentation with Natural Moisturizing Factors and HA in a surface hydration formula.",
     ingredients:
-      "Aqua, Glycerin, Niacinamide, Alpha Arbutin, Tranexamic Acid, Licorice Root Extract, Panthenol, Dimethicone, Phenoxyethanol.",
+      "Aqua, Glycerin, Niacinamide, Alpha Arbutin, Kojic Acid, Licorice Root Extract, Ceramide NP, Panthenol, Dimethicone, Phenoxyethanol.",
     keyIngredients: [
+      {
+        name: "Niacinamide",
+        benefit: "Helps refine the look of uneven tone and dullness.",
+      },
       {
         name: "Alpha Arbutin",
         benefit: "Helps improve the look of visible uneven tone.",
       },
       {
-        name: "Tranexamic Acid",
-        benefit: "Supports a more even-looking complexion with consistent use.",
+        name: "Kojic Acid",
+        benefit: "Supports a brighter-looking, more balanced complexion.",
       },
       {
-        name: "Licorice + Panthenol",
-        benefit: "Pairs tone-care support with a comfortable skin feel.",
+        name: "Licorice Extract",
+        benefit: "Helps soothe the look of stressed, uneven skin.",
+      },
+      {
+        name: "Ceramides",
+        benefit: "Keep the cream comfortable for barrier-focused routines.",
       },
     ],
     howToUse:
@@ -123,6 +151,10 @@ export const allProducts: Product[] = [
     gallery: [
       "/images/products/deep-pigmentation-cream.jpg",
       "/images/products/deep-pigmentation-cream-alt.jpg",
+    ],
+    galleryAlt: [
+      "Deep Pigmentation Cream jar",
+      "Deep Pigmentation Cream texture and packaging detail",
     ],
   },
   {
@@ -151,12 +183,20 @@ export const allProducts: Product[] = [
         benefit: "Help support the skin barrier and a replenished feel.",
       },
       {
-        name: "Cholesterol + Fatty Acids",
+        name: "Cholesterol",
         benefit: "Complements ceramides in a barrier-focused moisturizer.",
       },
       {
-        name: "NMF + Panthenol",
-        benefit: "Adds lasting comfort for dry or sensitive-feeling skin.",
+        name: "Fatty Acids",
+        benefit: "Add cushion and comfort for dry-feeling skin.",
+      },
+      {
+        name: "Panthenol",
+        benefit: "Helps skin feel calm and comfortable.",
+      },
+      {
+        name: "Natural Moisturizing Factors",
+        benefit: "Supports lasting hydration and softness.",
       },
     ],
     howToUse:
@@ -164,6 +204,10 @@ export const allProducts: Product[] = [
     gallery: [
       "/images/products/ceramide-moisture.jpg",
       "/images/products/ceramide-moisture-alt.jpg",
+    ],
+    galleryAlt: [
+      "Ceramide Moisture cream tube",
+      "Ceramide Moisture texture and product detail",
     ],
   },
 ];

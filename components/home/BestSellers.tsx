@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { allProducts, bestSellers } from "@/lib/data/products";
 import { ProductGrid } from "@/components/product/ProductGrid";
 
 export function BestSellers() {
-  const [ready, setReady] = useState(false);
   const products = bestSellers.length ? bestSellers : allProducts.slice(0, 4);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 800);
-    return () => window.clearTimeout(t);
-  }, []);
 
   return (
     <section id="best-sellers" className="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
@@ -23,25 +16,12 @@ export function BestSellers() {
         <div className="mt-2 h-0.5 w-12 bg-black" />
       </header>
 
-      {!ready ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="space-y-3 border border-[var(--brand-border)] p-3">
-              <div className="aspect-square skeleton" />
-              <div className="h-4 skeleton" />
-              <div className="h-3 w-2/3 skeleton" />
-              <div className="h-10 skeleton" />
-            </div>
-          ))}
-        </div>
+      {products.length > 0 ? (
+        <ProductGrid products={products} />
       ) : (
-        products.length > 0 ? (
-          <ProductGrid products={products} />
-        ) : (
-          <div className="rounded-xl border border-[var(--brand-border)] p-6 text-sm text-[var(--brand-text-muted)]">
-            Products are being prepared. Please visit the shop again shortly.
-          </div>
-        )
+        <div className="rounded-xl border border-[var(--brand-border)] p-6 text-sm text-[var(--brand-text-muted)]">
+          Products are being prepared. Please visit the shop again shortly.
+        </div>
       )}
 
       <div className="mt-6 flex justify-end">

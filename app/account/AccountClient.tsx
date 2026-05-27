@@ -113,18 +113,19 @@ export default function AccountClient() {
   setAuthenticated(true, {
     uid: user.uid,
     name:
-      profile.name ||
       user.name ||
+      profile.name ||
       user.email?.split("@")[0] ||
+      user.phone ||
       "CLINVARA member",
 
-    email: profile.email || user.email || undefined,
+    email: user.email || profile.email || undefined,
 
-    phone: profile.phone || user.phone || undefined,
+    phone: user.phone || profile.phone || undefined,
 
     provider:
-      profile.provider ||
       user.provider ||
+      profile.provider ||
       "email",
 
     firstName: profile.firstName || user.firstName,

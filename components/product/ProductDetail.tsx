@@ -61,7 +61,7 @@ export function ProductDetail({ product }: { product: Product }) {
             />
           </div>
           <div className="mt-4 flex gap-2 overflow-x-auto">
-            {gallery.map((src) => (
+            {gallery.map((src, index) => (
               <button
                 key={src}
                 type="button"
@@ -74,7 +74,10 @@ export function ProductDetail({ product }: { product: Product }) {
               >
                 <SafeImage
                   src={src}
-                  alt={`${product.name} thumbnail`}
+                  alt={
+                    product.galleryAlt?.[index] ??
+                    `${product.name} product image ${index + 1}`
+                  }
                   label={product.name}
                   fill
                   sizes="80px"

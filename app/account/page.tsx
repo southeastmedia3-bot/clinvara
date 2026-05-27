@@ -1,7 +1,19 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import AccountClient from "./AccountClient";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "My Account",
+  description: "Manage your CLINVARA profile, saved addresses, wishlist, cart, and order history.",
+  alternates: { canonical: "/account" },
+  openGraph: {
+    title: "My Account | CLINVARA",
+    description: "Manage your CLINVARA profile, saved addresses, wishlist, cart, and order history.",
+    url: "/account",
+  },
+};
 
 function AccountFallback() {
   return (

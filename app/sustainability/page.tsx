@@ -3,6 +3,12 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sustainability",
   description: "CLINVARA sustainability approach for packaging, sourcing, and responsible skincare.",
+  alternates: { canonical: "/sustainability" },
+  openGraph: {
+    title: "Sustainability | CLINVARA",
+    description: "CLINVARA sustainability approach for packaging, sourcing, and responsible skincare.",
+    url: "/sustainability",
+  },
 };
 
 export default function SustainabilityPage() {

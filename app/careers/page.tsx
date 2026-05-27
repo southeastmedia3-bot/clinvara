@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Careers",
   description: "Explore future career opportunities at CLINVARA.",
+  alternates: { canonical: "/careers" },
+  openGraph: {
+    title: "Careers | CLINVARA",
+    description: "Explore future career opportunities at CLINVARA.",
+    url: "/careers",
+  },
 };
 
 export default function CareersPage() {

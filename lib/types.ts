@@ -21,6 +21,7 @@ export interface Product {
   keyIngredients?: { name: string; benefit: string }[];
   howToUse?: string;
   gallery?: string[];
+  galleryAlt?: string[];
 }
 
 export interface Review {

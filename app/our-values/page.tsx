@@ -3,6 +3,12 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Our Values",
   description: "The principles behind CLINVARA formulas, service, and customer care.",
+  alternates: { canonical: "/our-values" },
+  openGraph: {
+    title: "Our Values | CLINVARA",
+    description: "The principles behind CLINVARA formulas, service, and customer care.",
+    url: "/our-values",
+  },
 };
 
 const values = [

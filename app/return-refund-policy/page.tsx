@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Return and Refund Policy",
   description: "CLINVARA return and refund policy for damaged, defective, incorrect, delayed, or eligible orders.",
+  alternates: { canonical: "/return-refund-policy" },
+  openGraph: {
+    title: "Return and Refund Policy | CLINVARA",
+    description: "CLINVARA return and refund policy for damaged, defective, incorrect, delayed, or eligible orders.",
+    url: "/return-refund-policy",
+  },
 };
 
 const sections = [

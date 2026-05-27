@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: "Terms and Conditions",
   description:
     "Terms and conditions for using CLINVARA website, account services, ecommerce features, AI assistant, orders, returns, and customer support.",
+  alternates: { canonical: "/terms-and-conditions" },
+  openGraph: {
+    title: "Terms and Conditions | CLINVARA",
+    description:
+      "Terms and conditions for using CLINVARA website, account services, ecommerce features, AI assistant, orders, returns, and customer support.",
+    url: "/terms-and-conditions",
+  },
 };
 
 const sections = [

@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description: "Learn about CLINVARA, a clinical skincare brand built around transparent formulas and simple routines.",
+  alternates: { canonical: "/about-us" },
+  openGraph: {
+    title: "About Us | CLINVARA",
+    description: "Learn about CLINVARA, a clinical skincare brand built around transparent formulas and simple routines.",
+    url: "/about-us",
+  },
 };
 
 const pillars = [

@@ -8,13 +8,13 @@ export function RoutineStrip() {
           Build Your Personalised Skincare Routine
         </p>
         <p className="max-w-md text-[15px] text-white/75">
-          Answer 3 quick questions → Get your routine
+          Explore simple product pairings for common skin needs.
         </p>
         <Link
           href="/routines"
           className="inline-flex h-12 min-w-[160px] items-center justify-center bg-white px-6 text-sm font-semibold text-black transition-colors hover:bg-black hover:text-white hover:ring-1 hover:ring-white"
         >
-          Take the Quiz
+          Find Your Routine
         </Link>
       </div>
     </section>
