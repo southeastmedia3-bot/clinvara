@@ -89,3 +89,14 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+
+  - variable: INSTAGRAM_ACCESS_TOKEN
+    secret: "IGAAOVSU0TEIdBZAFlnQ1BTTzNaV0hFMjFBX3VWSDRkdkExMEV4di1FUTMxTzJ5djFNQXUwOVczTEN0dlAyTlVQX195ODlXWC1tWTVhUDBUWGttTGllODlUdzNWTmRCd2xVeDVWa0ZAuQkVMcF84UU55NW1qMXFwYmMwcmwtd0lQZAwZDZD"
+    availability:
+      - RUNTIME
+
+  - variable: INSTAGRAM_USER_ID
+    value: "17841483683863768"
+    availability:
+      - RUNTIME
