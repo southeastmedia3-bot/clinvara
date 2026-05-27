@@ -121,7 +121,7 @@ export const allProducts: Product[] = [
     reviewCount: 12,
     category: "moisturizers",
     description:
-      "Targets visible pigmentation with Natural Moisturizing Factors and HA in a surface hydration formula.",
+      "A targeted tone-care cream for the look of dark spots, uneven tone, and visible pigmentation.",
     ingredients:
       "Aqua, Glycerin, Niacinamide, Alpha Arbutin, Kojic Acid, Licorice Root Extract, Ceramide NP, Panthenol, Dimethicone, Phenoxyethanol.",
     keyIngredients: [
@@ -174,7 +174,7 @@ export const allProducts: Product[] = [
     reviewCount: 31,
     category: "moisturizers",
     description:
-      "Ceramide moisture with Natural Moisturizing Factors + HA. Surface hydration formula for comfortable, resilient skin.",
+      "A ceramide-rich barrier moisturizer with cholesterol, fatty acids, panthenol, and Natural Moisturizing Factors.",
     ingredients:
       "Aqua, Glycerin, Ceramide NP, Ceramide AP, Cholesterol, Fatty Acids, Panthenol, Sodium PCA, Sodium Hyaluronate, Phenoxyethanol.",
     keyIngredients: [

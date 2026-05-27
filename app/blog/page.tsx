@@ -11,6 +11,12 @@ export const metadata: Metadata = {
     title: "The Clinvara Journal | CLINVARA",
     description: "Skincare guides, ingredient science, and barrier health from CLINVARA.",
     url: "/blog",
+    images: [blogs[0]?.image ?? "/images/brand/clinvara-logo.png"],
+  },
+  twitter: {
+    title: "The Clinvara Journal | CLINVARA",
+    description: "Skincare guides, ingredient science, and barrier health from CLINVARA.",
+    images: [blogs[0]?.image ?? "/images/brand/clinvara-logo.png"],
   },
 };
 

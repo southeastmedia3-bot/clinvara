@@ -5,7 +5,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      disallow: ["/api/", "/account"],
     },
-    sitemap: "https://clinvara.com/sitemap.xml",
+    sitemap: "https://clinvara.global/sitemap.xml",
+    host: "https://clinvara.global",
   };
 }

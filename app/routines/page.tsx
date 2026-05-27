@@ -1,7 +1,26 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import { routines } from "@/lib/data/routines";
+
+export const metadata: Metadata = {
+  title: "Skincare Routines",
+  description:
+    "Explore CLINVARA skincare routines for hydration, uneven tone, pigmentation, and barrier support.",
+  alternates: { canonical: "/routines" },
+  openGraph: {
+    title: "Skincare Routines | CLINVARA",
+    description:
+      "Explore CLINVARA skincare routines for hydration, uneven tone, pigmentation, and barrier support.",
+    url: "/routines",
+    images: ["/images/brand/clinvara-logo.png"],
+  },
+  twitter: {
+    title: "Skincare Routines | CLINVARA",
+    description:
+      "Explore CLINVARA skincare routines for hydration, uneven tone, pigmentation, and barrier support.",
+    images: ["/images/brand/clinvara-logo.png"],
+  },
+};
 
 export default function RoutinesPage() {
   return (

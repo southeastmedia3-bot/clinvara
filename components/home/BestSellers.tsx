@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { allProducts, bestSellers } from "@/lib/data/products";
 import { ProductGrid } from "@/components/product/ProductGrid";

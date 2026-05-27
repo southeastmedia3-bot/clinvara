@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { blogs, getBlogBySlug } from "@/lib/data/blogs";
+import { allProducts } from "@/lib/data/products";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { BackButton } from "@/components/ui/BackButton";
 
@@ -24,15 +25,46 @@ export function generateMetadata({ params }: Props): Metadata {
       url: `/blog/${post.slug}`,
       images: [post.image],
     },
+    twitter: {
+      title: `${post.title} | CLINVARA`,
+      description: post.excerpt,
+      images: [post.image],
+    },
   };
 }
 
 export default function BlogPostPage({ params }: Props) {
   const post = getBlogBySlug(params.slug);
   if (!post) notFound();
+  const relatedProducts = allProducts.slice(0, 3);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image,
+    datePublished: post.date,
+    author: {
+      "@type": "Organization",
+      name: "CLINVARA",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "CLINVARA",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://clinvara.global/images/brand/clinvara-logo.png",
+      },
+    },
+    mainEntityOfPage: `https://clinvara.global/blog/${post.slug}`,
+  };
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <BackButton fallbackHref="/blog" label="Back to Journal" />
       <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-accent)]">
         {post.tag}
@@ -58,7 +90,21 @@ export default function BlogPostPage({ params }: Props) {
         ))}
       </div>
       <div className="mt-10 border-t border-[var(--brand-border)] pt-6">
-        <Link href="/blog" className="text-sm font-semibold underline">
+        <h2 className="font-display text-2xl font-semibold">
+          Shop related formulas
+        </h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {relatedProducts.map((product) => (
+            <Link
+              key={product.id}
+              href={`/shop/${product.slug}`}
+              className="rounded-xl border border-[var(--brand-border)] p-4 text-sm font-semibold hover:border-black"
+            >
+              {product.name}
+            </Link>
+          ))}
+        </div>
+        <Link href="/blog" className="mt-6 inline-flex text-sm font-semibold underline">
           Back to all journal articles
         </Link>
       </div>

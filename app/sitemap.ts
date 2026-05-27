@@ -2,47 +2,50 @@ import type { MetadataRoute } from "next";
 import { allProducts } from "@/lib/data/products";
 import { blogs } from "@/lib/data/blogs";
 
-const base = "https://clinvara.com";
+const baseUrl = "https://clinvara.global";
+
+const staticRoutes = [
+  "",
+  "/shop",
+  "/routines",
+  "/blog",
+  "/track-order",
+  "/contact",
+  "/about-us",
+  "/our-values",
+  "/privacy-policy",
+  "/terms-and-conditions",
+  "/sustainability",
+  "/faqs",
+  "/shipping-policy",
+  "/return-refund-policy",
+  "/careers",
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticRoutes = [
-    "",
-    "/shop",
-    "/routines",
-    "/blog",
-    "/track-order",
-    "/cart",
-    "/account",
-    "/contact",
-    "/about-us",
-    "/privacy-policy",
-    "/our-values",
-    "/terms-and-conditions",
-    "/sustainability",
-    "/faqs",
-    "/shipping-policy",
-    "/return-refund-policy",
-    "/careers",
-  ].map((path) => ({
-    url: `${base}${path}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: path === "" ? 1 : 0.8,
-  }));
+  const now = new Date();
 
-  const products = allProducts.map((p) => ({
-    url: `${base}/shop/${p.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-  }));
-
-  const posts = blogs.map((b) => ({
-    url: `${base}/blog/${b.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
-
-  return [...staticRoutes, ...products, ...posts];
+  return [
+    ...staticRoutes.map((route) => ({
+      url: `${baseUrl}${route}`,
+      lastModified: now,
+      changeFrequency:
+        route === "" || route === "/shop"
+          ? ("weekly" as const)
+          : ("monthly" as const),
+      priority: route === "" ? 1 : route === "/shop" ? 0.9 : 0.7,
+    })),
+    ...allProducts.map((product) => ({
+      url: `${baseUrl}/shop/${product.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+    ...blogs.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+  ];
 }

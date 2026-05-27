@@ -22,6 +22,11 @@ export function generateMetadata({ params }: Props): Metadata {
       url: `/shop/${product.slug}`,
       images: [product.image],
     },
+    twitter: {
+      title: `${product.name} | CLINVARA`,
+      description: product.description,
+      images: [product.image],
+    },
   };
 }
 

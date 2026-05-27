@@ -46,6 +46,7 @@ export const metadata: Metadata = {
     siteName: "CLINVARA",
     type: "website",
     url: "https://clinvara.global",
+    images: ["/images/brand/clinvara-logo.png"],
   },
 
   twitter: {
@@ -53,6 +54,7 @@ export const metadata: Metadata = {
     title: "CLINVARA",
     description:
       "Science-backed, ingredient-transparent skincare.",
+    images: ["/images/brand/clinvara-logo.png"],
   },
 };
 

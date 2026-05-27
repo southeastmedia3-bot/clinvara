@@ -9,6 +9,12 @@ export const metadata: Metadata = {
     title: "Track Your Order | CLINVARA",
     description: "Check whether CLINVARA tracking is available for your order.",
     url: "/track-order",
+    images: ["/images/brand/clinvara-logo.png"],
+  },
+  twitter: {
+    title: "Track Your Order | CLINVARA",
+    description: "Check whether CLINVARA tracking is available for your order.",
+    images: ["/images/brand/clinvara-logo.png"],
   },
 };
 
