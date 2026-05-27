@@ -21,13 +21,13 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import { signOut } from "firebase/auth";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
-import { apiUrl } from "@/lib/api/client";
-import { firebaseDb } from "@/lib/firebase/client";
+import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import {
   customerToAuthUser,
   readCustomerProfile,
@@ -90,26 +90,17 @@ export default function AccountClient() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("authError")) setLoginOpen(true);
 
-    void fetch(apiUrl("/api/auth/session"), { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data?.user) {
-          setAuthenticated(true, {
-            name: data.user.name,
-            email: data.user.email,
-            phone: data.user.phone,
-            provider: data.user.provider,
-          });
+    if (params.get("authError")) {
+      setLoginOpen(true);
+    }
 
-          if (params.get("login") === "success") {
-            window.history.replaceState(null, "", "/account");
-          }
-        }
-      })
-      .finally(() => setCheckingSession(false));
-  }, [setAuthenticated, setLoginOpen]);
+    if (params.get("login") === "success") {
+      window.history.replaceState(null, "", "/account");
+    }
+
+    setCheckingSession(false);
+  }, [setLoginOpen]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -136,7 +127,8 @@ export default function AccountClient() {
         );
       });
     } else {
-      setCheckoutEmail(user?.email ?? "");
+      setCheckoutEmail("");
+      setAddresses([]);
       setOrders([]);
     }
 
@@ -186,12 +178,15 @@ export default function AccountClient() {
   };
 
   const logout = async () => {
-    await fetch(apiUrl("/api/auth/session"), {
-      method: "DELETE",
-      credentials: "include",
-    }).catch(() => undefined);
-
-    setAuthenticated(false);
+    try {
+      await signOut(firebaseAuth);
+    } finally {
+      setAuthenticated(false);
+      setAddresses([]);
+      setOrders([]);
+      setCheckoutEmail("");
+      window.location.href = "/";
+    }
   };
 
   if (checkingSession) {
