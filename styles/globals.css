@@ -123,3 +123,33 @@ button {
   animation: fly-to-cart 0.6s ease-in-out forwards;
   pointer-events: none;
 }
+
+@keyframes social-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.social-marquee {
+  overflow: hidden;
+}
+
+.social-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: social-marquee 42s linear infinite;
+}
+
+.social-marquee:hover .social-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-marquee-track {
+    animation: none;
+  }
+}
