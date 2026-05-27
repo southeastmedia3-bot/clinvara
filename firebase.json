@@ -2,7 +2,7 @@
   "apphosting": [
     {
       "backendId": "clinvara-backend",
-      "rootDir": ".",
+      "rootDir": "frontend",
       "ignore": [
         "node_modules",
         ".git",
@@ -11,8 +11,6 @@
         ".env.*",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "frontend",
-        "backend",
         "legacy-root-app"
       ]
     }
