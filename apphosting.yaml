@@ -57,21 +57,25 @@ env:
   - variable: INSTAGRAM_ACCESS_TOKEN
     value: "EAATLKkY0l28BRhd51D8DdZAhh7E6fftr9rYGtOPu757wRDWH3ceXLnmHoOWoDQjUiq9zSYmCOedqPS1ZC5wUUZAECEegbGb2ana4KsT4UKXosSr25LOkRMSehQElZA8jo5Qy3LDBOpoRf98uYZByda0r9vNiNcwwXN6vQPHhos77j4BpmUOMHLUQzao23aUuRnCJp4XyD7OC0h940ykcspx5ysUTNWfLxjdVKmmHHPf8N4lpZAlonxnKMgZCfC34dPuI39Aeefm0UY5jZBRTXDR2"
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: INSTAGRAM_USER_ID
     value: "17841433638863768"
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: THREADS_ACCESS_TOKEN
-    secret: "THREADS_ACCESS_TOKEN"
+    value: "THAAax3pcQib1BYmFncXRobzVjQThEMkRlUzJyS193NlBWNVV5STJJX1BCdnBNN2puRE1FLTBqTTN0LWkxR3JSMUhJTFVzODE2Q3JMNkJWNzdVMnBUczYzRXZAvbUs3Ylo5cHVOUEhJOWFGT2hhcmNSdzdyb2h2dldoSTlZAYWZAXcUdJRWRFcnlqczFzdnI5Tm1IbWN6M2hsbHBUSFp3R1lmWlNOZAFZAGZAwZDZD"
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: THREADS_USER_ID
     value: "27341858908836757"
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
@@ -115,16 +119,3 @@ env:
     availability:
       - BUILD
       - RUNTIME
-<<<<<<< HEAD
-=======
-
-  - variable: THREADS_ACCESS_TOKEN
-    value: "THAAax3pcQib1BYmFncXRobzVjQThEMkRlUzJyS193NlBWNVV5STJJX1BCdnBNN2puRE1FLTBqTTN0LWkxR3JSMUhJTFVzODE2Q3JMNkJWNzdVMnBUczYzRXZAvbUs3Ylo5cHVOUEhJOWFGT2hhcmNSdzdyb2h2dldoSTlZAYWZAXcUdJRWRFcnlqczFzdnI5Tm1IbWN6M2hsbHBUSFp3R1lmWlNOZAFZAGZAwZDZD"
-    availability:
-      - RUNTIME
-
-  - variable: THREADS_USER_ID
-    value: "27341858908836757"
-    availability:
-      - RUNTIME
->>>>>>> c764ac4 (Rebuild social strip with live Instagram YouTube and Threads feeds)
