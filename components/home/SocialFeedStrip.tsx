@@ -26,6 +26,10 @@ type FeedItem = {
   sourceKey?: string;
 };
 
+type SocialApiResponse = {
+  posts?: SocialPost[];
+};
+
 function platformIcon(platform: string) {
   return socialLinks.find((social) => social.platform === platform)?.icon;
 }
@@ -54,10 +58,11 @@ function uniqueLatestPosts(posts: SocialPost[]) {
 
   return posts
     .filter((post) => {
+      const image = postImage(post);
       const keys = [
         post.id ? `${post.platform}:id:${post.id}` : "",
         post.permalink ? `permalink:${post.permalink}` : "",
-        post.media_url ? `media:${post.media_url}` : "",
+        image ? `media:${image}` : "",
         post.caption || post.timestamp
           ? `caption-time:${normalizedText(post.caption)}:${post.timestamp}`
           : "",
@@ -65,7 +70,7 @@ function uniqueLatestPosts(posts: SocialPost[]) {
 
       if (keys.some((key) => seen.has(key))) return false;
       keys.forEach((key) => seen.add(key));
-      return Boolean(post.permalink && postImage(post));
+      return Boolean(post.permalink && image);
     })
     .sort((a, b) => postTime(b) - postTime(a))
     .slice(0, 5);
@@ -131,26 +136,74 @@ function uniqueFeedItems(items: FeedItem[]) {
   });
 }
 
+function toFeedItem(post: SocialPost): FeedItem {
+  return {
+    platform: platformLabel(post.platform),
+    title:
+      post.platform === "youtube"
+        ? "Latest YouTube Video"
+        : post.media_type === "VIDEO"
+        ? "Latest Instagram Reel"
+        : "Latest Instagram Post",
+    body:
+      post.caption ||
+      "Follow CLINVARA for skincare routines, launch updates, and product education.",
+    href: post.permalink,
+    cta: post.platform === "youtube" ? "Watch video" : "View on Instagram",
+    image: postImage(post),
+    sourceKey: `${post.platform}-${post.id || post.permalink}`,
+  };
+}
+
+function buildDisplayPosts(realPosts: SocialPost[]) {
+  const uniqueRealPosts = uniqueLatestPosts(realPosts);
+  const liveItems = uniqueRealPosts.map(toFeedItem);
+  const fallbackFillers = staticFallbackFeed.filter(
+    (fallback) =>
+      !liveItems.some(
+        (item) =>
+          item.href === fallback.href ||
+          normalizedText(item.body) === normalizedText(fallback.body) ||
+          normalizedText(item.title) === normalizedText(fallback.title),
+      ),
+  );
+
+  return uniqueFeedItems([...liveItems, ...fallbackFillers]).slice(0, 5);
+}
+
 export function SocialFeedStrip() {
-  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [realPosts, setRealPosts] = useState<SocialPost[]>([]);
 
   useEffect(() => {
     let active = true;
 
-    void Promise.allSettled([
-      fetch("/api/social/instagram")
-        .then((response) => response.json())
-        .then((data) => {
-          if (!active || !Array.isArray(data?.posts)) return;
-          setPosts((current) => uniqueLatestPosts([...current, ...data.posts]));
-        }),
-      fetch("/api/social/youtube")
-        .then((response) => response.json())
-        .then((data) => {
-          if (!active || !Array.isArray(data?.posts)) return;
-          setPosts((current) => uniqueLatestPosts([...current, ...data.posts]));
-        }),
-    ]);
+    async function loadSocialPosts() {
+      const [instagramResult, youtubeResult] = await Promise.allSettled([
+        fetch("/api/social/instagram", { cache: "no-store" }).then(
+          (response) => response.json() as Promise<SocialApiResponse>,
+        ),
+        fetch("/api/social/youtube", { cache: "no-store" }).then(
+          (response) => response.json() as Promise<SocialApiResponse>,
+        ),
+      ]);
+
+      if (!active) return;
+
+      const instagramPosts =
+        instagramResult.status === "fulfilled" &&
+        Array.isArray(instagramResult.value.posts)
+          ? instagramResult.value.posts
+          : [];
+      const youtubePosts =
+        youtubeResult.status === "fulfilled" &&
+        Array.isArray(youtubeResult.value.posts)
+          ? youtubeResult.value.posts
+          : [];
+
+      setRealPosts(uniqueLatestPosts([...instagramPosts, ...youtubePosts]));
+    }
+
+    void loadSocialPosts();
 
     return () => {
       active = false;
@@ -158,29 +211,8 @@ export function SocialFeedStrip() {
   }, []);
 
   const feedItems = useMemo(
-    (): FeedItem[] => {
-      const liveItems = uniqueLatestPosts(posts).map((post) => ({
-        platform: platformLabel(post.platform),
-        title:
-          post.platform === "youtube"
-            ? "Latest YouTube Video"
-            : post.media_type === "VIDEO"
-            ? "Latest Instagram Reel"
-            : "Latest Instagram Post",
-        body:
-          post.caption ||
-          "Follow CLINVARA for skincare routines, launch updates, and product education.",
-        href: post.permalink,
-        cta: post.platform === "youtube" ? "Watch video" : "View on Instagram",
-        image: postImage(post),
-        sourceKey: `${post.platform}-${post.id}`,
-      } satisfies FeedItem));
-
-      return uniqueFeedItems(
-        [...liveItems, ...staticFallbackFeed],
-      ).slice(0, 5);
-    },
-    [posts],
+    () => buildDisplayPosts(realPosts),
+    [realPosts],
   );
   const displayPosts = feedItems;
   const animationPosts = displayPosts;
