@@ -13,6 +13,15 @@ type InstagramMediaItem = {
   timestamp?: string;
 };
 
+type InstagramErrorResponse = {
+  error?: {
+    message?: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+  };
+};
+
 function shortCaption(caption = "") {
   return caption.replace(/\s+/g, " ").trim();
 }
@@ -42,11 +51,21 @@ export async function GET() {
 
   try {
     const response = await fetch(
-      `https://graph.instagram.com/${userId}/media?${params.toString()}`,
+      `https://graph.facebook.com/v19.0/${userId}/media?${params.toString()}`,
       { next: { revalidate: 60 * 15 } },
     );
 
     if (!response.ok) {
+      const errorData = (await response.json().catch(() => null)) as
+        | InstagramErrorResponse
+        | null;
+      console.error("Instagram Graph API error", {
+        status: response.status,
+        code: errorData?.error?.code,
+        subcode: errorData?.error?.error_subcode,
+        type: errorData?.error?.type,
+        message: errorData?.error?.message,
+      });
       return NextResponse.json({ posts: [] }, { status: 200 });
     }
 
@@ -58,18 +77,19 @@ export async function GET() {
         .map((item) => ({
           id: item.id,
           caption: shortCaption(item.caption),
-          mediaType: item.media_type ?? "IMAGE",
-          image:
-            item.media_type === "VIDEO"
-              ? item.thumbnail_url ?? item.media_url ?? ""
-              : item.media_url ?? item.thumbnail_url ?? "",
-          href: item.permalink,
+          media_type: item.media_type ?? "IMAGE",
+          media_url: item.media_url ?? "",
+          thumbnail_url: item.thumbnail_url ?? "",
+          permalink: item.permalink,
           timestamp: item.timestamp ?? "",
         }))
-        .filter((item) => item.image) ?? [];
+        .filter((item) => item.media_url || item.thumbnail_url) ?? [];
 
     return NextResponse.json({ posts });
-  } catch {
+  } catch (error) {
+    console.error("Instagram Graph API request failed", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
     return NextResponse.json({ posts: [] }, { status: 200 });
   }
 }

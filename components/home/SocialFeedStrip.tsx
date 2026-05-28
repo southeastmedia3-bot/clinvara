@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { socialFeed, socialLinks } from "@/lib/data/socialLinks";
+import { socialLinks } from "@/lib/data/socialLinks";
 
 type YouTubeVideo = {
   id: string;
@@ -17,9 +17,10 @@ type YouTubeVideo = {
 type InstagramPost = {
   id: string;
   caption: string;
-  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
-  image: string;
-  href: string;
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_url: string;
+  thumbnail_url?: string;
+  permalink: string;
   timestamp: string;
 };
 
@@ -35,6 +36,37 @@ type FeedItem = {
 function platformIcon(platform: string) {
   return socialLinks.find((social) => social.platform === platform)?.icon;
 }
+
+const staticFallbackFeed: FeedItem[] = [
+  {
+    platform: "Instagram",
+    title: "Follow @clinvaraglobal",
+    body: "Daily clinical skincare rituals, product textures, and launch notes from CLINVARA.",
+    href: socialLinks[0].href,
+    cta: "Open Instagram",
+  },
+  {
+    platform: "Instagram",
+    title: "Clinical skincare routines",
+    body: "Simple cleanse, treat, moisturize, and protect routines for consistent skin support.",
+    href: "/routines",
+    cta: "Explore routines",
+  },
+  {
+    platform: "Instagram",
+    title: "New launches coming soon",
+    body: "Follow CLINVARA for product drops, formulation updates, and early access notes.",
+    href: socialLinks[0].href,
+    cta: "Follow now",
+  },
+  {
+    platform: "Instagram",
+    title: "Ingredient transparency",
+    body: "Clear ingredient education for actives, barrier support, hydration, and tone care.",
+    href: "/blog",
+    cta: "Read journal",
+  },
+];
 
 export function SocialFeedStrip() {
   const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
@@ -64,30 +96,37 @@ export function SocialFeedStrip() {
   }, []);
 
   const feedItems = useMemo(
-    (): FeedItem[] => [
-      ...instagramPosts.map((post) => ({
+    (): FeedItem[] => {
+      const liveInstagramItems = instagramPosts.map((post) => ({
         platform: "Instagram" as const,
         title:
-          post.mediaType === "VIDEO"
+          post.media_type === "VIDEO"
             ? "Latest Instagram Reel"
             : "Latest Instagram Post",
         body:
           post.caption ||
           "Follow CLINVARA for skincare routines, launch updates, and product education.",
-        href: post.href,
+        href: post.permalink,
         cta: "View on Instagram",
-        image: post.image,
-      } satisfies FeedItem)),
-      ...youtubeVideos.map((video) => ({
+        image:
+          post.media_type === "VIDEO"
+            ? post.thumbnail_url || post.media_url
+            : post.media_url || post.thumbnail_url,
+      } satisfies FeedItem));
+
+      const youtubeItems = youtubeVideos.map((video) => ({
         platform: "YouTube" as const,
         title: video.title,
         body: video.description || "Watch the latest CLINVARA skincare video.",
         href: video.href,
         cta: "Watch video",
         image: video.thumbnail,
-      } satisfies FeedItem)),
-      ...socialFeed,
-    ],
+      } satisfies FeedItem));
+
+      return liveInstagramItems.length
+        ? [...liveInstagramItems, ...youtubeItems]
+        : [...staticFallbackFeed, ...youtubeItems];
+    },
     [instagramPosts, youtubeVideos],
   );
   const marqueeItems = feedItems.length > 0 ? [...feedItems, ...feedItems] : [];
