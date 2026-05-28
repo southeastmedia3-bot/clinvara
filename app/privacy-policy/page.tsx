@@ -149,8 +149,8 @@ export default function PrivacyPolicyPage() {
             Contact Us
           </Link>{" "}
           page or email{" "}
-          <a href="mailto:help@clinvara.com" className="font-semibold text-black underline">
-            help@clinvara.com
+          <a href="mailto:clinvaraglobal@gmail.com" className="font-semibold text-black underline">
+            clinvaraglobal@gmail.com
           </a>
           . We aim to acknowledge customer grievances within 48 hours and work
           toward resolution within one month, where feasible and applicable.

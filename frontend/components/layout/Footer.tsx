@@ -98,18 +98,18 @@ export function Footer() {
           </p>
           <p className="mt-3 text-sm">
             <a
-              href="mailto:help@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               className="hover:text-[var(--brand-accent)]"
             >
-              help@clinvara.com
+              clinvaraglobal@gmail.com
             </a>
           </p>
           <p className="mt-1 text-sm">
             <a
-              href="mailto:gifting@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               className="hover:text-[var(--brand-accent)]"
             >
-              gifting@clinvara.com
+              clinvaraglobal@gmail.com
             </a>
           </p>
           <Link
@@ -124,7 +124,7 @@ export function Footer() {
           <p className="mb-3 text-sm font-semibold">Follow Us</p>
           <div className="flex gap-4">
             <a
-              href="mailto:help@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               aria-label="Email"
               className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
             >

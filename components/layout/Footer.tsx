@@ -129,7 +129,7 @@ export function Footer() {
               href="mailto:clinvaraglobal@gmail.com"
               className="text-white/80 transition hover:text-white"
             >
-              help@clinvara.com
+              clinvaraglobal@gmail.com
             </a>
           </p>
 
@@ -138,7 +138,7 @@ export function Footer() {
               href="mailto:clinvaraglobal@gmail.com"
               className="text-white/80 transition hover:text-white"
             >
-              gifting@clinvara.com
+              clinvaraglobal@gmail.com
             </a>
           </p>
 
@@ -157,7 +157,7 @@ export function Footer() {
 
           <div className="flex gap-4">
             <a
-              href="mailto:help@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               aria-label="Email"
               className="text-white/60 transition hover:text-white"
             >

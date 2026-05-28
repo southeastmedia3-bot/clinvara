@@ -111,8 +111,8 @@ export default function PrivacyPolicyPage() {
             Contact Us
           </Link>{" "}
           page or email{" "}
-          <a href="mailto:help@clinvara.com" className="font-semibold text-black underline">
-            help@clinvara.com
+          <a href="mailto:clinvaraglobal@gmail.com" className="font-semibold text-black underline">
+            clinvaraglobal@gmail.com
           </a>
           .
         </p>
