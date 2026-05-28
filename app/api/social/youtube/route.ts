@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const channelId = "UCi5HxfxaBwjAGqXEbWT_QYQ";
+const fallbackChannelId = "UCi5HxfxaBwjAGqXEbWT_QYQ";
 
 type YouTubeSearchItem = {
   id?: {
@@ -19,9 +19,10 @@ type YouTubeSearchItem = {
 
 export async function GET() {
   const apiKey = process.env.YOUTUBE_API_KEY;
+  const channelId = process.env.YOUTUBE_CHANNEL_ID ?? fallbackChannelId;
 
   if (!apiKey) {
-    return NextResponse.json({ videos: [] }, { status: 200 });
+    return NextResponse.json({ posts: [], videos: [] }, { status: 200 });
   }
 
   const params = new URLSearchParams({
@@ -40,27 +41,43 @@ export async function GET() {
     );
 
     if (!response.ok) {
-      return NextResponse.json({ videos: [] }, { status: 200 });
+      const errorData = await response.json().catch(() => null);
+      console.error("YouTube API error", {
+        status: response.status,
+        message:
+          typeof errorData === "object" && errorData !== null
+            ? JSON.stringify(errorData)
+            : "Unknown error",
+      });
+      return NextResponse.json({ posts: [], videos: [] }, { status: 200 });
     }
 
     const data = (await response.json()) as { items?: YouTubeSearchItem[] };
-    const videos =
+    const posts =
       data.items
         ?.filter((item) => item.id?.videoId && item.snippet?.title)
         .map((item) => ({
           id: item.id?.videoId,
-          title: item.snippet?.title,
-          description: item.snippet?.description ?? "",
-          publishedAt: item.snippet?.publishedAt ?? "",
-          thumbnail:
+          platform: "youtube",
+          caption: item.snippet?.title ?? "",
+          media_url:
             item.snippet?.thumbnails?.high?.url ??
             item.snippet?.thumbnails?.medium?.url ??
             "",
-          href: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+          thumbnail_url:
+            item.snippet?.thumbnails?.high?.url ??
+            item.snippet?.thumbnails?.medium?.url ??
+            "",
+          permalink: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+          timestamp: item.snippet?.publishedAt ?? "",
+          media_type: "VIDEO",
         })) ?? [];
 
-    return NextResponse.json({ videos });
-  } catch {
-    return NextResponse.json({ videos: [] }, { status: 200 });
+    return NextResponse.json({ posts, videos: posts });
+  } catch (error) {
+    console.error("YouTube API request failed", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ posts: [], videos: [] }, { status: 200 });
   }
 }

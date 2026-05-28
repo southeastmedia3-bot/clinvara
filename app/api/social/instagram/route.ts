@@ -76,6 +76,7 @@ export async function GET() {
         .slice(0, 8)
         .map((item) => ({
           id: item.id,
+          platform: "instagram",
           caption: shortCaption(item.caption),
           media_type: item.media_type ?? "IMAGE",
           media_url: item.media_url ?? "",

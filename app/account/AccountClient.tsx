@@ -29,7 +29,6 @@ import { allProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import {
-  customerToAuthUser,
   readCustomerProfile,
   saveCustomerAddresses,
   saveCustomerCheckoutEmail,
@@ -84,7 +83,6 @@ export default function AccountClient() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editing, setEditing] = useState<Address | null>(null);
   const [checkoutEmail, setCheckoutEmail] = useState("");
-  const [loaded, setLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
@@ -103,69 +101,70 @@ export default function AccountClient() {
   }, [setLoginOpen]);
 
   useEffect(() => {
-    if (user?.uid) {
-      void readCustomerProfile(user.uid).then((profile) => {
-  if (!profile) return;
+    let active = true;
 
-  setAddresses(profile.addresses ?? []);
-  setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
-
-  setAuthenticated(true, {
-    uid: user.uid,
-    name:
-      user.name ||
-      profile.name ||
-      user.email?.split("@")[0] ||
-      user.phone ||
-      "CLINVARA member",
-
-    email: user.email || profile.email || undefined,
-
-    phone: user.phone || profile.phone || undefined,
-
-    provider:
-      user.provider ||
-      profile.provider ||
-      "email",
-
-    firstName: profile.firstName || user.firstName,
-    lastName: profile.lastName || user.lastName,
-    pincode: profile.pincode || user.pincode,
-  });
-});
-
-      const ordersQuery = query(
-        collection(firebaseDb, "orders"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc"),
-      );
-
-      void getDocs(ordersQuery).then((snapshot) => {
-        setOrders(
-          snapshot.docs.map((orderDoc) => ({
-            id: orderDoc.id,
-            ...(orderDoc.data() as Omit<OrderRecord, "id">),
-          })),
-        );
-      });
-    } else {
+    if (!user?.uid) {
       setCheckoutEmail("");
       setAddresses([]);
       setOrders([]);
+      return;
     }
 
-    setLoaded(true);
-  }, [setAuthenticated, user]);
+    const currentUser = user;
 
-  useEffect(() => {
-    if (!loaded || !user?.uid) return;
-    void saveCustomerAddresses(user.uid, addresses);
-  }, [addresses, loaded, user?.uid]);
+    void readCustomerProfile(currentUser.uid).then((profile) => {
+      if (!active || !profile) return;
 
-  useEffect(() => {
-    if (!loaded || !user?.uid || user?.email) return;
-    void saveCustomerCheckoutEmail(user.uid, checkoutEmail);
-  }, [checkoutEmail, loaded, user?.email, user?.uid]);
+      setAddresses(profile.addresses ?? []);
+      setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
+
+      setAuthenticated(true, {
+        uid: currentUser.uid,
+        name:
+          currentUser.name ||
+          profile.name ||
+          currentUser.email?.split("@")[0] ||
+          currentUser.phone ||
+          "CLINVARA member",
+        email: currentUser.email || profile.email || undefined,
+        phone: currentUser.phone || profile.phone || undefined,
+        provider: currentUser.provider || profile.provider || "email",
+        firstName: profile.firstName || currentUser.firstName,
+        lastName: profile.lastName || currentUser.lastName,
+        pincode: profile.pincode || currentUser.pincode,
+      });
+    });
+
+    const ordersQuery = query(
+      collection(firebaseDb, "orders"),
+      where("userId", "==", currentUser.uid),
+      orderBy("createdAt", "desc"),
+    );
+
+    void getDocs(ordersQuery).then((snapshot) => {
+      if (!active) return;
+      setOrders(
+        snapshot.docs.map((orderDoc) => ({
+          id: orderDoc.id,
+          ...(orderDoc.data() as Omit<OrderRecord, "id">),
+        })),
+      );
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    setAuthenticated,
+    user?.email,
+    user?.firstName,
+    user?.lastName,
+    user?.name,
+    user?.phone,
+    user?.pincode,
+    user?.provider,
+    user?.uid,
+  ]);
 
   const wishlistProducts = useMemo(
     () => allProducts.filter((product) => wishIds.includes(product.id)),
@@ -191,13 +190,29 @@ export default function AccountClient() {
     if (!editing) return;
 
     const next = editing.id ? editing : { ...editing, id: crypto.randomUUID() };
+    const nextAddresses = [
+      ...addresses.filter((address) => address.id !== next.id),
+      next,
+    ].slice(0, 2);
 
-    setAddresses((current) => {
-      const without = current.filter((address) => address.id !== next.id);
-      return [...without, next].slice(0, 2);
-    });
-
+    setAddresses(nextAddresses);
     setEditing(null);
+    if (user?.uid) {
+      void saveCustomerAddresses(user.uid, nextAddresses);
+    }
+  };
+
+  const removeAddress = (addressId: string) => {
+    const nextAddresses = addresses.filter((address) => address.id !== addressId);
+    setAddresses(nextAddresses);
+    if (user?.uid) {
+      void saveCustomerAddresses(user.uid, nextAddresses);
+    }
+  };
+
+  const saveContactDetails = () => {
+    if (!user?.uid || user.email) return;
+    void saveCustomerCheckoutEmail(user.uid, checkoutEmail);
   };
 
   const logout = async () => {
@@ -397,11 +412,7 @@ export default function AccountClient() {
                       <button
                         type="button"
                         aria-label="Remove address"
-                        onClick={() =>
-                          setAddresses((current) =>
-                            current.filter((item) => item.id !== address.id),
-                          )
-                        }
+                        onClick={() => removeAddress(address.id)}
                         className="rounded-full p-2 hover:bg-[var(--brand-off-white)]"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -494,6 +505,15 @@ export default function AccountClient() {
                 className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black disabled:bg-[var(--brand-off-white)]"
               />
             </label>
+            {!user?.email && (
+              <button
+                type="button"
+                onClick={saveContactDetails}
+                className="mt-4 h-11 rounded-full bg-black px-5 text-sm font-semibold text-white"
+              >
+                Save Contact
+              </button>
+            )}
           </article>
 
           <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">

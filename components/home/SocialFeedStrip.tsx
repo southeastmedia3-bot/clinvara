@@ -5,17 +5,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { socialLinks } from "@/lib/data/socialLinks";
 
-type YouTubeVideo = {
+type SocialPost = {
   id: string;
-  title: string;
-  description: string;
-  publishedAt: string;
-  thumbnail: string;
-  href: string;
-};
-
-type InstagramPost = {
-  id: string;
+  platform: "instagram" | "youtube";
   caption: string;
   media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
   media_url: string;
@@ -35,6 +27,41 @@ type FeedItem = {
 
 function platformIcon(platform: string) {
   return socialLinks.find((social) => social.platform === platform)?.icon;
+}
+
+function platformLabel(platform: SocialPost["platform"]): FeedItem["platform"] {
+  return platform === "youtube" ? "YouTube" : "Instagram";
+}
+
+function postImage(post: SocialPost) {
+  return post.media_type === "VIDEO"
+    ? post.thumbnail_url || post.media_url
+    : post.media_url || post.thumbnail_url;
+}
+
+function postTime(post: SocialPost) {
+  const time = Date.parse(post.timestamp);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function uniqueLatestPosts(posts: SocialPost[]) {
+  const seen = new Set<string>();
+
+  return posts
+    .filter((post) => {
+      const key = [
+        post.platform,
+        post.id,
+        post.permalink,
+        post.media_url,
+        post.thumbnail_url ?? "",
+      ].join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return Boolean(post.permalink && postImage(post));
+    })
+    .sort((a, b) => postTime(b) - postTime(a))
+    .slice(0, 5);
 }
 
 const staticFallbackFeed: FeedItem[] = [
@@ -69,8 +96,7 @@ const staticFallbackFeed: FeedItem[] = [
 ];
 
 export function SocialFeedStrip() {
-  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
-  const [instagramPosts, setInstagramPosts] = useState<InstagramPost[]>([]);
+  const [posts, setPosts] = useState<SocialPost[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -80,13 +106,13 @@ export function SocialFeedStrip() {
         .then((response) => response.json())
         .then((data) => {
           if (!active || !Array.isArray(data?.posts)) return;
-          setInstagramPosts(data.posts);
+          setPosts((current) => uniqueLatestPosts([...current, ...data.posts]));
         }),
       fetch("/api/social/youtube")
         .then((response) => response.json())
         .then((data) => {
-          if (!active || !Array.isArray(data?.videos)) return;
-          setYoutubeVideos(data.videos);
+          if (!active || !Array.isArray(data?.posts)) return;
+          setPosts((current) => uniqueLatestPosts([...current, ...data.posts]));
         }),
     ]);
 
@@ -97,37 +123,25 @@ export function SocialFeedStrip() {
 
   const feedItems = useMemo(
     (): FeedItem[] => {
-      const liveInstagramItems = instagramPosts.map((post) => ({
-        platform: "Instagram" as const,
+      const liveItems = uniqueLatestPosts(posts).map((post) => ({
+        platform: platformLabel(post.platform),
         title:
-          post.media_type === "VIDEO"
+          post.platform === "youtube"
+            ? "Latest YouTube Video"
+            : post.media_type === "VIDEO"
             ? "Latest Instagram Reel"
             : "Latest Instagram Post",
         body:
           post.caption ||
           "Follow CLINVARA for skincare routines, launch updates, and product education.",
         href: post.permalink,
-        cta: "View on Instagram",
-        image:
-          post.media_type === "VIDEO"
-            ? post.thumbnail_url || post.media_url
-            : post.media_url || post.thumbnail_url,
+        cta: post.platform === "youtube" ? "Watch video" : "View on Instagram",
+        image: postImage(post),
       } satisfies FeedItem));
 
-      const youtubeItems = youtubeVideos.map((video) => ({
-        platform: "YouTube" as const,
-        title: video.title,
-        body: video.description || "Watch the latest CLINVARA skincare video.",
-        href: video.href,
-        cta: "Watch video",
-        image: video.thumbnail,
-      } satisfies FeedItem));
-
-      return liveInstagramItems.length
-        ? [...liveInstagramItems, ...youtubeItems]
-        : [...staticFallbackFeed, ...youtubeItems];
+      return liveItems.length ? liveItems : staticFallbackFeed;
     },
-    [instagramPosts, youtubeVideos],
+    [posts],
   );
   const marqueeItems = feedItems.length > 0 ? [...feedItems, ...feedItems] : [];
 

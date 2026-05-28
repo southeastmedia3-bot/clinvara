@@ -141,7 +141,7 @@ button {
 .social-marquee-track {
   display: flex;
   width: max-content;
-  animation: social-marquee 42s linear infinite;
+  animation: social-marquee 32s linear infinite;
 }
 
 .social-marquee:hover .social-marquee-track {
