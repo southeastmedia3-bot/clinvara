@@ -22,6 +22,10 @@ type InstagramErrorResponse = {
   };
 };
 
+type InstagramApiResponse = {
+  data?: InstagramMediaItem[];
+};
+
 function shortCaption(caption = "") {
   return caption.replace(/\s+/g, " ").trim();
 }
@@ -38,6 +42,30 @@ function uniqueInstagramItems(items: InstagramMediaItem[]) {
       ]),
     ).values(),
   );
+}
+
+async function readInstagramMedia(url: string) {
+  const response = await fetch(url, { next: { revalidate: 60 * 15 } });
+  const data = (await response.json().catch(() => null)) as
+    | InstagramApiResponse
+    | InstagramErrorResponse
+    | null;
+
+  if (!response.ok) {
+    const errorData = data as InstagramErrorResponse | null;
+    console.error("Instagram API error", {
+      status: response.status,
+      code: errorData?.error?.code,
+      subcode: errorData?.error?.error_subcode,
+      type: errorData?.error?.type,
+      message: errorData?.error?.message,
+    });
+    return [];
+  }
+
+  return Array.isArray((data as InstagramApiResponse | null)?.data)
+    ? ((data as InstagramApiResponse).data ?? [])
+    : [];
 }
 
 export async function GET() {
@@ -64,28 +92,15 @@ export async function GET() {
   });
 
   try {
-    const response = await fetch(
-      `https://graph.facebook.com/v19.0/${userId}/media?${params.toString()}`,
-      { next: { revalidate: 60 * 15 } },
-    );
+    const graphUrl = `https://graph.facebook.com/v19.0/${userId}/media?${params.toString()}`;
+    const basicDisplayUrl = `https://graph.instagram.com/${userId}/media?${params.toString()}`;
+    const graphItems = await readInstagramMedia(graphUrl);
+    const items = graphItems.length
+      ? graphItems
+      : await readInstagramMedia(basicDisplayUrl);
 
-    if (!response.ok) {
-      const errorData = (await response.json().catch(() => null)) as
-        | InstagramErrorResponse
-        | null;
-      console.error("Instagram Graph API error", {
-        status: response.status,
-        code: errorData?.error?.code,
-        subcode: errorData?.error?.error_subcode,
-        type: errorData?.error?.type,
-        message: errorData?.error?.message,
-      });
-      return NextResponse.json({ posts: [] }, { status: 200 });
-    }
-
-    const data = (await response.json()) as { data?: InstagramMediaItem[] };
     const posts =
-      uniqueInstagramItems(data.data ?? [])
+      uniqueInstagramItems(items)
         ?.filter((item) => item.id && item.permalink)
         .slice(0, 8)
         .map((item) => ({

@@ -7,7 +7,7 @@ import { socialLinks } from "@/lib/data/socialLinks";
 
 type SocialPost = {
   id: string;
-  platform: "instagram" | "youtube";
+  platform: "instagram" | "facebook" | "youtube" | "threads";
   caption: string;
   media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
   media_url: string;
@@ -35,7 +35,10 @@ function platformIcon(platform: string) {
 }
 
 function platformLabel(platform: SocialPost["platform"]): FeedItem["platform"] {
-  return platform === "youtube" ? "YouTube" : "Instagram";
+  if (platform === "youtube") return "YouTube";
+  if (platform === "facebook") return "Facebook";
+  if (platform === "threads") return "Threads";
+  return "Instagram";
 }
 
 function postImage(post: SocialPost) {
@@ -70,7 +73,7 @@ function uniqueLatestPosts(posts: SocialPost[]) {
 
       if (keys.some((key) => seen.has(key))) return false;
       keys.forEach((key) => seen.add(key));
-      return Boolean(post.permalink && image);
+      return Boolean(post.permalink && (image || post.caption));
     })
     .sort((a, b) => postTime(b) - postTime(a))
     .slice(0, 5);
@@ -142,11 +145,17 @@ function uniqueFeedItems(items: FeedItem[]) {
 }
 
 function toFeedItem(post: SocialPost): FeedItem {
+  const platform = platformLabel(post.platform);
+
   return {
-    platform: platformLabel(post.platform),
+    platform,
     title:
       post.platform === "youtube"
         ? "Latest YouTube Video"
+        : post.platform === "facebook"
+        ? "Latest Facebook Post"
+        : post.platform === "threads"
+        ? "Latest Threads Post"
         : post.media_type === "VIDEO"
         ? "Latest Instagram Reel"
         : "Latest Instagram Post",
@@ -154,7 +163,10 @@ function toFeedItem(post: SocialPost): FeedItem {
       post.caption ||
       "Follow CLINVARA for skincare routines, launch updates, and product education.",
     href: post.permalink,
-    cta: post.platform === "youtube" ? "Watch video" : "View on Instagram",
+    cta:
+      post.platform === "youtube"
+        ? "Watch video"
+        : `View on ${platform}`,
     image: postImage(post),
     sourceKey: `${post.platform}-${post.id || post.permalink}`,
   };
@@ -179,29 +191,19 @@ export function SocialFeedStrip() {
     let active = true;
 
     async function loadSocialPosts() {
-      const [instagramResult, youtubeResult] = await Promise.allSettled([
-        fetch("/api/social/instagram", { cache: "no-store" }).then(
-          (response) => response.json() as Promise<SocialApiResponse>,
-        ),
-        fetch("/api/social/youtube", { cache: "no-store" }).then(
-          (response) => response.json() as Promise<SocialApiResponse>,
-        ),
-      ]);
+      const feedResult = await fetch("/api/social/feed", {
+        cache: "no-store",
+      })
+        .then((response) => response.json() as Promise<SocialApiResponse>)
+        .catch(() => null);
 
       if (!active) return;
 
-      const instagramPosts =
-        instagramResult.status === "fulfilled" &&
-        Array.isArray(instagramResult.value.posts)
-          ? instagramResult.value.posts
-          : [];
-      const youtubePosts =
-        youtubeResult.status === "fulfilled" &&
-        Array.isArray(youtubeResult.value.posts)
-          ? youtubeResult.value.posts
-          : [];
-
-      setRealPosts(uniqueLatestPosts([...instagramPosts, ...youtubePosts]));
+      setRealPosts(
+        Array.isArray(feedResult?.posts)
+          ? uniqueLatestPosts(feedResult.posts)
+          : [],
+      );
       setLoaded(true);
     }
 
