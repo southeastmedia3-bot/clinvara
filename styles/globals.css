@@ -130,7 +130,7 @@ button {
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-35%);
   }
 }
 
@@ -144,6 +144,10 @@ button {
   display: flex;
   width: max-content;
   animation: none;
+}
+
+.social-marquee-track[data-auto-scroll="true"] {
+  animation: social-marquee 28s linear infinite alternate;
 }
 
 .social-marquee:hover .social-marquee-track {

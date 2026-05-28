@@ -1,6 +1,12 @@
-import { Facebook, Instagram, Youtube, type LucideIcon } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  MessageCircle,
+  Youtube,
+  type LucideIcon,
+} from "lucide-react";
 
-export type SocialPlatform = "Instagram" | "Facebook" | "YouTube";
+export type SocialPlatform = "Instagram" | "Facebook" | "YouTube" | "Threads";
 
 export type SocialLink = {
   platform: SocialPlatform;
@@ -27,6 +33,12 @@ export const socialLinks: SocialLink[] = [
     href: "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ",
     handle: "CLINVARA",
     icon: Youtube,
+  },
+  {
+    platform: "Threads",
+    href: "https://www.threads.net/@clinvaraglobal",
+    handle: "@clinvaraglobal",
+    icon: MessageCircle,
   },
 ];
 

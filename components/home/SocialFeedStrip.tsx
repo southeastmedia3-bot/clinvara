@@ -17,7 +17,7 @@ type SocialPost = {
 };
 
 type FeedItem = {
-  platform: "Instagram" | "Facebook" | "YouTube";
+  platform: "Instagram" | "Facebook" | "YouTube" | "Threads";
   title: string;
   body: string;
   href: string;
@@ -117,6 +117,14 @@ const staticFallbackFeed: FeedItem[] = [
     cta: "Open YouTube",
     sourceKey: "fallback-youtube",
   },
+  {
+    platform: "Threads",
+    title: "Routine conversations",
+    body: "Follow CLINVARA for quick notes on launches, textures, and daily skincare rituals.",
+    href: socialLinks[3].href,
+    cta: "Open Threads",
+    sourceKey: "fallback-threads",
+  },
 ];
 
 function uniqueFeedItems(items: FeedItem[]) {
@@ -209,6 +217,7 @@ export function SocialFeedStrip() {
     [loaded, realPosts],
   );
   const displayPosts = uniqueFeedItems(feedItems).slice(0, 5);
+  const shouldAutoScroll = displayPosts.length > 1;
 
   return (
     <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-12">
@@ -239,7 +248,10 @@ export function SocialFeedStrip() {
         </div>
 
         <div className="social-marquee pb-3">
-          <div className="social-marquee-track gap-4">
+          <div
+            className="social-marquee-track gap-4"
+            data-auto-scroll={shouldAutoScroll ? "true" : "false"}
+          >
             {displayPosts.map((item) => {
               const Icon = platformIcon(item.platform);
               return (
