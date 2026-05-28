@@ -120,20 +120,17 @@ const staticFallbackFeed: FeedItem[] = [
 ];
 
 function uniqueFeedItems(items: FeedItem[]) {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const keys = [
-      item.sourceKey ? `source:${item.sourceKey}` : "",
-      item.image ? `image:${item.image}` : "",
-      item.href && !item.sourceKey ? `href:${item.href}` : "",
-      item.body ? `body:${normalizedText(item.body)}` : "",
-      item.title ? `title:${normalizedText(item.title)}` : "",
-    ].filter(Boolean);
-
-    if (keys.some((key) => seen.has(key))) return false;
-    keys.forEach((key) => seen.add(key));
-    return true;
-  });
+  return Array.from(
+    new Map(
+      items.map((item) => [
+        item.href ||
+          item.sourceKey ||
+          item.image ||
+          `${normalizedText(item.body)}-${normalizedText(item.title)}`,
+        item,
+      ]),
+    ).values(),
+  );
 }
 
 function toFeedItem(post: SocialPost): FeedItem {
@@ -211,8 +208,7 @@ export function SocialFeedStrip() {
     () => buildDisplayPosts(realPosts, loaded),
     [loaded, realPosts],
   );
-  const displayPosts = feedItems;
-  const animationPosts = displayPosts;
+  const displayPosts = uniqueFeedItems(feedItems).slice(0, 5);
 
   return (
     <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-12">
@@ -244,17 +240,15 @@ export function SocialFeedStrip() {
 
         <div className="social-marquee pb-3">
           <div className="social-marquee-track gap-4">
-            {animationPosts.map((item, index) => {
+            {displayPosts.map((item) => {
               const Icon = platformIcon(item.platform);
               return (
                 <Link
-                  key={`${item.platform}-${item.title}-${index}`}
+                  key={item.href || item.sourceKey || item.title}
                   href={item.href}
                   target="_blank"
                   rel="noreferrer"
                   className="group flex min-h-48 w-[78vw] max-w-[410px] shrink-0 flex-col justify-between rounded-lg border border-[var(--brand-border)] bg-white p-5 transition hover:border-black sm:w-[360px] lg:w-[410px]"
-                  aria-hidden={index >= displayPosts.length}
-                  tabIndex={index >= displayPosts.length ? -1 : 0}
                 >
                   <div>
                     {item.image && (

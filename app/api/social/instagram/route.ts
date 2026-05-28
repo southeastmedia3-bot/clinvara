@@ -26,6 +26,20 @@ function shortCaption(caption = "") {
   return caption.replace(/\s+/g, " ").trim();
 }
 
+function uniqueInstagramItems(items: InstagramMediaItem[]) {
+  return Array.from(
+    new Map(
+      items.map((item) => [
+        item.permalink ||
+          item.id ||
+          item.media_url ||
+          `${shortCaption(item.caption)}-${item.timestamp ?? ""}`,
+        item,
+      ]),
+    ).values(),
+  );
+}
+
 export async function GET() {
   const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
   const userId = process.env.INSTAGRAM_USER_ID;
@@ -71,7 +85,7 @@ export async function GET() {
 
     const data = (await response.json()) as { data?: InstagramMediaItem[] };
     const posts =
-      data.data
+      uniqueInstagramItems(data.data ?? [])
         ?.filter((item) => item.id && item.permalink)
         .slice(0, 8)
         .map((item) => ({
