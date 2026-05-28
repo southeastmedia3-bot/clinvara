@@ -23,6 +23,7 @@ type FeedItem = {
   href: string;
   cta: string;
   image?: string;
+  sourceKey?: string;
 };
 
 function platformIcon(platform: string) {
@@ -54,11 +55,13 @@ function uniqueLatestPosts(posts: SocialPost[]) {
   return posts
     .filter((post) => {
       const keys = [
-        `${post.platform}:id:${post.id}`,
-        `permalink:${post.permalink}`,
-        `media:${post.media_url}`,
-        `caption-time:${normalizedText(post.caption)}:${post.timestamp}`,
-      ].filter((key) => !key.endsWith(":") && !key.endsWith("::"));
+        post.id ? `${post.platform}:id:${post.id}` : "",
+        post.permalink ? `permalink:${post.permalink}` : "",
+        post.media_url ? `media:${post.media_url}` : "",
+        post.caption || post.timestamp
+          ? `caption-time:${normalizedText(post.caption)}:${post.timestamp}`
+          : "",
+      ].filter(Boolean);
 
       if (keys.some((key) => seen.has(key))) return false;
       keys.forEach((key) => seen.add(key));
@@ -75,6 +78,7 @@ const staticFallbackFeed: FeedItem[] = [
     body: "Daily clinical skincare rituals, product textures, and launch notes from CLINVARA.",
     href: socialLinks[0].href,
     cta: "Open Instagram",
+    sourceKey: "fallback-follow",
   },
   {
     platform: "Instagram",
@@ -82,6 +86,7 @@ const staticFallbackFeed: FeedItem[] = [
     body: "Simple cleanse, treat, moisturize, and protect routines for consistent skin support.",
     href: "/routines",
     cta: "Explore routines",
+    sourceKey: "fallback-routines",
   },
   {
     platform: "Instagram",
@@ -89,6 +94,7 @@ const staticFallbackFeed: FeedItem[] = [
     body: "Follow CLINVARA for product drops, formulation updates, and early access notes.",
     href: socialLinks[0].href,
     cta: "Follow now",
+    sourceKey: "fallback-launches",
   },
   {
     platform: "Instagram",
@@ -96,6 +102,15 @@ const staticFallbackFeed: FeedItem[] = [
     body: "Clear ingredient education for actives, barrier support, hydration, and tone care.",
     href: "/blog",
     cta: "Read journal",
+    sourceKey: "fallback-ingredients",
+  },
+  {
+    platform: "YouTube",
+    title: "Skincare education",
+    body: "Watch CLINVARA explainers for routines, actives, and barrier-focused skincare.",
+    href: socialLinks[2].href,
+    cta: "Open YouTube",
+    sourceKey: "fallback-youtube",
   },
 ];
 
@@ -103,11 +118,12 @@ function uniqueFeedItems(items: FeedItem[]) {
   const seen = new Set<string>();
   return items.filter((item) => {
     const keys = [
-      `href:${item.href}`,
-      `image:${item.image ?? ""}`,
-      `body:${normalizedText(item.body)}`,
-      `title:${normalizedText(item.title)}`,
-    ].filter((key) => !key.endsWith(":"));
+      item.sourceKey ? `source:${item.sourceKey}` : "",
+      item.image ? `image:${item.image}` : "",
+      item.href && !item.sourceKey ? `href:${item.href}` : "",
+      item.body ? `body:${normalizedText(item.body)}` : "",
+      item.title ? `title:${normalizedText(item.title)}` : "",
+    ].filter(Boolean);
 
     if (keys.some((key) => seen.has(key))) return false;
     keys.forEach((key) => seen.add(key));
@@ -157,18 +173,17 @@ export function SocialFeedStrip() {
         href: post.permalink,
         cta: post.platform === "youtube" ? "Watch video" : "View on Instagram",
         image: postImage(post),
+        sourceKey: `${post.platform}-${post.id}`,
       } satisfies FeedItem));
 
       return uniqueFeedItems(
-        liveItems.length
-          ? [...liveItems, ...staticFallbackFeed]
-          : staticFallbackFeed,
+        [...liveItems, ...staticFallbackFeed],
       ).slice(0, 5);
     },
     [posts],
   );
-  const shouldLoop = feedItems.length >= 5;
-  const marqueeItems = shouldLoop ? [...feedItems, ...feedItems] : feedItems;
+  const displayPosts = feedItems;
+  const animationPosts = displayPosts;
 
   return (
     <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-12">
@@ -198,9 +213,9 @@ export function SocialFeedStrip() {
           </div>
         </div>
 
-        <div className="social-marquee -mx-4 px-4 pb-3">
+        <div className="social-marquee pb-3">
           <div className="social-marquee-track gap-4">
-            {marqueeItems.map((item, index) => {
+            {animationPosts.map((item, index) => {
               const Icon = platformIcon(item.platform);
               return (
                 <Link
@@ -209,8 +224,8 @@ export function SocialFeedStrip() {
                   target="_blank"
                   rel="noreferrer"
                   className="group flex min-h-48 w-[78vw] max-w-[410px] shrink-0 flex-col justify-between rounded-lg border border-[var(--brand-border)] bg-white p-5 transition hover:border-black sm:w-[360px] lg:w-[410px]"
-                  aria-hidden={index >= feedItems.length}
-                  tabIndex={index >= feedItems.length ? -1 : 0}
+                  aria-hidden={index >= displayPosts.length}
+                  tabIndex={index >= displayPosts.length ? -1 : 0}
                 >
                   <div>
                     {item.image && (

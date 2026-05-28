@@ -135,13 +135,15 @@ button {
 }
 
 .social-marquee {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .social-marquee-track {
   display: flex;
   width: max-content;
-  animation: social-marquee 32s linear infinite;
+  animation: none;
 }
 
 .social-marquee:hover .social-marquee-track {
