@@ -12,6 +12,12 @@ env:
       - BUILD
       - RUNTIME
 
+  - variable: AUTH_SECRET
+    secret: "AUTH_SECRET"
+    availability:
+      - BUILD
+      - RUNTIME
+
   - variable: GOOGLE_CLIENT_ID
     value: "667821786923-gf5lcilhq4ip6qvueqnoqcvmee7jj4d4.apps.googleusercontent.com"
     availability:
@@ -36,16 +42,26 @@ env:
       - BUILD
       - RUNTIME
 
-  - variable: AUTH_SECRET
-    secret: "AUTH_SECRET"
+  - variable: YOUTUBE_API_KEY
+    value: "AIzaSyAWJqn91Ut0i-4wzKV_3txEeJU6idKOazE"
     availability:
       - BUILD
       - RUNTIME
 
-  - variable: YOUTUBE_API_KEY
-    secret: "YOUTUBE_API_KEY"
+  - variable: YOUTUBE_CHANNEL_ID
+    value: "UCi5HxfxaBwjAGqXEbWT_QYQ"
     availability:
       - BUILD
+      - RUNTIME
+
+  - variable: INSTAGRAM_ACCESS_TOKEN
+    value: "EAATLKkY0l28BRhd51D8DdZAhh7E6fftr9rYGtOPu757wRDWH3ceXLnmHoOWoDQjUiq9zSYmCOedqPS1ZC5wUUZAECEegbGb2ana4KsT4UKXosSr25LOkRMSehQElZA8jo5Qy3LDBOpoRf98uYZByda0r9vNiNcwwXN6vQPHhos77j4BpmUOMHLUQzao23aUuRnCJp4XyD7OC0h940ykcspx5ysUTNWfLxjdVKmmHHPf8N4lpZAlonxnKMgZCfC34dPuI39Aeefm0UY5jZBRTXDR2"
+    availability:
+      - RUNTIME
+
+  - variable: INSTAGRAM_USER_ID
+    value: "17841433638863768"
+    availability:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
@@ -88,15 +104,4 @@ env:
     value: "G-DYB2VHQSF0"
     availability:
       - BUILD
-      - RUNTIME
-
-
-  - variable: INSTAGRAM_ACCESS_TOKEN
-    secret: "EAATLKkY0l28BRhd51D8DdZAhh7E6fftr9rYGtOPu757wRDWH3ceXLnmHoOWoDQjUiq9zSYmCOedqPS1ZC5wUUZAECEegbGb2ana4KsT4UKXosSr25LOkRMSehQElZA8jo5Qy3LDBOpoRf98uYZByda0r9vNiNcwwXN6vQPHhos77j4BpmUOMHLUQzao23aUuRnCJp4XyD7OC0h940ykcspx5ysUTNWfLxjdVKmmHHPf8N4lpZAlonxnKMgZCfC34dPuI39Aeefm0UY5jZBRTXDR2"
-    availability:
-      - RUNTIME
-
-  - variable: INSTAGRAM_USER_ID
-    value: "17841433638863768"
-    availability:
       - RUNTIME
