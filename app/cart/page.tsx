@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore, cartTotal } from "@/lib/store/cartStore";
@@ -41,8 +41,60 @@ export default function CartPage() {
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const { showToast } = useToast();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<CheckoutAddress[]>([]);
+  const [checkoutEmailValue, setCheckoutEmailValue] = useState("");
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
+  const [addressError, setAddressError] = useState("");
+  const [highlightAddress, setHighlightAddress] = useState(false);
+  const addressSectionRef = useRef<HTMLDivElement | null>(null);
 
   const subtotal = cartTotal(items);
+  const completeAddresses = useMemo(
+    () => savedAddresses.filter(hasCompleteAddress),
+    [savedAddresses],
+  );
+  const selectedShippingAddress =
+    selectedAddressIndex === null ? null : completeAddresses[selectedAddressIndex] ?? null;
+
+  useEffect(() => {
+    let active = true;
+
+    if (!user?.uid) {
+      setSavedAddresses([]);
+      setCheckoutEmailValue("");
+      setSelectedAddressIndex(null);
+      return;
+    }
+
+    void readCustomerProfile(user.uid).then((customer) => {
+      if (!active) return;
+      const addresses = ((customer?.addresses ?? []) as CheckoutAddress[]).filter(
+        hasCompleteAddress,
+      );
+      setSavedAddresses(addresses);
+      setCheckoutEmailValue(user.email || customer?.checkoutEmail || customer?.email || "");
+      setSelectedAddressIndex(addresses.length === 1 ? 0 : null);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.email, user?.uid]);
+
+  const guideToAddress = (message: string) => {
+    setAddressError(message);
+    setHighlightAddress(true);
+    addressSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    window.setTimeout(() => setHighlightAddress(false), 2500);
+    showToast({
+      message,
+      variant: "error",
+      durationMs: 5000,
+    });
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
@@ -132,6 +184,82 @@ export default function CartPage() {
             <span className="text-lg font-bold">{formatINR(subtotal)}</span>
           </div>
 
+          {isAuthenticated && (
+            <section
+              ref={addressSectionRef}
+              className={`mt-6 rounded-2xl border bg-white p-5 transition ${
+                highlightAddress || addressError
+                  ? "border-black ring-2 ring-black/10"
+                  : "border-[var(--brand-border)]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-2xl font-semibold">
+                    Delivery Address
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                    Select where your CLINVARA order should be delivered.
+                  </p>
+                </div>
+                <Link href="/account" className="shrink-0 text-sm font-semibold underline">
+                  Add Address
+                </Link>
+              </div>
+
+              {addressError && (
+                <p className="mt-4 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm font-semibold text-black">
+                  {addressError}
+                </p>
+              )}
+
+              {completeAddresses.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {completeAddresses.map((address, index) => (
+                    <label
+                      key={`${address.line1}-${address.pincode}-${index}`}
+                      className={`flex cursor-pointer gap-3 rounded-xl border p-4 text-sm transition ${
+                        selectedAddressIndex === index
+                          ? "border-black bg-[var(--brand-off-white)]"
+                          : "border-[var(--brand-border)]"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="delivery-address"
+                        className="mt-1"
+                        checked={selectedAddressIndex === index}
+                        onChange={() => {
+                          setSelectedAddressIndex(index);
+                          setAddressError("");
+                          setHighlightAddress(false);
+                        }}
+                      />
+                      <span>
+                        <span className="block font-semibold">
+                          {address.fullName}
+                        </span>
+                        <span className="mt-1 block text-[var(--brand-text-muted)]">
+                          {[address.line1, address.line2, address.city, address.state, address.pincode]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                        <span className="mt-1 block text-[var(--brand-text-muted)]">
+                          {address.phone}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-dashed border-[var(--brand-border)] p-5 text-sm text-[var(--brand-text-muted)]">
+                  No saved delivery address yet. Add one in your account to
+                  continue checkout.
+                </div>
+              )}
+            </section>
+          )}
+
           <button
             type="button"
             disabled={checkoutLoading}
@@ -154,11 +282,13 @@ export default function CartPage() {
                 const customer = await readCustomerProfile(user.uid);
 
                 const checkoutEmail =
-                  user.email || customer?.checkoutEmail || customer?.email || "";
+                  user.email || checkoutEmailValue || customer?.checkoutEmail || customer?.email || "";
 
                 const savedAddresses = (customer?.addresses ?? []) as CheckoutAddress[];
-
-                const shippingAddress = savedAddresses.find(hasCompleteAddress);
+                const completeSavedAddresses = savedAddresses.filter(hasCompleteAddress);
+                const selectedAddress =
+                  selectedShippingAddress ??
+                  (completeSavedAddresses.length === 1 ? completeSavedAddresses[0] : null);
 
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail)) {
                   showToast({
@@ -170,13 +300,13 @@ export default function CartPage() {
                   return;
                 }
 
-                if (!shippingAddress) {
-                  showToast({
-                    message: "Add a complete shipping address in your account before payment.",
-                    variant: "error",
-                    durationMs: 5000,
-                  });
-                  window.location.href = "/account?checkout=details";
+                if (!completeSavedAddresses.length) {
+                  guideToAddress("Please add a delivery address to continue.");
+                  return;
+                }
+
+                if (!selectedAddress) {
+                  guideToAddress("Please select a delivery address to continue.");
                   return;
                 }
 
@@ -186,13 +316,13 @@ export default function CartPage() {
                   items,
                   subtotal,
                   shippingAddress: {
-                    fullName: shippingAddress.fullName ?? "",
-                    phone: shippingAddress.phone ?? "",
-                    line1: shippingAddress.line1 ?? "",
-                    line2: shippingAddress.line2 ?? "",
-                    city: shippingAddress.city ?? "",
-                    state: shippingAddress.state ?? "",
-                    pincode: shippingAddress.pincode ?? "",
+                    fullName: selectedAddress.fullName ?? "",
+                    phone: selectedAddress.phone ?? "",
+                    line1: selectedAddress.line1 ?? "",
+                    line2: selectedAddress.line2 ?? "",
+                    city: selectedAddress.city ?? "",
+                    state: selectedAddress.state ?? "",
+                    pincode: selectedAddress.pincode ?? "",
                   },
                 });
 

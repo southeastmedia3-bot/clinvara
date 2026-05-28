@@ -44,20 +44,24 @@ function postTime(post: SocialPost) {
   return Number.isFinite(time) ? time : 0;
 }
 
+function normalizedText(value = "") {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
 function uniqueLatestPosts(posts: SocialPost[]) {
   const seen = new Set<string>();
 
   return posts
     .filter((post) => {
-      const key = [
-        post.platform,
-        post.id,
-        post.permalink,
-        post.media_url,
-        post.thumbnail_url ?? "",
-      ].join("|");
-      if (seen.has(key)) return false;
-      seen.add(key);
+      const keys = [
+        `${post.platform}:id:${post.id}`,
+        `permalink:${post.permalink}`,
+        `media:${post.media_url}`,
+        `caption-time:${normalizedText(post.caption)}:${post.timestamp}`,
+      ].filter((key) => !key.endsWith(":") && !key.endsWith("::"));
+
+      if (keys.some((key) => seen.has(key))) return false;
+      keys.forEach((key) => seen.add(key));
       return Boolean(post.permalink && postImage(post));
     })
     .sort((a, b) => postTime(b) - postTime(a))
@@ -94,6 +98,22 @@ const staticFallbackFeed: FeedItem[] = [
     cta: "Read journal",
   },
 ];
+
+function uniqueFeedItems(items: FeedItem[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const keys = [
+      `href:${item.href}`,
+      `image:${item.image ?? ""}`,
+      `body:${normalizedText(item.body)}`,
+      `title:${normalizedText(item.title)}`,
+    ].filter((key) => !key.endsWith(":"));
+
+    if (keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
+    return true;
+  });
+}
 
 export function SocialFeedStrip() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -139,11 +159,16 @@ export function SocialFeedStrip() {
         image: postImage(post),
       } satisfies FeedItem));
 
-      return liveItems.length ? liveItems : staticFallbackFeed;
+      return uniqueFeedItems(
+        liveItems.length
+          ? [...liveItems, ...staticFallbackFeed]
+          : staticFallbackFeed,
+      ).slice(0, 5);
     },
     [posts],
   );
-  const marqueeItems = feedItems.length > 0 ? [...feedItems, ...feedItems] : [];
+  const shouldLoop = feedItems.length >= 5;
+  const marqueeItems = shouldLoop ? [...feedItems, ...feedItems] : feedItems;
 
   return (
     <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-12">
