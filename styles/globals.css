@@ -124,38 +124,17 @@ button {
   pointer-events: none;
 }
 
-@keyframes social-marquee {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-35%);
-  }
-}
-
-.social-marquee {
+.social-scroll {
+  display: flex;
+  gap: 1rem;
   overflow-x: auto;
   overflow-y: hidden;
+  padding-bottom: 0.75rem;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
   scrollbar-width: thin;
 }
 
-.social-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: none;
-}
-
-.social-marquee-track[data-auto-scroll="true"] {
-  animation: social-marquee 28s linear infinite alternate;
-}
-
-.social-marquee:hover .social-marquee-track {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .social-marquee-track {
-    animation: none;
-  }
+.social-card {
+  scroll-snap-align: start;
 }

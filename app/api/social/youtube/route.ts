@@ -59,7 +59,8 @@ export async function GET() {
         .map((item) => ({
           id: item.id?.videoId,
           platform: "youtube",
-          caption: item.snippet?.title ?? "",
+          title: item.snippet?.title ?? "Latest YouTube Video",
+          caption: item.snippet?.description || item.snippet?.title || "",
           media_url:
             item.snippet?.thumbnails?.high?.url ??
             item.snippet?.thumbnails?.medium?.url ??

@@ -1,303 +1,306 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { socialLinks } from "@/lib/data/socialLinks";
+import { ArrowUpRight, Instagram, MessageCircle, Play } from "lucide-react";
+
+type SocialPlatform = "instagram" | "youtube" | "threads";
 
 type SocialPost = {
   id: string;
-  platform: "instagram" | "facebook" | "youtube" | "threads";
+  platform: SocialPlatform;
+  title?: string;
   caption: string;
-  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | "TEXT";
   media_url: string;
   thumbnail_url?: string;
   permalink: string;
   timestamp: string;
 };
 
-type FeedItem = {
-  platform: "Instagram" | "Facebook" | "YouTube" | "Threads";
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-  image?: string;
-  sourceKey?: string;
-};
-
 type SocialApiResponse = {
   posts?: SocialPost[];
 };
 
-function platformIcon(platform: string) {
-  return socialLinks.find((social) => social.platform === platform)?.icon;
-}
+type SocialCard = {
+  id: string;
+  platform: SocialPlatform;
+  label: string;
+  title: string;
+  caption: string;
+  image?: string;
+  href: string;
+  cta: string;
+  timestamp: string;
+};
 
-function platformLabel(platform: SocialPost["platform"]): FeedItem["platform"] {
+const fallbackCards: SocialCard[] = [
+  {
+    id: "fallback-instagram",
+    platform: "instagram",
+    label: "Instagram",
+    title: "Follow @clinvaraglobal",
+    caption:
+      "Clinical skincare routines, product textures, and launch notes from CLINVARA.",
+    href: "https://www.instagram.com/clinvaraglobal/",
+    cta: "Open Instagram",
+    timestamp: "",
+  },
+  {
+    id: "fallback-youtube",
+    platform: "youtube",
+    label: "YouTube",
+    title: "Skincare education",
+    caption:
+      "Watch CLINVARA explainers for actives, routines, and barrier-focused care.",
+    href: "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ",
+    cta: "Open YouTube",
+    timestamp: "",
+  },
+  {
+    id: "fallback-threads",
+    platform: "threads",
+    label: "Threads",
+    title: "Routine notes",
+    caption:
+      "Follow CLINVARA for concise product updates and daily skincare notes.",
+    href: "https://www.threads.net/@clinvaraglobal",
+    cta: "Open Threads",
+    timestamp: "",
+  },
+];
+
+function platformLabel(platform: SocialPlatform) {
   if (platform === "youtube") return "YouTube";
-  if (platform === "facebook") return "Facebook";
   if (platform === "threads") return "Threads";
   return "Instagram";
 }
 
-function postImage(post: SocialPost) {
-  return post.media_type === "VIDEO"
-    ? post.thumbnail_url || post.media_url
-    : post.media_url || post.thumbnail_url;
+function platformCta(platform: SocialPlatform) {
+  if (platform === "youtube") return "Watch Video";
+  if (platform === "threads") return "View Thread";
+  return "View Post";
 }
 
-function postTime(post: SocialPost) {
+function platformTitle(post: SocialPost) {
+  if (post.title?.trim()) return post.title.trim();
+  if (post.platform === "youtube") return "Latest YouTube Video";
+  if (post.platform === "threads") return "Latest Thread";
+  if (post.media_type === "VIDEO") return "Latest Instagram Reel";
+  return "Latest Instagram Post";
+}
+
+function platformIcon(platform: SocialPlatform) {
+  if (platform === "youtube") return Play;
+  if (platform === "threads") return MessageCircle;
+  return Instagram;
+}
+
+function postImage(post: SocialPost) {
+  if (post.media_type === "VIDEO") {
+    return post.thumbnail_url || post.media_url;
+  }
+
+  return post.thumbnail_url || post.media_url;
+}
+
+function postTime(post: Pick<SocialPost, "timestamp">) {
   const time = Date.parse(post.timestamp);
   return Number.isFinite(time) ? time : 0;
 }
 
-function normalizedText(value = "") {
+function normalizeText(value = "") {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function uniqueLatestPosts(posts: SocialPost[]) {
+function uniquePosts(posts: SocialPost[]) {
   const seen = new Set<string>();
 
-  return posts
-    .filter((post) => {
-      const image = postImage(post);
-      const keys = [
-        post.id ? `${post.platform}:id:${post.id}` : "",
-        post.permalink ? `permalink:${post.permalink}` : "",
-        image ? `media:${image}` : "",
-        post.caption || post.timestamp
-          ? `caption-time:${normalizedText(post.caption)}:${post.timestamp}`
-          : "",
-      ].filter(Boolean);
+  return posts.filter((post) => {
+    const image = postImage(post);
+    const keys = [
+      post.id ? `${post.platform}:id:${post.id}` : "",
+      post.permalink ? `permalink:${post.permalink}` : "",
+      image ? `media:${image}` : "",
+      post.caption || post.timestamp
+        ? `caption-time:${normalizeText(post.caption)}:${post.timestamp}`
+        : "",
+    ].filter(Boolean);
 
-      if (keys.some((key) => seen.has(key))) return false;
-      keys.forEach((key) => seen.add(key));
-      return Boolean(post.permalink && (image || post.caption));
-    })
-    .sort((a, b) => postTime(b) - postTime(a))
-    .slice(0, 5);
+    if (!post.permalink || keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
+    return Boolean(image || post.caption || post.title);
+  });
 }
 
-const staticFallbackFeed: FeedItem[] = [
-  {
-    platform: "Instagram",
-    title: "Follow @clinvaraglobal",
-    body: "Daily clinical skincare rituals, product textures, and launch notes from CLINVARA.",
-    href: socialLinks[0].href,
-    cta: "Open Instagram",
-    sourceKey: "fallback-follow",
-  },
-  {
-    platform: "Instagram",
-    title: "Clinical skincare routines",
-    body: "Simple cleanse, treat, moisturize, and protect routines for consistent skin support.",
-    href: "/routines",
-    cta: "Explore routines",
-    sourceKey: "fallback-routines",
-  },
-  {
-    platform: "Instagram",
-    title: "New launches coming soon",
-    body: "Follow CLINVARA for product drops, formulation updates, and early access notes.",
-    href: socialLinks[0].href,
-    cta: "Follow now",
-    sourceKey: "fallback-launches",
-  },
-  {
-    platform: "Instagram",
-    title: "Ingredient transparency",
-    body: "Clear ingredient education for actives, barrier support, hydration, and tone care.",
-    href: "/blog",
-    cta: "Read journal",
-    sourceKey: "fallback-ingredients",
-  },
-  {
-    platform: "YouTube",
-    title: "Skincare education",
-    body: "Watch CLINVARA explainers for routines, actives, and barrier-focused skincare.",
-    href: socialLinks[2].href,
-    cta: "Open YouTube",
-    sourceKey: "fallback-youtube",
-  },
-  {
-    platform: "Threads",
-    title: "Routine conversations",
-    body: "Follow CLINVARA for quick notes on launches, textures, and daily skincare rituals.",
-    href: socialLinks[3].href,
-    cta: "Open Threads",
-    sourceKey: "fallback-threads",
-  },
-];
-
-function uniqueFeedItems(items: FeedItem[]) {
-  return Array.from(
-    new Map(
-      items.map((item) => [
-        item.href ||
-          item.sourceKey ||
-          item.image ||
-          `${normalizedText(item.body)}-${normalizedText(item.title)}`,
-        item,
-      ]),
-    ).values(),
-  );
-}
-
-function toFeedItem(post: SocialPost): FeedItem {
-  const platform = platformLabel(post.platform);
-
+function toCard(post: SocialPost): SocialCard {
   return {
-    platform,
-    title:
-      post.platform === "youtube"
-        ? "Latest YouTube Video"
-        : post.platform === "facebook"
-        ? "Latest Facebook Post"
-        : post.platform === "threads"
-        ? "Latest Threads Post"
-        : post.media_type === "VIDEO"
-        ? "Latest Instagram Reel"
-        : "Latest Instagram Post",
-    body:
+    id: `${post.platform}-${post.id || post.permalink}`,
+    platform: post.platform,
+    label: platformLabel(post.platform),
+    title: platformTitle(post),
+    caption:
       post.caption ||
       "Follow CLINVARA for skincare routines, launch updates, and product education.",
-    href: post.permalink,
-    cta:
-      post.platform === "youtube"
-        ? "Watch video"
-        : `View on ${platform}`,
     image: postImage(post),
-    sourceKey: `${post.platform}-${post.id || post.permalink}`,
+    href: post.permalink,
+    cta: platformCta(post.platform),
+    timestamp: post.timestamp,
   };
 }
 
-function buildDisplayPosts(realPosts: SocialPost[], hasLoaded: boolean) {
-  const uniqueRealPosts = uniqueLatestPosts(realPosts);
-  const liveItems = uniqueRealPosts.map(toFeedItem);
+function sortAndLimit(posts: SocialPost[]) {
+  return uniquePosts(posts)
+    .sort((a, b) => postTime(b) - postTime(a))
+    .slice(0, 7)
+    .map(toCard);
+}
 
-  if (liveItems.length) {
-    return uniqueFeedItems(liveItems).slice(0, 5);
+function CardMedia({ card }: { card: SocialCard }) {
+  if (!card.image) {
+    return (
+      <div className="flex aspect-[4/5] items-end rounded-lg bg-[var(--brand-light-gray)] p-5">
+        <p className="font-display text-3xl font-semibold leading-none">
+          CLINVARA
+        </p>
+      </div>
+    );
   }
 
-  return hasLoaded ? staticFallbackFeed.slice(0, 5) : [];
+  return (
+    <div className="aspect-[4/5] overflow-hidden rounded-lg bg-[var(--brand-light-gray)]">
+      <img
+        src={card.image}
+        alt={`${card.label} post thumbnail`}
+        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+        loading="lazy"
+      />
+    </div>
+  );
 }
 
 export function SocialFeedStrip() {
-  const [realPosts, setRealPosts] = useState<SocialPost[]>([]);
+  const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    async function loadSocialPosts() {
-      const feedResult = await fetch("/api/social/feed", {
-        cache: "no-store",
-      })
+    async function loadPosts() {
+      const result = await fetch("/api/social/feed", { cache: "no-store" })
         .then((response) => response.json() as Promise<SocialApiResponse>)
         .catch(() => null);
 
       if (!active) return;
 
-      setRealPosts(
-        Array.isArray(feedResult?.posts)
-          ? uniqueLatestPosts(feedResult.posts)
-          : [],
-      );
+      setPosts(Array.isArray(result?.posts) ? result.posts : []);
       setLoaded(true);
     }
 
-    void loadSocialPosts();
+    void loadPosts();
 
     return () => {
       active = false;
     };
   }, []);
 
-  const feedItems = useMemo(
-    () => buildDisplayPosts(realPosts, loaded),
-    [loaded, realPosts],
-  );
-  const displayPosts = uniqueFeedItems(feedItems).slice(0, 5);
-  const shouldAutoScroll = displayPosts.length > 1;
+  const cards = useMemo(() => {
+    const liveCards = sortAndLimit(posts);
+    return liveCards.length ? liveCards : loaded ? fallbackCards : [];
+  }, [loaded, posts]);
+
+  useEffect(() => {
+    const track = scrollRef.current;
+    if (!track || cards.length < 2 || isPaused) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReducedMotion) return;
+
+    let frameId = 0;
+    let direction = 1;
+    let previousTime = performance.now();
+
+    function animate(currentTime: number) {
+      if (!track) return;
+
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      if (maxScroll <= 0) {
+        frameId = requestAnimationFrame(animate);
+        return;
+      }
+
+      const elapsed = currentTime - previousTime;
+      previousTime = currentTime;
+      track.scrollLeft += direction * elapsed * 0.025;
+
+      if (track.scrollLeft >= maxScroll - 1) direction = -1;
+      if (track.scrollLeft <= 1) direction = 1;
+
+      frameId = requestAnimationFrame(animate);
+    }
+
+    frameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [cards.length, isPaused]);
 
   return (
-    <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-12">
+    <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-14">
       <div className="mx-auto max-w-[1440px] px-4 lg:px-8">
-        <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
-              Social
-            </p>
-            <h2 className="mt-2 font-display text-3xl font-semibold md:text-4xl">
-              From CLINVARA Social
-            </h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {socialLinks.map((social) => (
-              <Link
-                key={social.platform}
-                href={social.href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/15 bg-white px-4 text-xs font-semibold uppercase tracking-[0.1em] transition hover:border-black"
-              >
-                <social.icon className="h-4 w-4" />
-                {social.platform}
-              </Link>
-            ))}
-          </div>
+        <div className="mb-8 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+            Socials
+          </p>
+          <h2 className="mt-2 font-display text-4xl font-semibold leading-tight md:text-5xl">
+            As Seen on Social
+          </h2>
         </div>
 
-        <div className="social-marquee pb-3">
-          <div
-            className="social-marquee-track gap-4"
-            data-auto-scroll={shouldAutoScroll ? "true" : "false"}
-          >
-            {displayPosts.map((item) => {
-              const Icon = platformIcon(item.platform);
-              return (
-                <Link
-                  key={item.href || item.sourceKey || item.title}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex min-h-48 w-[78vw] max-w-[410px] shrink-0 flex-col justify-between rounded-lg border border-[var(--brand-border)] bg-white p-5 transition hover:border-black sm:w-[360px] lg:w-[410px]"
-                >
-                  <div>
-                    {item.image && (
-                      <div className="mb-5 aspect-video overflow-hidden rounded-md bg-[var(--brand-light-gray)]">
-                        <img
-                          src={item.image}
-                          alt={`${item.title} thumbnail`}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
-                        {Icon && <Icon className="h-4 w-4 text-black" />}
-                        {item.platform}
-                      </span>
-                      <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </div>
-                    <h3 className="mt-6 font-display text-2xl font-semibold leading-tight">
-                      {item.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
-                      {item.body.length > 132
-                        ? `${item.body.slice(0, 132)}...`
-                        : item.body}
-                    </p>
+        <div
+          ref={scrollRef}
+          className="social-scroll"
+          aria-label="Latest CLINVARA social posts"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+        >
+          {cards.map((card) => {
+            const Icon = platformIcon(card.platform);
+
+            return (
+              <Link
+                key={card.id}
+                href={card.href}
+                target="_blank"
+                rel="noreferrer"
+                className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
+              >
+                <CardMedia card={card} />
+                <div className="p-2 pt-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                      <Icon className="h-4 w-4 text-black" />
+                      {card.label}
+                    </span>
+                    <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
-                  <span className="mt-7 text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
-                    {item.cta}
+                  <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                    {card.caption}
+                  </p>
+                  <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
+                    {card.cta}
                   </span>
-                </Link>
-              );
-            })}
-          </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

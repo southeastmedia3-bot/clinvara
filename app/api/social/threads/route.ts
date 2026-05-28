@@ -82,9 +82,12 @@ export async function GET() {
       .map((post) => ({
         id: post.id,
         platform: "threads",
+        title: "Latest Thread",
         caption: cleanText(post.text),
         media_type:
-          post.media_type === "VIDEO"
+          post.media_type === "TEXT"
+            ? "TEXT"
+            : post.media_type === "VIDEO"
             ? "VIDEO"
             : post.media_type === "CAROUSEL_ALBUM"
             ? "CAROUSEL_ALBUM"

@@ -106,6 +106,10 @@ export async function GET() {
         .map((item) => ({
           id: item.id,
           platform: "instagram",
+          title:
+            item.media_type === "VIDEO"
+              ? "Latest Instagram Reel"
+              : "Latest Instagram Post",
           caption: shortCaption(item.caption),
           media_type: item.media_type ?? "IMAGE",
           media_url: item.media_url ?? "",

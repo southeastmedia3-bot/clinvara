@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 
 type SocialPost = {
   id: string;
-  platform: "instagram" | "facebook" | "youtube" | "threads";
+  platform: "instagram" | "youtube" | "threads";
+  title?: string;
   caption: string;
-  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | "TEXT";
   media_url: string;
   thumbnail_url?: string;
   permalink: string;
@@ -50,7 +51,7 @@ function uniqueLatestPosts(posts: SocialPost[]) {
       return Boolean(post.permalink && (image || post.caption));
     })
     .sort((a, b) => postTime(b) - postTime(a))
-    .slice(0, 5);
+    .slice(0, 7);
 }
 
 async function fetchPosts(origin: string, path: string) {
@@ -65,19 +66,16 @@ export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
 
   try {
-    const [instagramResult, youtubeResult, facebookResult, threadsResult] =
+    const [instagramResult, youtubeResult, threadsResult] =
       await Promise.allSettled([
         fetchPosts(origin, "/api/social/instagram"),
         fetchPosts(origin, "/api/social/youtube"),
-        fetchPosts(origin, "/api/social/facebook"),
         fetchPosts(origin, "/api/social/threads"),
       ]);
     const instagramPosts =
       instagramResult.status === "fulfilled" ? instagramResult.value : [];
     const youtubePosts =
       youtubeResult.status === "fulfilled" ? youtubeResult.value : [];
-    const facebookPosts =
-      facebookResult.status === "fulfilled" ? facebookResult.value : [];
     const threadsPosts =
       threadsResult.status === "fulfilled" ? threadsResult.value : [];
 
@@ -85,7 +83,6 @@ export async function GET(request: Request) {
       posts: uniqueLatestPosts([
         ...instagramPosts,
         ...youtubePosts,
-        ...facebookPosts,
         ...threadsPosts,
       ]),
     });

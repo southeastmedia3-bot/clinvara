@@ -64,6 +64,16 @@ env:
     availability:
       - RUNTIME
 
+  - variable: THREADS_ACCESS_TOKEN
+    secret: "THREADS_ACCESS_TOKEN"
+    availability:
+      - RUNTIME
+
+  - variable: THREADS_USER_ID
+    value: "27341858908836757"
+    availability:
+      - RUNTIME
+
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: "AIzaSyAwvH6tBJ7RR8zgUfV9ckCdJDLdhV_yimI"
     availability:
