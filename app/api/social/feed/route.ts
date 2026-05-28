@@ -16,7 +16,28 @@ type SocialPost = {
 };
 
 type SocialApiResponse = {
-  posts?: SocialPost[];
+  posts?: unknown;
+  videos?: unknown;
+};
+
+type ThreadsApiItem = {
+  id?: string;
+  text?: string;
+  media_type?: "TEXT" | "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_url?: string;
+  thumbnail_url?: string;
+  permalink?: string;
+  timestamp?: string;
+};
+
+type ThreadsApiResponse = {
+  data?: ThreadsApiItem[];
+  error?: {
+    message?: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+  };
 };
 
 function postImage(post: SocialPost) {
@@ -32,6 +53,27 @@ function postTime(post: SocialPost) {
 
 function normalizedText(value = "") {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function cleanText(value = "") {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function isSocialPost(value: unknown): value is SocialPost {
+  if (!value || typeof value !== "object") return false;
+
+  const post = value as Partial<SocialPost>;
+  return Boolean(
+    post.id &&
+      (post.platform === "instagram" ||
+        post.platform === "youtube" ||
+        post.platform === "threads") &&
+      post.permalink,
+  );
+}
+
+function normalizePosts(value: unknown) {
+  return Array.isArray(value) ? value.filter(isSocialPost) : [];
 }
 
 function uniqueLatestPosts(posts: SocialPost[]) {
@@ -66,10 +108,85 @@ async function fetchPosts(origin: string, path: string) {
       | SocialApiResponse
       | null;
 
-    return Array.isArray(data?.posts) ? data.posts : [];
+    return normalizePosts(data?.posts);
   } catch (error) {
     console.error("Social feed source failed", {
       path,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return [];
+  }
+}
+
+function normalizeThreadsItems(items: ThreadsApiItem[]) {
+  return Array.from(
+    new Map(
+      items.map((item) => [
+        item.permalink ||
+          item.id ||
+          item.media_url ||
+          `${cleanText(item.text)}-${item.timestamp ?? ""}`,
+        item,
+      ]),
+    ).values(),
+  )
+    .filter((item) => item.id && item.permalink)
+    .slice(0, 8)
+    .map<SocialPost>((item) => ({
+      id: item.id ?? "",
+      platform: "threads",
+      title: "Latest Thread",
+      caption: cleanText(item.text),
+      media_type:
+        item.media_type === "TEXT"
+          ? "TEXT"
+          : item.media_type === "VIDEO"
+          ? "VIDEO"
+          : item.media_type === "CAROUSEL_ALBUM"
+          ? "CAROUSEL_ALBUM"
+          : "IMAGE",
+      media_url: item.media_url ?? "",
+      thumbnail_url: item.thumbnail_url ?? item.media_url ?? "",
+      permalink: item.permalink ?? "",
+      timestamp: item.timestamp ?? "",
+    }));
+}
+
+async function fetchThreadsDirectly() {
+  const accessToken = process.env.THREADS_ACCESS_TOKEN;
+  const userId = process.env.THREADS_USER_ID;
+
+  if (!accessToken || !userId) return [];
+
+  const params = new URLSearchParams({
+    fields: "id,text,media_type,media_url,thumbnail_url,permalink,timestamp",
+    limit: "8",
+    access_token: accessToken,
+  });
+
+  try {
+    const response = await fetch(
+      `https://graph.threads.net/v1.0/${userId}/threads?${params.toString()}`,
+      { cache: "no-store" },
+    );
+    const data = (await response.json().catch(() => null)) as
+      | ThreadsApiResponse
+      | null;
+
+    if (!response.ok) {
+      console.error("Social feed direct Threads fallback failed", {
+        status: response.status,
+        code: data?.error?.code,
+        subcode: data?.error?.error_subcode,
+        type: data?.error?.type,
+        message: data?.error?.message,
+      });
+      return [];
+    }
+
+    return normalizeThreadsItems(data?.data ?? []);
+  } catch (error) {
+    console.error("Social feed direct Threads fallback errored", {
       message: error instanceof Error ? error.message : "Unknown error",
     });
     return [];
@@ -90,8 +207,11 @@ export async function GET(request: Request) {
       instagramResult.status === "fulfilled" ? instagramResult.value : [];
     const youtubePosts =
       youtubeResult.status === "fulfilled" ? youtubeResult.value : [];
-    const threadsPosts =
+    let threadsPosts =
       threadsResult.status === "fulfilled" ? threadsResult.value : [];
+    if (!threadsPosts.length) {
+      threadsPosts = await fetchThreadsDirectly();
+    }
     const mergedPosts = uniqueLatestPosts([
       ...instagramPosts,
       ...youtubePosts,
