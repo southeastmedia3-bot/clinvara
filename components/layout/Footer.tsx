@@ -126,7 +126,7 @@ export function Footer() {
 
           <p className="mt-4 text-[14px]">
             <a
-              href="mailto:help@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               className="text-white/80 transition hover:text-white"
             >
               help@clinvara.com
@@ -135,7 +135,7 @@ export function Footer() {
 
           <p className="mt-2 text-[14px]">
             <a
-              href="mailto:gifting@clinvara.com"
+              href="mailto:clinvaraglobal@gmail.com"
               className="text-white/80 transition hover:text-white"
             >
               gifting@clinvara.com

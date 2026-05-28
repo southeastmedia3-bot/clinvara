@@ -115,3 +115,16 @@ env:
     availability:
       - BUILD
       - RUNTIME
+<<<<<<< HEAD
+=======
+
+  - variable: THREADS_ACCESS_TOKEN
+    value: "THAAax3pcQib1BYmFncXRobzVjQThEMkRlUzJyS193NlBWNVV5STJJX1BCdnBNN2puRE1FLTBqTTN0LWkxR3JSMUhJTFVzODE2Q3JMNkJWNzdVMnBUczYzRXZAvbUs3Ylo5cHVOUEhJOWFGT2hhcmNSdzdyb2h2dldoSTlZAYWZAXcUdJRWRFcnlqczFzdnI5Tm1IbWN6M2hsbHBUSFp3R1lmWlNOZAFZAGZAwZDZD"
+    availability:
+      - RUNTIME
+
+  - variable: THREADS_USER_ID
+    value: "27341858908836757"
+    availability:
+      - RUNTIME
+>>>>>>> c764ac4 (Rebuild social strip with live Instagram YouTube and Threads feeds)
