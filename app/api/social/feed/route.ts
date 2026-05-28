@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type SocialPost = {
   id: string;
   platform: "instagram" | "youtube" | "threads";
@@ -55,11 +58,22 @@ function uniqueLatestPosts(posts: SocialPost[]) {
 }
 
 async function fetchPosts(origin: string, path: string) {
-  const response = await fetch(`${origin}${path}`, {
-    next: { revalidate: 60 * 10 },
-  });
-  const data = (await response.json().catch(() => null)) as SocialApiResponse | null;
-  return Array.isArray(data?.posts) ? data.posts : [];
+  try {
+    const response = await fetch(new URL(path, origin), {
+      cache: "no-store",
+    });
+    const data = (await response.json().catch(() => null)) as
+      | SocialApiResponse
+      | null;
+
+    return Array.isArray(data?.posts) ? data.posts : [];
+  } catch (error) {
+    console.error("Social feed source failed", {
+      path,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return [];
+  }
 }
 
 export async function GET(request: Request) {
@@ -78,13 +92,21 @@ export async function GET(request: Request) {
       youtubeResult.status === "fulfilled" ? youtubeResult.value : [];
     const threadsPosts =
       threadsResult.status === "fulfilled" ? threadsResult.value : [];
+    const mergedPosts = uniqueLatestPosts([
+      ...instagramPosts,
+      ...youtubePosts,
+      ...threadsPosts,
+    ]);
+
+    console.log("social counts", {
+      instagram: instagramPosts.length,
+      youtube: youtubePosts.length,
+      threads: threadsPosts.length,
+      merged: mergedPosts.length,
+    });
 
     return NextResponse.json({
-      posts: uniqueLatestPosts([
-        ...instagramPosts,
-        ...youtubePosts,
-        ...threadsPosts,
-      ]),
+      posts: mergedPosts,
     });
   } catch (error) {
     console.error("Social feed aggregation failed", {
