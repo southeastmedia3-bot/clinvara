@@ -155,24 +155,20 @@ function toFeedItem(post: SocialPost): FeedItem {
   };
 }
 
-function buildDisplayPosts(realPosts: SocialPost[]) {
+function buildDisplayPosts(realPosts: SocialPost[], hasLoaded: boolean) {
   const uniqueRealPosts = uniqueLatestPosts(realPosts);
   const liveItems = uniqueRealPosts.map(toFeedItem);
-  const fallbackFillers = staticFallbackFeed.filter(
-    (fallback) =>
-      !liveItems.some(
-        (item) =>
-          item.href === fallback.href ||
-          normalizedText(item.body) === normalizedText(fallback.body) ||
-          normalizedText(item.title) === normalizedText(fallback.title),
-      ),
-  );
 
-  return uniqueFeedItems([...liveItems, ...fallbackFillers]).slice(0, 5);
+  if (liveItems.length) {
+    return uniqueFeedItems(liveItems).slice(0, 5);
+  }
+
+  return hasLoaded ? staticFallbackFeed.slice(0, 5) : [];
 }
 
 export function SocialFeedStrip() {
   const [realPosts, setRealPosts] = useState<SocialPost[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -201,6 +197,7 @@ export function SocialFeedStrip() {
           : [];
 
       setRealPosts(uniqueLatestPosts([...instagramPosts, ...youtubePosts]));
+      setLoaded(true);
     }
 
     void loadSocialPosts();
@@ -211,8 +208,8 @@ export function SocialFeedStrip() {
   }, []);
 
   const feedItems = useMemo(
-    () => buildDisplayPosts(realPosts),
-    [realPosts],
+    () => buildDisplayPosts(realPosts, loaded),
+    [loaded, realPosts],
   );
   const displayPosts = feedItems;
   const animationPosts = displayPosts;
