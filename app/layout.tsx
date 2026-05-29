@@ -6,6 +6,7 @@ import "../styles/globals.css";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { AdminChromeHider } from "@/components/layout/AdminChromeHider";
 
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
@@ -179,13 +180,18 @@ export default async function RootLayout({
 
         <ToastProvider>
           <ClientBootstrap>
-            <AnnouncementBar initialAnnouncements={announcementItems} />
-            <Navbar />
+            <AdminChromeHider />
+            <div data-store-chrome>
+              <AnnouncementBar initialAnnouncements={announcementItems} />
+              <Navbar />
+            </div>
 
             <main id="main-content">{children}</main>
 
-            <ChatBot />
-            <Footer />
+            <div data-store-chrome>
+              <ChatBot />
+              <Footer />
+            </div>
           </ClientBootstrap>
         </ToastProvider>
       </body>

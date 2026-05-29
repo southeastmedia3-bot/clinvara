@@ -7,7 +7,8 @@ import {
   Menu,
   Search,
   User,
-  Star,
+  Heart,
+  Sparkles,
   ShoppingBag,
   X,
   ChevronDown,
@@ -204,27 +205,6 @@ export function Navbar() {
             </button>
             <button
               type="button"
-              aria-label="Open account menu"
-              aria-expanded={accountOpen}
-              className="hidden text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)] sm:inline-flex"
-              onClick={() => setAccountOpen(true)}
-            >
-              <User className="h-[22px] w-[22px]" />
-            </button>
-            <Link
-              href="/account#wishlist"
-              className="relative hidden text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)] sm:inline-flex"
-              aria-label="Wishlist"
-            >
-              <Star className="h-[22px] w-[22px]" />
-              {wishCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand-accent)] px-1 text-[10px] font-bold text-white">
-                  {wishCount > 99 ? "99+" : wishCount}
-                </span>
-              )}
-            </Link>
-            <button
-              type="button"
               aria-label="Open cart"
               className="relative text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)]"
               onClick={() => openCart()}
@@ -235,6 +215,28 @@ export function Navbar() {
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
+            </button>
+            <Link
+              href="/account#wishlist"
+              className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)] sm:inline-flex"
+              aria-label="Open wishlist"
+            >
+              <Heart className="h-[18px] w-[18px]" />
+              <Sparkles className="absolute right-1 top-1 h-2.5 w-2.5" />
+              {wishCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[10px] font-bold text-white">
+                  {wishCount > 99 ? "99+" : wishCount}
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              aria-label="Open account menu"
+              aria-expanded={accountOpen}
+              className="hidden text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)] sm:inline-flex"
+              onClick={() => setAccountOpen(true)}
+            >
+              <User className="h-[22px] w-[22px]" />
             </button>
           </div>
         </nav>

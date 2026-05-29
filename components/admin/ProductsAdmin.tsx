@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { AdminTable } from "@/components/admin/AdminTable";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { deleteProduct, listProducts, saveProduct } from "@/lib/admin/firestore";
 import type { AdminProduct } from "@/lib/admin/types";
 
@@ -12,6 +13,7 @@ export function ProductsAdmin() {
   const [editing, setEditing] = useState<AdminProduct | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<AdminProduct | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -89,12 +91,7 @@ export function ProductsAdmin() {
                   />
                   <IconButton
                     label="Delete product"
-                    onClick={async () => {
-                      if (window.confirm(`Delete ${product.name}?`)) {
-                        await deleteProduct(product.id);
-                        await refresh();
-                      }
-                    }}
+                    onClick={() => setPendingDelete(product)}
                     icon={<Trash2 className="h-4 w-4" />}
                   />
                 </div>
@@ -103,6 +100,19 @@ export function ProductsAdmin() {
           ))}
         </AdminTable>
       )}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete product?"
+        message={`This will remove ${pendingDelete?.name || "this product"} from Firestore products. This action should only be used when the product is no longer needed.`}
+        confirmLabel="Delete"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={async () => {
+          if (!pendingDelete) return;
+          await deleteProduct(pendingDelete.id);
+          setPendingDelete(null);
+          await refresh();
+        }}
+      />
     </div>
   );
 }

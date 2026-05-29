@@ -8,13 +8,15 @@ import { listOrders, updateOrder } from "@/lib/admin/firestore";
 import type { AdminOrder, OrderStatus } from "@/lib/admin/types";
 
 const statuses: OrderStatus[] = [
-  "Pending",
-  "Accepted",
-  "Packed",
-  "Shipped",
-  "Delivered",
-  "Cancelled",
-  "Refunded",
+  "pending_admin_confirmation",
+  "confirmed",
+  "packed",
+  "picked_up",
+  "shipped",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+  "refunded",
 ];
 
 function money(value: number) {
@@ -26,7 +28,17 @@ function money(value: number) {
 }
 
 function orderStatus(order: AdminOrder) {
-  return String(order.orderStatus || order.status || "Pending");
+  return String(order.orderStatus || order.status || "pending_admin_confirmation");
+}
+
+function timestampPatch(status: string) {
+  const now = new Date().toISOString();
+  if (status === "packed") return { packedAt: now };
+  if (status === "picked_up") return { pickedUpAt: now };
+  if (status === "shipped") return { shippedAt: now };
+  if (status === "out_for_delivery") return { outForDeliveryAt: now };
+  if (status === "delivered") return { deliveredAt: now };
+  return {};
 }
 
 export function OrdersAdmin() {
@@ -34,6 +46,7 @@ export function OrdersAdmin() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
@@ -70,6 +83,25 @@ export function OrdersAdmin() {
     setSelected((current) => (current?.id === order.id ? { ...current, ...patch } : current));
   }
 
+  async function acceptOrder(order: AdminOrder) {
+    await saveOrder(order, {
+      adminDecision: "accepted",
+      orderStatus: "confirmed",
+      publicOrderStatus: "confirmed",
+      confirmedAt: new Date().toISOString(),
+    } as Partial<AdminOrder>);
+  }
+
+  async function rejectOrder(order: AdminOrder) {
+    await saveOrder(order, {
+      adminDecision: "rejected",
+      orderStatus: "rejected",
+      publicOrderStatus: "rejected",
+      rejectionReason,
+      rejectedAt: new Date().toISOString(),
+    } as Partial<AdminOrder>);
+  }
+
   return (
     <div className="space-y-6">
       <Header title="Orders" description="Search, review, and update customer orders." />
@@ -102,7 +134,10 @@ export function OrdersAdmin() {
             <tr
               key={order.id}
               className="cursor-pointer hover:bg-[var(--brand-off-white)]"
-              onClick={() => setSelected(order)}
+              onClick={() => {
+                setSelected(order);
+                setRejectionReason(order.rejectionReason || "");
+              }}
             >
               <td className="px-4 py-4 font-medium">{order.orderId || order.id}</td>
               <td className="px-4 py-4 text-[var(--brand-text-muted)]">
@@ -134,12 +169,41 @@ export function OrdersAdmin() {
             </button>
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="flex flex-wrap gap-2 md:col-span-2">
+              <button
+                type="button"
+                onClick={() => void acceptOrder(selected)}
+                className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white"
+              >
+                Accept order
+              </button>
+              <button
+                type="button"
+                onClick={() => void rejectOrder(selected)}
+                className="rounded-full border border-red-700 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-red-700"
+              >
+                Reject order
+              </button>
+            </div>
+            <label className="space-y-2 text-sm md:col-span-2">
+              <span className="font-medium">Rejection reason</span>
+              <input
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Optional reason shown to customer if rejected"
+                className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
+              />
+            </label>
             <label className="space-y-2 text-sm">
               <span className="font-medium">Order status</span>
               <select
                 value={orderStatus(selected)}
                 onChange={(event) =>
-                  void saveOrder(selected, { orderStatus: event.target.value as OrderStatus })
+                  void saveOrder(selected, {
+                    orderStatus: event.target.value as OrderStatus,
+                    publicOrderStatus: event.target.value,
+                    ...timestampPatch(event.target.value),
+                  } as Partial<AdminOrder>)
                 }
                 className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
               >

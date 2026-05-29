@@ -14,13 +14,16 @@ export type AdminProduct = Product & {
 };
 
 export type OrderStatus =
-  | "Pending"
-  | "Accepted"
-  | "Packed"
-  | "Shipped"
-  | "Delivered"
-  | "Cancelled"
-  | "Refunded";
+  | "pending_admin_confirmation"
+  | "confirmed"
+  | "packed"
+  | "picked_up"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled"
+  | "refunded"
+  | "rejected";
 
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded" | "not_connected";
 
@@ -44,6 +47,9 @@ export type AdminOrder = {
   orderStatus?: OrderStatus | string;
   status?: string;
   adminNotes?: string;
+  adminDecision?: "pending" | "accepted" | "rejected";
+  publicOrderStatus?: string;
+  rejectionReason?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 };

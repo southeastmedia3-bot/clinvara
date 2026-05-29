@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Search, ShieldCheck } from "lucide-react";
+import { Menu, ShieldCheck } from "lucide-react";
 
 export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
@@ -24,10 +24,6 @@ export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-2 rounded-full border border-[var(--brand-border)] px-3 py-2 text-sm text-[var(--brand-text-muted)] md:flex">
-          <Search className="h-4 w-4" />
-          Search inside each section
-        </div>
         <div className="flex items-center gap-2 rounded-full bg-[var(--brand-off-white)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em]">
           <ShieldCheck className="h-4 w-4" />
           Admin

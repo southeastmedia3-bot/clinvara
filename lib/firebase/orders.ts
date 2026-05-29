@@ -30,7 +30,10 @@ export async function createOrder(payload: CreateOrderPayload) {
     {
       ...payload,
 
-      status: "pending",
+      status: "pending_admin_confirmation",
+      orderStatus: "pending_admin_confirmation",
+      adminDecision: "pending",
+      publicOrderStatus: "waiting_for_confirmation",
 
       paymentStatus: "pending",
 

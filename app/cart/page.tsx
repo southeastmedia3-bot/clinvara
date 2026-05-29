@@ -47,6 +47,7 @@ export default function CartPage() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   const [addressError, setAddressError] = useState("");
   const [highlightAddress, setHighlightAddress] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState("");
   const addressSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -331,10 +332,11 @@ export default function CartPage() {
                   },
                 });
 
+                setCreatedOrderId(orderId);
                 showToast({
-                  message: `Pending order created. Order ID: ${orderId}`,
+                  message: "Order placed and waiting for confirmation.",
                   variant: "success",
-                  durationMs: 7000,
+                  durationMs: 5000,
                 });
               } catch (error) {
                 console.error("Checkout error:", error);
@@ -349,6 +351,37 @@ export default function CartPage() {
           >
             {checkoutLoading ? "Creating Order..." : "Proceed to Checkout"}
           </button>
+          {createdOrderId && (
+            <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+                  Order Placed
+                </p>
+                <h2 className="mt-2 font-display text-3xl font-semibold">
+                  Waiting for confirmation
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[var(--brand-text-muted)]">
+                  Your order has been received and is waiting for admin confirmation.
+                  Order ID: <span className="font-semibold text-black">{createdOrderId}</span>
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href={`/track-order`}
+                    className="flex-1 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white"
+                  >
+                    Track Order
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setCreatedOrderId("")}
+                    className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -3,11 +3,26 @@
 The storefront now reads `products` from Firestore first and falls back to
 `lib/data/products.ts` only when Firestore is empty or unavailable.
 
-To seed the first product set safely:
+To seed the original four products safely with Firebase Admin SDK:
 
-1. Open `/admin/products` with an approved admin account.
-2. Create or edit products using each product `slug` as the stable identity.
-3. Keep document IDs stable by saving products with the existing `id` or `slug`.
+```bash
+set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\service-account.json
+node scripts/seed-products-firestore.mjs
+```
+
+PowerShell:
+
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\service-account.json"
+node scripts\seed-products-firestore.mjs
+```
+
+The script uses `firebase-admin` from the existing `backend` dependencies and
+requires Application Default Credentials or a service account JSON with
+Firestore write access.
+
+It upserts products with the product `slug` as the Firestore document ID, so it
+can be run again without creating duplicates.
 
 Recommended Firestore document IDs:
 

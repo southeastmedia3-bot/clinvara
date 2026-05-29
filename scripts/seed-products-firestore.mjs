@@ -1,0 +1,181 @@
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const admin = require("../backend/node_modules/firebase-admin");
+
+const products = [
+  {
+    id: "1",
+    name: "Niacinamide 10% Face Serum",
+    slug: "niacinamide-10-zinc-serum",
+    category: "serums",
+    price: 599,
+    mrp: 799,
+    sizes: ["30ml"],
+    badge: "BESTSELLER",
+    featured: true,
+    active: true,
+    stock: 25,
+    lowStockThreshold: 5,
+    availability: "in_stock",
+    image: "/images/products/niacinamide-serum.jpg",
+    imageHover: "/images/products/niacinamide-serum-alt.jpg",
+    gallery: ["/images/products/niacinamide-serum.jpg", "/images/products/niacinamide-serum-alt.jpg"],
+    galleryAlt: ["Niacinamide 10% Face Serum bottle", "Niacinamide 10% Face Serum bottle and texture detail"],
+    concern: "Oiliness · Uneven Tone",
+    concerns: ["Oiliness", "Pores", "Uneven Tone"],
+    concernSlugs: ["oiliness", "pore-minimizing", "uneven-tone"],
+    rating: 4.7,
+    reviewCount: 24,
+    description: "A dermatologist-inspired niacinamide serum formulated for oily skin, visible pores, uneven tone and post-acne marks. Powered by niacinamide, zinc PCA and hydrating actives to support balanced, clearer-looking skin without heaviness.",
+    ingredients: "Aqua, Niacinamide, Zinc PCA, Acetyl Glucosamine, Sodium Hyaluronate, Pentylene Glycol, Xanthan Gum, Phenoxyethanol.",
+    howToUse: "Apply 2-3 drops to clean, dry skin after cleansing. Follow with moisturizer. Use sunscreen in the morning.",
+    keyIngredients: [
+      { name: "Niacinamide", benefit: "Helps balance excess oil and improve the look of uneven tone." },
+      { name: "Zinc PCA", benefit: "Supports a fresh, comfortable finish for oily-prone skin." },
+      { name: "Acetyl Glucosamine", benefit: "Complements niacinamide for a more even-looking finish." },
+      { name: "Hyaluronic Acid", benefit: "Adds lightweight hydration without a heavy feel." },
+    ],
+    seoTitle: "Niacinamide 10% Face Serum for Oily Skin & Uneven Tone",
+    seoDescription: "Shop CLINVARA Niacinamide 10% Face Serum for oily skin, visible pores, uneven tone and post-acne marks with zinc PCA and hydrating actives.",
+    sortOrder: 1,
+  },
+  {
+    id: "2",
+    name: "Natural Moisturizing Factors + HA Cleanser",
+    slug: "nmf-ha-cleanser",
+    category: "cleansers",
+    price: 449,
+    mrp: 549,
+    sizes: ["100ml", "200ml"],
+    badge: "",
+    featured: false,
+    active: true,
+    stock: 30,
+    lowStockThreshold: 5,
+    availability: "in_stock",
+    image: "/images/products/cleanser-nmf.jpg",
+    imageHover: "/images/products/cleanser-nmf-alt.jpg",
+    gallery: ["/images/products/cleanser-nmf.jpg", "/images/products/cleanser-nmf-alt.jpg"],
+    galleryAlt: ["Natural Moisturizing Factors + HA Cleanser product tube", "NMF + HA Cleanser texture and product detail"],
+    concern: "Hydration · Gentle Cleanse",
+    concerns: ["Dryness", "Dehydration", "Sensitive Skin"],
+    concernSlugs: ["dryness-dehydration", "sensitive-skin", "barrier-repair"],
+    rating: 4.6,
+    reviewCount: 19,
+    description: "A gentle hydrating cleanser formulated with Natural Moisturizing Factors and hyaluronic acid to cleanse without stripping the skin barrier. Suitable for dry, dehydrated and sensitive skin types.",
+    ingredients: "Aqua, Glycerin, Coco-Glucoside, Sodium Cocoyl Glutamate, Sodium Hyaluronate, Panthenol, Sodium PCA, Amino Acids, Phenoxyethanol.",
+    howToUse: "Massage onto damp skin for 30-60 seconds, then rinse. Use morning and evening.",
+    keyIngredients: [
+      { name: "Natural Moisturizing Factors", benefit: "Helps skin feel comfortable after cleansing." },
+      { name: "Hyaluronic Acid", benefit: "Supports a soft, hydrated feel without heaviness." },
+      { name: "Panthenol", benefit: "Helps maintain a gentle, non-stripping cleanse." },
+      { name: "Amino Acids", benefit: "Supports a soft, conditioned after-feel." },
+      { name: "Gentle Surfactants", benefit: "Lift daily impurities while keeping the cleanse mild." },
+    ],
+    seoTitle: "Natural Moisturizing Factors + HA Cleanser for Dry & Sensitive Skin",
+    seoDescription: "Shop CLINVARA NMF + HA Cleanser, a gentle hydrating cleanser for dry, dehydrated and sensitive skin with hyaluronic acid and Natural Moisturizing Factors.",
+    sortOrder: 2,
+  },
+  {
+    id: "3",
+    name: "Deep Pigmentation Cream",
+    slug: "deep-pigmentation-cream",
+    category: "moisturizers",
+    price: 649,
+    mrp: 849,
+    sizes: ["50ml"],
+    badge: "NEW",
+    featured: true,
+    active: true,
+    stock: 20,
+    lowStockThreshold: 5,
+    availability: "in_stock",
+    image: "/images/products/deep-pigmentation-cream.jpg",
+    imageHover: "/images/products/deep-pigmentation-cream-alt.jpg",
+    gallery: ["/images/products/deep-pigmentation-cream.jpg", "/images/products/deep-pigmentation-cream-alt.jpg"],
+    galleryAlt: ["Deep Pigmentation Cream jar", "Deep Pigmentation Cream texture and packaging detail"],
+    concern: "Dark Spots · Pigmentation",
+    concerns: ["Pigmentation", "Dark Spots", "Uneven Tone"],
+    concernSlugs: ["pigmentation", "uneven-tone"],
+    rating: 4.5,
+    reviewCount: 12,
+    description: "A clinical pigmentation cream formulated for dark spots, uneven skin tone and post-acne pigmentation using alpha arbutin, kojic acid derivatives and barrier-supporting ingredients.",
+    ingredients: "Aqua, Glycerin, Alpha Arbutin, Kojic Acid Dipalmitate, Licorice Root Extract, Panthenol, Ceramide NP, Dimethicone, Phenoxyethanol.",
+    howToUse: "Apply a thin layer to areas of uneven tone after serum. Use once daily at night to start, and wear sunscreen in the morning.",
+    keyIngredients: [
+      { name: "Alpha Arbutin", benefit: "Helps improve the look of visible uneven tone." },
+      { name: "Kojic Acid Dipalmitate", benefit: "Supports a brighter-looking, more balanced complexion." },
+      { name: "Licorice Extract", benefit: "Helps soothe the look of stressed, uneven skin." },
+      { name: "Panthenol", benefit: "Helps keep targeted tone-care routines comfortable." },
+      { name: "Ceramides", benefit: "Keep the cream comfortable for barrier-focused routines." },
+    ],
+    seoTitle: "Deep Pigmentation Cream for Dark Spots & Uneven Skin Tone",
+    seoDescription: "Shop CLINVARA Deep Pigmentation Cream for dark spots, uneven tone and post-acne pigmentation with alpha arbutin, kojic acid derivative and barrier-supporting ingredients.",
+    sortOrder: 3,
+  },
+  {
+    id: "4",
+    name: "Ceramide Moisture",
+    slug: "ceramide-moisture",
+    category: "moisturizers",
+    price: 549,
+    mrp: 699,
+    sizes: ["50ml"],
+    badge: "BESTSELLER",
+    featured: true,
+    active: true,
+    stock: 25,
+    lowStockThreshold: 5,
+    availability: "in_stock",
+    image: "/images/products/ceramide-moisture.jpg",
+    imageHover: "/images/products/ceramide-moisture-alt.jpg",
+    gallery: ["/images/products/ceramide-moisture.jpg", "/images/products/ceramide-moisture-alt.jpg"],
+    galleryAlt: ["Ceramide Moisture cream tube", "Ceramide Moisture texture and product detail"],
+    concern: "Barrier Repair · Hydration",
+    concerns: ["Barrier Repair", "Dryness", "Sensitivity"],
+    concernSlugs: ["barrier-repair", "dryness-dehydration", "sensitive-skin"],
+    rating: 4.8,
+    reviewCount: 31,
+    description: "A ceramide moisturizer formulated to support skin barrier repair, hydration and long-lasting comfort using ceramides, cholesterol, fatty acids and panthenol.",
+    ingredients: "Aqua, Glycerin, Ceramide NP, Ceramide AP, Cholesterol, Fatty Acids, Panthenol, Sodium PCA, Sodium Hyaluronate, Phenoxyethanol.",
+    howToUse: "Apply after serums as the final moisturizing step. Use morning and evening as needed.",
+    keyIngredients: [
+      { name: "Ceramides", benefit: "Help support the skin barrier and a replenished feel." },
+      { name: "Cholesterol", benefit: "Complements ceramides in a barrier-focused moisturizer." },
+      { name: "Fatty Acids", benefit: "Add cushion and comfort for dry-feeling skin." },
+      { name: "Panthenol", benefit: "Helps skin feel calm and comfortable." },
+      { name: "Natural Moisturizing Factors", benefit: "Supports lasting hydration and softness." },
+    ],
+    seoTitle: "Ceramide Moisture Barrier Repair Moisturizer",
+    seoDescription: "Shop CLINVARA Ceramide Moisture, a barrier repair moisturizer with ceramides, cholesterol, fatty acids and panthenol for hydrated, comfortable skin.",
+    sortOrder: 4,
+  },
+];
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    projectId: process.env.GOOGLE_CLOUD_PROJECT || "clinvara-f6235",
+  });
+}
+
+const db = admin.firestore();
+const timestamp = admin.firestore.FieldValue.serverTimestamp;
+
+for (const product of products) {
+  await db
+    .collection("products")
+    .doc(product.slug)
+    .set(
+    {
+      ...product,
+      createdAt: timestamp(),
+      updatedAt: timestamp(),
+    },
+    { merge: true },
+  );
+  console.log(`Upserted products/${product.slug}`);
+}
+
+console.log("Seed complete. Firestore products collection now has the original CLINVARA products.");

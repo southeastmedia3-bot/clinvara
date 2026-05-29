@@ -11,7 +11,7 @@ import {
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type ToastVariant = "success" | "error" | "info";
+export type ToastVariant = "success" | "error" | "info" | "warning";
 
 export type ToastInput = {
   message: string;
@@ -55,10 +55,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 border border-black/10 px-4 py-3 text-sm text-white shadow-lg",
-              t.variant === "success" && "bg-[var(--brand-green-check)]",
-              t.variant === "error" && "bg-red-600",
-              t.variant === "info" && "bg-[var(--brand-accent)]",
+              "pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur",
+              t.variant === "success" && "border-green-200 bg-green-50 text-green-900",
+              t.variant === "error" && "border-red-200 bg-red-50 text-red-900",
+              t.variant === "info" && "border-[var(--brand-border)] bg-white text-black",
+              t.variant === "warning" && "border-amber-200 bg-amber-50 text-amber-900",
             )}
           >
             <p className="flex-1 font-medium leading-snug">{t.message}</p>

@@ -1,7 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { SearchX } from "lucide-react";
+import { CheckCircle2, Clock, PackageCheck, SearchX, Truck } from "lucide-react";
+import { apiUrl } from "@/lib/api/client";
+
+type TrackedOrder = {
+  id: string;
+  orderId: string;
+  adminDecision: "pending" | "accepted" | "rejected";
+  orderStatus: string;
+  publicOrderStatus: string;
+  paymentStatus: string;
+  rejectionReason?: string;
+  createdAt?: string;
+  confirmedAt?: string;
+  packedAt?: string;
+  pickedUpAt?: string;
+  shippedAt?: string;
+  outForDeliveryAt?: string;
+  deliveredAt?: string;
+};
+
+const stages = [
+  { key: "confirmed", label: "Confirmed", icon: CheckCircle2, time: "confirmedAt" },
+  { key: "packed", label: "Packed", icon: PackageCheck, time: "packedAt" },
+  { key: "picked_up", label: "Picked Up", icon: Truck, time: "pickedUpAt" },
+  { key: "shipped", label: "In Transit", icon: Truck, time: "shippedAt" },
+  { key: "out_for_delivery", label: "Out for Delivery", icon: Truck, time: "outForDeliveryAt" },
+  { key: "delivered", label: "Delivered", icon: CheckCircle2, time: "deliveredAt" },
+] as const;
 
 export function TrackOrderClient() {
   const [orderId, setOrderId] = useState("");
@@ -9,6 +36,8 @@ export function TrackOrderClient() {
   const [errors, setErrors] = useState<{ orderId?: string; contact?: string }>({});
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [order, setOrder] = useState<TrackedOrder | null>(null);
+  const [lookupError, setLookupError] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +48,25 @@ export function TrackOrderClient() {
     setSearched(false);
     if (Object.keys(next).length) return;
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    setLookupError("");
+    setOrder(null);
+    try {
+      const response = await fetch(apiUrl("/api/orders/track"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, contact }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { order?: TrackedOrder | null; error?: string }
+        | null;
+      if (!response.ok) {
+        setLookupError(data?.error || "Unable to track this order right now.");
+      } else {
+        setOrder(data?.order || null);
+      }
+    } catch {
+      setLookupError("Unable to reach order tracking. Please try again.");
+    }
     setLoading(false);
     setSearched(true);
   };
@@ -85,7 +132,18 @@ export function TrackOrderClient() {
         </button>
       </form>
 
-      {searched && (
+      {searched && lookupError && (
+        <section className="mt-8 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
+          <h2 className="font-display text-2xl font-semibold">Tracking unavailable</h2>
+          <p className="mt-2 text-sm text-red-700">{lookupError}</p>
+        </section>
+      )}
+
+      {searched && order && (
+        <OrderStatusPanel order={order} />
+      )}
+
+      {searched && !order && !lookupError && (
         <section className="mt-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-sm">
           <SearchX className="mx-auto h-8 w-8 text-[var(--brand-text-muted)]" />
           <h2 className="mt-3 font-display text-2xl font-semibold">
@@ -98,5 +156,112 @@ export function TrackOrderClient() {
         </section>
       )}
     </main>
+  );
+}
+
+function dateLabel(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function OrderStatusPanel({ order }: { order: TrackedOrder }) {
+  const rejected =
+    order.adminDecision === "rejected" ||
+    ["rejected", "cancelled"].includes(order.orderStatus);
+  const pending = order.adminDecision === "pending";
+  const currentIndex = stages.findIndex((stage) => stage.key === order.publicOrderStatus);
+
+  if (pending) {
+    return (
+      <StatusCard
+        icon={<Clock className="h-8 w-8" />}
+        title="Waiting for confirmation"
+        message="Your order has been placed and is waiting for admin confirmation. You will see the next steps once it is accepted."
+      />
+    );
+  }
+
+  if (rejected) {
+    return (
+      <StatusCard
+        icon={<SearchX className="h-8 w-8" />}
+        title="Order rejected"
+        message={
+          order.rejectionReason ||
+          "Your order could not be confirmed. Please contact CLINVARA support."
+        }
+      />
+    );
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+        Order {order.orderId}
+      </p>
+      <h2 className="mt-2 font-display text-3xl font-semibold">Order confirmed</h2>
+      <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+        Your CLINVARA order is moving through fulfilment.
+      </p>
+      <ol className="mt-6 space-y-4">
+        {stages.map((stage, index) => {
+          const Icon = stage.icon;
+          const done = currentIndex === -1 ? index === 0 : index <= currentIndex;
+          const timestamp = order[stage.time as keyof TrackedOrder] as string | undefined;
+          return (
+            <li key={stage.key} className="flex gap-3">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${
+                  done ? "border-black bg-black text-white" : "border-[var(--brand-border)]"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold">{stage.label}</span>
+                <span className="text-xs text-[var(--brand-text-muted)]">
+                  {timestamp ? dateLabel(timestamp) : done ? "Updated" : "Pending"}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <a
+        href="mailto:clinvaraglobal@gmail.com"
+        className="mt-6 inline-flex rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em]"
+      >
+        Contact Support
+      </a>
+    </section>
+  );
+}
+
+function StatusCard({
+  icon,
+  title,
+  message,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  message: string;
+}) {
+  return (
+    <section className="mt-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-sm">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-off-white)]">
+        {icon}
+      </div>
+      <h2 className="mt-3 font-display text-2xl font-semibold">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-[var(--brand-text-muted)]">
+        {message}
+      </p>
+    </section>
   );
 }

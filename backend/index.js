@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const express = require("express");
+const admin = require("firebase-admin");
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { allProducts } = require("./data/products");
@@ -15,6 +16,7 @@ const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
 
 const app = express();
 app.use(express.json());
+if (!admin.apps.length) admin.initializeApp();
 
 function allowedOrigins() {
   return (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_BASE_URL || "")
@@ -172,6 +174,66 @@ app.get("/social/feed", async (_req, res) => {
 app.get("/social/instagram-status", async (_req, res) => {
   const status = await checkInstagramToken();
   return res.status(status.ok ? 200 : 200).json(status);
+});
+
+app.post("/orders/track", async (req, res) => {
+  const orderId = String(req.body?.orderId || "").trim();
+  const contact = String(req.body?.contact || "").trim().toLowerCase();
+  if (!orderId || !contact) {
+    return res.status(400).json({ error: "Order ID and email or phone are required." });
+  }
+
+  const db = admin.firestore();
+  const direct = await db.collection("orders").doc(orderId).get();
+  let orderDoc = direct.exists ? direct : null;
+
+  if (!orderDoc) {
+    const byOrderId = await db
+      .collection("orders")
+      .where("orderId", "==", orderId)
+      .limit(1)
+      .get();
+    orderDoc = byOrderId.docs[0] || null;
+  }
+
+  if (!orderDoc) {
+    return res.json({ order: null });
+  }
+
+  const data = orderDoc.data() || {};
+  const allowedContacts = [
+    data.email,
+    data.checkoutEmail,
+    data.customerEmail,
+    data.customerPhone,
+    data.shippingAddress?.phone,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  if (!allowedContacts.includes(contact)) {
+    return res.json({ order: null });
+  }
+
+  return res.json({
+    order: {
+      id: orderDoc.id,
+      orderId: data.orderId || orderDoc.id,
+      adminDecision: data.adminDecision || "pending",
+      orderStatus: data.orderStatus || data.status || "pending_admin_confirmation",
+      publicOrderStatus: data.publicOrderStatus || "waiting_for_confirmation",
+      paymentStatus: data.paymentStatus || "pending",
+      rejectionReason: data.rejectionReason || "",
+      createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || "",
+      confirmedAt: data.confirmedAt || "",
+      packedAt: data.packedAt || "",
+      pickedUpAt: data.pickedUpAt || "",
+      shippedAt: data.shippedAt || "",
+      outForDeliveryAt: data.outForDeliveryAt || "",
+      deliveredAt: data.deliveredAt || "",
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAt || "",
+    },
+  });
 });
 
 app.get("/social/instagram-feed", async (_req, res) => {
