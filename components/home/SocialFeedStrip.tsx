@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Instagram, MessageCircle, Play } from "lucide-react";
+import { apiUrl } from "@/lib/api/client";
 
 type SocialPlatform = "instagram" | "youtube" | "threads";
 
@@ -12,8 +13,8 @@ type SocialPost = {
   title?: string;
   caption: string;
   media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | "TEXT";
-  media_url: string;
-  thumbnail_url?: string;
+  media_url?: string | null;
+  thumbnail_url?: string | null;
   permalink: string;
   timestamp: string;
 };
@@ -33,42 +34,6 @@ type SocialCard = {
   cta: string;
   timestamp: string;
 };
-
-const fallbackCards: SocialCard[] = [
-  {
-    id: "fallback-instagram",
-    platform: "instagram",
-    label: "Instagram",
-    title: "Follow @clinvaraglobal",
-    caption:
-      "Clinical skincare routines, product textures, and launch notes from CLINVARA.",
-    href: "https://www.instagram.com/clinvaraglobal/",
-    cta: "Open Instagram",
-    timestamp: "",
-  },
-  {
-    id: "fallback-youtube",
-    platform: "youtube",
-    label: "YouTube",
-    title: "Skincare education",
-    caption:
-      "Watch CLINVARA explainers for actives, routines, and barrier-focused care.",
-    href: "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ",
-    cta: "Open YouTube",
-    timestamp: "",
-  },
-  {
-    id: "fallback-threads",
-    platform: "threads",
-    label: "Threads",
-    title: "Routine notes",
-    caption:
-      "Follow CLINVARA for concise product updates and daily skincare notes.",
-    href: "https://www.threads.net/@clinvaraglobal",
-    cta: "Open Threads",
-    timestamp: "",
-  },
-];
 
 function platformLabel(platform: SocialPlatform) {
   if (platform === "youtube") return "YouTube";
@@ -98,10 +63,10 @@ function platformIcon(platform: SocialPlatform) {
 
 function postImage(post: SocialPost) {
   if (post.media_type === "VIDEO") {
-    return post.thumbnail_url || post.media_url;
+    return post.thumbnail_url || post.media_url || undefined;
   }
 
-  return post.thumbnail_url || post.media_url;
+  return post.thumbnail_url || post.media_url || undefined;
 }
 
 function postTime(post: Pick<SocialPost, "timestamp">) {
@@ -131,6 +96,54 @@ function uniquePosts(posts: SocialPost[]) {
     keys.forEach((key) => seen.add(key));
     return Boolean(image || post.caption || post.title);
   });
+}
+
+function SkeletonCard() {
+  return (
+    <div className="social-card w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 sm:w-[320px]">
+      <div className="skeleton aspect-[4/5] rounded-lg" />
+      <div className="p-2 pt-4">
+        <div className="skeleton h-4 w-28 rounded" />
+        <div className="skeleton mt-4 h-7 w-44 rounded" />
+        <div className="skeleton mt-3 h-4 w-full rounded" />
+        <div className="skeleton mt-2 h-4 w-4/5 rounded" />
+      </div>
+    </div>
+  );
+}
+
+function EmptySocialState() {
+  const links = [
+    ["Instagram", "https://www.instagram.com/clinvaraglobal/"],
+    ["YouTube", "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ"],
+    ["Threads", "https://www.threads.net/@clinvaraglobal"],
+  ];
+
+  return (
+    <div className="rounded-xl border border-[var(--brand-border)] bg-white p-6">
+      <p className="font-display text-2xl font-semibold">
+        Follow CLINVARA for skincare updates
+      </p>
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--brand-text-muted)]">
+        Our latest social posts could not be loaded right now. Follow CLINVARA
+        on Instagram, YouTube and Threads for skincare routines, launches, and
+        product education.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        {links.map(([label, href]) => (
+          <Link
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-black/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition hover:border-black"
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function toCard(post: SocialPost): SocialCard {
@@ -189,7 +202,9 @@ export function SocialFeedStrip() {
     let active = true;
 
     async function loadPosts() {
-      const result = await fetch("/api/social/feed", { cache: "no-store" })
+      const result = await fetch(apiUrl("/api/social/feed"), {
+        cache: "no-store",
+      })
         .then((response) => response.json() as Promise<SocialApiResponse>)
         .catch(() => null);
 
@@ -207,9 +222,8 @@ export function SocialFeedStrip() {
   }, []);
 
   const cards = useMemo(() => {
-    const liveCards = sortAndLimit(posts);
-    return liveCards.length ? liveCards : loaded ? fallbackCards : [];
-  }, [loaded, posts]);
+    return sortAndLimit(posts);
+  }, [posts]);
 
   useEffect(() => {
     const track = scrollRef.current;
@@ -260,48 +274,60 @@ export function SocialFeedStrip() {
           </h2>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="social-scroll"
-          aria-label="Latest CLINVARA social posts"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          onTouchStart={() => setIsPaused(true)}
-        >
-          {cards.map((card) => {
-            const Icon = platformIcon(card.platform);
+        {!loaded && (
+          <div className="social-scroll" aria-label="Loading latest CLINVARA social posts">
+            {[0, 1, 2, 3].map((item) => (
+              <SkeletonCard key={item} />
+            ))}
+          </div>
+        )}
 
-            return (
-              <Link
-                key={card.id}
-                href={card.href}
-                target="_blank"
-                rel="noreferrer"
-                className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
-              >
-                <CardMedia card={card} />
-                <div className="p-2 pt-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
-                      <Icon className="h-4 w-4 text-black" />
-                      {card.label}
+        {loaded && cards.length === 0 && <EmptySocialState />}
+
+        {loaded && cards.length > 0 && (
+          <div
+            ref={scrollRef}
+            className="social-scroll"
+            aria-label="Latest CLINVARA social posts"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+          >
+            {cards.map((card) => {
+              const Icon = platformIcon(card.platform);
+
+              return (
+                <Link
+                  key={card.id}
+                  href={card.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
+                >
+                  <CardMedia card={card} />
+                  <div className="p-2 pt-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                        <Icon className="h-4 w-4 text-black" />
+                        {card.label}
+                      </span>
+                      <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </div>
+                    <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
+                      {card.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                      {card.caption}
+                    </p>
+                    <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
+                      {card.cta}
                     </span>
-                    <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
-                  <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
-                    {card.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
-                    {card.caption}
-                  </p>
-                  <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
-                    {card.cta}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
