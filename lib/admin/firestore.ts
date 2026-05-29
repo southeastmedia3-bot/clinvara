@@ -23,6 +23,7 @@ import type {
   AdminReview,
   StoreSettings,
 } from "@/lib/admin/types";
+import { defaultStoreSettings } from "@/lib/data/settings";
 
 function docId(slugOrId: string) {
   return slugOrId.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
@@ -32,21 +33,7 @@ function withId<T>(id: string, data: T) {
   return { id, ...(data as Record<string, unknown>) } as T & { id: string };
 }
 
-export const defaultSettings: StoreSettings = {
-  storeName: "CLINVARA",
-  supportEmail: "clinvaraglobal@gmail.com",
-  supportPhone: "",
-  shippingCharge: 0,
-  freeShippingThreshold: 999,
-  announcementBarText: "Free sunscreen on orders above Rs.999",
-  homepageBannerText: "Clinical skincare with integrity.",
-  socialLinks: {
-    instagram: "https://www.instagram.com/clinvaraglobal/",
-    facebook: "https://www.facebook.com/people/Clinvara-global/61590268716995/",
-    youtube: "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ",
-    threads: "",
-  },
-};
+export const defaultSettings: StoreSettings = defaultStoreSettings;
 
 export async function listProducts(): Promise<AdminProduct[]> {
   const snapshot = await getDocs(collection(firebaseDb, "products"));

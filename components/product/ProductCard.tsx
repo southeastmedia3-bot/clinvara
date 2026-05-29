@@ -10,6 +10,7 @@ import { useCartStore } from "@/lib/store/cartStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { SafeImage } from "@/components/shared/SafeImage";
+import { isLowStock, isOutOfStock } from "@/lib/productAvailability";
 
 export function ProductCard({
   product,
@@ -28,8 +29,18 @@ export function ProductCard({
   const { showToast } = useToast();
 
   const size = product.sizes[0] ?? "30ml";
+  const outOfStock = isOutOfStock(product);
+  const lowStock = isLowStock(product);
 
   const onAdd = () => {
+    if (outOfStock) {
+      showToast({
+        message: "This product is currently out of stock.",
+        variant: "info",
+      });
+      return;
+    }
+
     setFlying(true);
 
     addItem({
@@ -65,6 +76,15 @@ export function ProductCard({
           {product.badge}
         </span>
       )}
+      {outOfStock ? (
+        <span className="absolute left-3 top-12 z-10 border border-red-700 bg-red-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+          Out of Stock
+        </span>
+      ) : lowStock ? (
+        <span className="absolute left-3 top-12 z-10 border border-amber-700 bg-amber-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+          Low Stock
+        </span>
+      ) : null}
 
       <button
         type="button"
@@ -148,9 +168,10 @@ export function ProductCard({
         <button
           type="button"
           onClick={onAdd}
-          className="flex h-[44px] w-full items-center justify-center border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black"
+          disabled={outOfStock}
+          className="flex h-[44px] w-full items-center justify-center border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
         >
-          Add to Cart
+          {outOfStock ? "Out of Stock" : "Add to Cart"}
         </button>
       </div>
     </div>

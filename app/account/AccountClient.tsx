@@ -26,6 +26,7 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
+import type { Product } from "@/lib/types";
 import { ProductCard } from "@/components/product/ProductCard";
 import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import {
@@ -85,6 +86,18 @@ export default function AccountClient() {
   const [checkoutEmail, setCheckoutEmail] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [products, setProducts] = useState<Product[]>(allProducts);
+
+  useEffect(() => {
+    fetch("/api/products", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { products?: Product[] } | null) => {
+        if (Array.isArray(data?.products) && data.products.length) {
+          setProducts(data.products);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -167,8 +180,8 @@ export default function AccountClient() {
   ]);
 
   const wishlistProducts = useMemo(
-    () => allProducts.filter((product) => wishIds.includes(product.id)),
-    [wishIds],
+    () => products.filter((product) => wishIds.includes(product.id)),
+    [products, wishIds],
   );
 
   const displayName =

@@ -12,6 +12,7 @@ import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
 
 import { ChatBot } from "@/components/ui/ChatBot";
 import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
+import { getStoreSettings } from "@/lib/firebase/products";
 
 const siteUrl = "https://clinvara.global";
 
@@ -141,11 +142,17 @@ const websiteJsonLd = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getStoreSettings();
+  const announcementText = settings.announcementBarText?.trim();
+  const announcementItems = announcementText
+    ? [{ text: announcementText, href: "/shop" }]
+    : undefined;
+
   return (
     <html lang="en-IN" className={`${display.variable} ${body.variable}`}>
       <body className="font-body antialiased">
@@ -172,7 +179,7 @@ export default function RootLayout({
 
         <ToastProvider>
           <ClientBootstrap>
-            <AnnouncementBar />
+            <AnnouncementBar initialAnnouncements={announcementItems} />
             <Navbar />
 
             <main id="main-content">{children}</main>

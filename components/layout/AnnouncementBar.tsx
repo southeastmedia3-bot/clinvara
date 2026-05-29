@@ -5,26 +5,32 @@ import { useEffect, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { announcements } from "@/lib/data/announcements";
+import type { Announcement } from "@/lib/types";
 
 const INTERVAL_MS = 4000;
 
-export function AnnouncementBar() {
+export function AnnouncementBar({
+  initialAnnouncements = announcements,
+}: {
+  initialAnnouncements?: Announcement[];
+}) {
   const [index, setIndex] = useState(0);
+  const items = initialAnnouncements.length ? initialAnnouncements : announcements;
 
   const next = useCallback(() => {
-    setIndex((i) => (i + 1) % announcements.length);
-  }, []);
+    setIndex((i) => (i + 1) % items.length);
+  }, [items.length]);
 
   const prev = useCallback(() => {
-    setIndex((i) => (i - 1 + announcements.length) % announcements.length);
-  }, []);
+    setIndex((i) => (i - 1 + items.length) % items.length);
+  }, [items.length]);
 
   useEffect(() => {
     const id = window.setInterval(next, INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [next]);
 
-  const current = announcements[index];
+  const current = items[index] || announcements[0];
 
   return (
     <div

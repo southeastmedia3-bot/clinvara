@@ -6,10 +6,23 @@ import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import { reviews } from "@/lib/data/reviews";
 import { StarRating } from "@/components/shared/StarRating";
+import type { Review } from "@/lib/types";
 
 export function ReviewsSection() {
   const [start, setStart] = useState(0);
   const [pageSize, setPageSize] = useState(3);
+  const [items, setItems] = useState<Review[]>(reviews);
+
+  useEffect(() => {
+    fetch("/api/reviews", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { reviews?: Review[] } | null) => {
+        if (Array.isArray(data?.reviews) && data.reviews.length) {
+          setItems(data.reviews);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -19,8 +32,8 @@ export function ReviewsSection() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  const maxStart = Math.max(0, reviews.length - pageSize);
-  const visible = reviews.slice(start, start + pageSize);
+  const maxStart = Math.max(0, items.length - pageSize);
+  const visible = items.slice(start, start + pageSize);
 
   useEffect(() => {
     setStart((s) => Math.min(s, maxStart));

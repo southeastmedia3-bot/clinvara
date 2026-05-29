@@ -22,6 +22,13 @@ export interface Product {
   howToUse?: string;
   gallery?: string[];
   galleryAlt?: string[];
+  stock?: number;
+  availability?: "in_stock" | "low_stock" | "out_of_stock";
+  lowStockThreshold?: number;
+  featured?: boolean;
+  active?: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface Review {

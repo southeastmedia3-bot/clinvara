@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { allProducts } from "@/lib/data/products";
 import { blogs } from "@/lib/data/blogs";
 import { debounce, formatINR } from "@/lib/utils";
+import type { Product } from "@/lib/types";
 
 type Props = {
   open: boolean;
@@ -17,6 +18,7 @@ export function SearchOverlay({ open, onClose }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [products, setProducts] = useState<Product[]>(allProducts);
 
   const pushDebounced = useMemo(
     () => debounce((val: string) => setDebounced(val), 300),
@@ -38,6 +40,14 @@ export function SearchOverlay({ open, onClose }: Props) {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
+    fetch("/api/products", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { products?: Product[] } | null) => {
+        if (Array.isArray(data?.products) && data.products.length) {
+          setProducts(data.products);
+        }
+      })
+      .catch(() => undefined);
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("keydown", onKey);
@@ -47,7 +57,7 @@ export function SearchOverlay({ open, onClose }: Props) {
   const results = useMemo(() => {
     const term = debounced.trim().toLowerCase();
     if (!term) return { products: [], concerns: [] as string[], posts: [] };
-    const products = allProducts.filter(
+    const matchedProducts = products.filter(
       (p) =>
         p.name.toLowerCase().includes(term) ||
         p.concerns.some((c) => c.toLowerCase().includes(term)) ||
@@ -59,7 +69,7 @@ export function SearchOverlay({ open, onClose }: Props) {
     );
     const concerns = Array.from(
       new Set(
-        allProducts.flatMap((p) =>
+        products.flatMap((p) =>
           p.concerns.filter((c) => c.toLowerCase().includes(term)),
         ),
       ),
@@ -70,8 +80,8 @@ export function SearchOverlay({ open, onClose }: Props) {
         b.excerpt.toLowerCase().includes(term) ||
         b.tag.toLowerCase().includes(term),
     );
-    return { products, concerns, posts };
-  }, [debounced]);
+    return { products: matchedProducts, concerns, posts };
+  }, [debounced, products]);
 
   if (!open) return null;
 

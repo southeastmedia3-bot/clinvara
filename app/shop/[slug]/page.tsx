@@ -1,18 +1,28 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, allProducts } from "@/lib/data/products";
+import { allProducts } from "@/lib/data/products";
 import { ProductDetail } from "@/components/product/ProductDetail";
+import {
+  getApprovedReviews,
+  getRelatedProducts,
+  getStorefrontProductBySlug,
+} from "@/lib/firebase/products";
+import { isOutOfStock } from "@/lib/productAvailability";
 
 type Props = { params: { slug: string } };
 
 const siteUrl = "https://clinvara.global";
+function absoluteUrl(path: string) {
+  if (/^https?:\/\//.test(path)) return path;
+  return `${siteUrl}${path}`;
+}
 
 export function generateStaticParams() {
   return allProducts.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await getStorefrontProductBySlug(params.slug);
 
   if (!product) {
     return {
@@ -24,8 +34,8 @@ export function generateMetadata({ params }: Props): Metadata {
     };
   }
 
-  const title = `${product.name} | Clinical Skincare`;
-  const description = `${product.description} Shop ${product.name} by CLINVARA for ${product.concerns.join(
+  const title = product.seoTitle || `${product.name} | Clinical Skincare`;
+  const description = product.seoDescription || `${product.description} Shop ${product.name} by CLINVARA for ${product.concerns.join(
     ", ",
   )}.`;
 
@@ -58,20 +68,22 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function ProductPage({ params }: Props) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: Props) {
+  const product = await getStorefrontProductBySlug(params.slug);
 
   if (!product) notFound();
+  const relatedProducts = await getRelatedProducts(product);
+  const approvedReviews = await getApprovedReviews(product.slug);
 
   const productUrl = `${siteUrl}/shop/${product.slug}`;
-  const imageUrl = `${siteUrl}${product.image}`;
+  const imageUrl = absoluteUrl(product.image);
 
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     image: product.gallery?.length
-      ? product.gallery.map((image) => `${siteUrl}${image}`)
+      ? product.gallery.map((image) => absoluteUrl(image))
       : [imageUrl],
     description: product.description,
     sku: `CLINVARA-${product.id}`,
@@ -86,7 +98,9 @@ export default function ProductPage({ params }: Props) {
       url: productUrl,
       price: product.price,
       priceCurrency: "INR",
-      availability: "https://schema.org/InStock",
+      availability: isOutOfStock(product)
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: {
         "@type": "Organization",
@@ -143,7 +157,11 @@ export default function ProductPage({ params }: Props) {
         }}
       />
 
-      <ProductDetail product={product} />
+      <ProductDetail
+        product={product}
+        relatedProducts={relatedProducts}
+        reviews={approvedReviews}
+      />
     </>
   );
 }

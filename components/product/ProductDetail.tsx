@@ -10,12 +10,20 @@ import { SizeSelector } from "@/components/product/SizeSelector";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { useToast } from "@/components/providers/ToastProvider";
-import { reviewsForProductSlug } from "@/lib/data/reviews";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { allProducts } from "@/lib/data/products";
 import { BackButton } from "@/components/ui/BackButton";
+import type { Review } from "@/lib/types";
+import { isLowStock, isOutOfStock } from "@/lib/productAvailability";
 
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+  product,
+  relatedProducts = [],
+  reviews = [],
+}: {
+  product: Product;
+  relatedProducts?: Product[];
+  reviews?: Review[];
+}) {
   const gallery = product.gallery ?? [product.image, product.imageHover];
   const [activeImage, setActiveImage] = useState(gallery[0]);
   const [size, setSize] = useState(product.sizes[0] ?? "30ml");
@@ -27,10 +35,8 @@ export function ProductDetail({ product }: { product: Product }) {
   const hasWish = useWishlistStore((s) => s.has(product.id));
   const { showToast } = useToast();
 
-  const productReviews = reviewsForProductSlug(product.slug);
-  const related = allProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const outOfStock = isOutOfStock(product);
+  const lowStock = isLowStock(product);
 
   const highlights =
     product.keyIngredients?.length
@@ -114,6 +120,15 @@ export function ProductDetail({ product }: { product: Product }) {
           <p className="mt-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
             {product.description}
           </p>
+          {outOfStock ? (
+            <p className="mt-4 inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-red-700">
+              Out of stock
+            </p>
+          ) : lowStock ? (
+            <p className="mt-4 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+              Low stock
+            </p>
+          ) : null}
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-xl font-bold">{formatINR(product.price)}</span>
             <span className="text-sm text-[var(--brand-mid-gray)] line-through">
@@ -150,8 +165,10 @@ export function ProductDetail({ product }: { product: Product }) {
 
           <button
             type="button"
-            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+            disabled={outOfStock}
+            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600 disabled:hover:ring-0"
             onClick={() => {
+              if (outOfStock) return;
               addItem({
                 productId: product.id,
                 slug: product.slug,
@@ -164,7 +181,7 @@ export function ProductDetail({ product }: { product: Product }) {
               showToast({ message: "Added to cart!", variant: "success" });
             }}
           >
-            Add to Cart
+            {outOfStock ? "Out of Stock" : "Add to Cart"}
           </button>
 
           <button
@@ -272,13 +289,13 @@ export function ProductDetail({ product }: { product: Product }) {
 
       <section id="product-reviews" className="mt-16 border-t border-[var(--brand-border)] pt-12">
         <h2 className="font-display text-2xl font-semibold">Customer Reviews</h2>
-        {productReviews.length === 0 ? (
+        {reviews.length === 0 ? (
           <p className="mt-4 text-sm text-[var(--brand-text-muted)]">
             No reviews yet. Be the first to share your experience.
           </p>
         ) : (
           <ul className="mt-6 space-y-4">
-            {productReviews.map((r) => (
+            {reviews.map((r) => (
               <li
                 key={r.name + r.date}
                 className="border border-[var(--brand-border)] p-4"
@@ -300,12 +317,12 @@ export function ProductDetail({ product }: { product: Product }) {
         )}
       </section>
 
-      {related.length > 0 && (
+      {relatedProducts.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 font-display text-2xl font-semibold">
             You Might Also Like
           </h2>
-          <ProductGrid products={related} />
+          <ProductGrid products={relatedProducts} />
         </section>
       )}
     </div>

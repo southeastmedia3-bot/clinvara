@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import { allProducts } from "@/lib/data/products";
+import { getStorefrontProducts } from "@/lib/firebase/products";
 
 type ChatMessage = {
   role: "assistant" | "user";
   text: string;
 };
-
-const productContext = allProducts
-  .map(
-    (product) =>
-      `${product.name}: ${product.description} Concerns: ${product.concerns.join(
-        ", ",
-      )}. Price: INR ${product.price}. Slug: /shop/${product.slug}. Ingredients: ${product.ingredients}`,
-  )
-  .join("\n");
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -36,6 +27,16 @@ export async function POST(request: Request) {
 
   let response: Response;
   try {
+    const products = await getStorefrontProducts();
+    const productContext = products
+      .map(
+        (product) =>
+          `${product.name}: ${product.description} Concerns: ${product.concerns.join(
+            ", ",
+          )}. Price: INR ${product.price}. Slug: /shop/${product.slug}. Ingredients: ${product.ingredients}`,
+      )
+      .join("\n");
+
     response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {

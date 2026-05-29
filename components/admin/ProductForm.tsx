@@ -27,6 +27,8 @@ const emptyProduct: AdminProduct = {
   gallery: [],
   seoTitle: "",
   seoDescription: "",
+  featured: false,
+  active: true,
 };
 
 function csv(value?: string[]) {
@@ -38,6 +40,20 @@ function splitCsv(value: string) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function formatKeyIngredients(value: AdminProduct["keyIngredients"]) {
+  return (value || []).map((item) => `${item.name}: ${item.benefit}`).join("\n");
+}
+
+function parseKeyIngredients(value: string) {
+  return value
+    .split("\n")
+    .map((line) => {
+      const [name, ...benefit] = line.split(":");
+      return { name: name.trim(), benefit: benefit.join(":").trim() };
+    })
+    .filter((item) => item.name && item.benefit);
 }
 
 export function ProductForm({
@@ -115,9 +131,32 @@ export function ProductForm({
         <Field label="Gallery URLs, comma separated" value={csv(form.gallery)} onChange={(value) => update("gallery", splitCsv(value))} />
         <Field label="SEO title" value={form.seoTitle || ""} onChange={(value) => update("seoTitle", value)} />
       </div>
+      <div className="flex flex-wrap gap-5 text-sm">
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={form.featured || false}
+            onChange={(event) => update("featured", event.target.checked)}
+          />
+          Featured / Best Seller
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={form.active !== false}
+            onChange={(event) => update("active", event.target.checked)}
+          />
+          Visible on storefront
+        </label>
+      </div>
 
       <Textarea label="Description" value={form.description || ""} onChange={(value) => update("description", value)} />
       <Textarea label="Ingredients" value={form.ingredients || ""} onChange={(value) => update("ingredients", value)} />
+      <Textarea
+        label="Key ingredients, one per line as Name: Benefit"
+        value={formatKeyIngredients(form.keyIngredients)}
+        onChange={(value) => update("keyIngredients", parseKeyIngredients(value))}
+      />
       <Textarea label="How to use" value={form.howToUse || ""} onChange={(value) => update("howToUse", value)} />
       <Textarea label="SEO description" value={form.seoDescription || ""} onChange={(value) => update("seoDescription", value)} />
 

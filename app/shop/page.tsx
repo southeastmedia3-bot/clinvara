@@ -1,17 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  allProducts,
   bestSellerIds,
   categoryFilters,
   concernPills,
-  getProductBySlug,
   productMatchesCategoryParam,
   productMatchesConcernSlug,
 } from "@/lib/data/products";
 import { routines } from "@/lib/data/routines";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import type { Product } from "@/lib/types";
+import { getStorefrontProducts } from "@/lib/firebase/products";
 
 type SearchValue = string | string[] | undefined;
 type ShopSearchParams = Record<string, SearchValue>;
@@ -49,11 +48,14 @@ function allParams(value: SearchValue) {
   return Array.isArray(value) ? value : [value];
 }
 
-function filterProducts(searchParams: ShopSearchParams = {}) {
+function filterProducts(productsInput: Product[], searchParams: ShopSearchParams = {}) {
   const filter = firstParam(searchParams.filter);
   const category = firstParam(searchParams.category);
   const concern = firstParam(searchParams.concern);
   const routine = firstParam(searchParams.routine);
+  const search = firstParam(searchParams.search).toLowerCase();
+  const availability = firstParam(searchParams.availability);
+  const badge = firstParam(searchParams.badge).toUpperCase();
   const sort = (firstParam(searchParams.sort) || "relevance") as SortKey;
   const minPrice = Number(firstParam(searchParams.minPrice) || "0");
   const maxPrice = Number(firstParam(searchParams.maxPrice) || "9999");
@@ -61,10 +63,15 @@ function filterProducts(searchParams: ShopSearchParams = {}) {
   const categories = allParams(searchParams.cat);
   const concerns = allParams(searchParams.c);
 
-  let products: Product[] = [...allProducts];
+  let products: Product[] = [...productsInput];
 
   if (filter === "bestsellers") {
-    products = products.filter((product) => bestSellerIds.includes(product.id));
+    products = products.filter(
+      (product) =>
+        bestSellerIds.includes(product.id) ||
+        product.featured ||
+        product.badge?.toUpperCase() === "BESTSELLER",
+    );
   }
 
   if (category) {
@@ -83,13 +90,37 @@ function filterProducts(searchParams: ShopSearchParams = {}) {
     const routineProducts =
       routines
         .find((item) => item.id === routine)
-        ?.steps.map((step) => getProductBySlug(step.slug))
+        ?.steps.map((step) => productsInput.find((product) => product.slug === step.slug))
         .filter((product): product is Product => Boolean(product)) ?? [];
 
     if (routineProducts.length) {
       const ids = new Set(routineProducts.map((product) => product.id));
       products = products.filter((product) => ids.has(product.id));
     }
+  }
+
+  if (search) {
+    products = products.filter((product) =>
+      [
+        product.name,
+        product.category,
+        product.description,
+        product.ingredients,
+        product.badge,
+        ...product.concerns,
+        ...(product.keyIngredients || []).flatMap((item) => [item.name, item.benefit]),
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(search)),
+    );
+  }
+
+  if (availability) {
+    products = products.filter((product) => product.availability === availability);
+  }
+
+  if (badge) {
+    products = products.filter((product) => product.badge?.toUpperCase() === badge);
   }
 
   if (categories.length) {
@@ -152,9 +183,10 @@ function activeLabel({
   return "All Products";
 }
 
-export default function ShopPage({ searchParams = {} }: ShopPageProps) {
+export default async function ShopPage({ searchParams = {} }: ShopPageProps) {
+  const allProducts = await getStorefrontProducts();
   const { products, filter, category, concern, routine, sort } =
-    filterProducts(searchParams);
+    filterProducts(allProducts, searchParams);
   const hasProducts = products.length > 0;
   const currentLabel = activeLabel({ filter, category, concern, routine });
 

@@ -51,6 +51,14 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) || isAdmin();
         allow delete: if isAdmin();
       }
+
+      match /cart/{itemId} {
+        allow read, create, update, delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /wishlist/{itemId} {
+        allow read, create, update, delete: if isOwner(userId) || isAdmin();
+      }
     }
 
     match /products/{productId} {

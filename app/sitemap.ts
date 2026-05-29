@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
-import { allProducts } from "@/lib/data/products";
 import { blogs } from "@/lib/data/blogs";
+import { getStorefrontProducts } from "@/lib/firebase/products";
 
 const baseUrl = "https://clinvara.global";
 
@@ -20,8 +20,9 @@ const staticRoutes = [
   { route: "/careers", priority: 0.4, changeFrequency: "monthly" as const },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const products = await getStorefrontProducts();
 
   return [
     ...staticRoutes.map(({ route, priority, changeFrequency }) => ({
@@ -31,7 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority,
     })),
 
-    ...allProducts.map((product) => ({
+    ...products.map((product) => ({
       url: `${baseUrl}/shop/${product.slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,

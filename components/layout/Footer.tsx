@@ -6,8 +6,25 @@ import {
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { socialLinks } from "@/lib/data/socialLinks";
+import { getStoreSettings } from "@/lib/firebase/products";
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getStoreSettings();
+  const supportEmail = settings.supportEmail || "clinvaraglobal@gmail.com";
+  const dynamicSocialLinks = socialLinks.map((social) => ({
+    ...social,
+    href:
+      social.platform.toLowerCase() === "instagram"
+        ? settings.socialLinks.instagram || social.href
+        : social.platform.toLowerCase() === "facebook"
+          ? settings.socialLinks.facebook || social.href
+          : social.platform.toLowerCase() === "youtube"
+            ? settings.socialLinks.youtube || social.href
+            : social.platform.toLowerCase() === "threads"
+              ? settings.socialLinks.threads || social.href
+              : social.href,
+  }));
+
   return (
     <footer className="mt-24 border-t border-white/10 bg-black text-white">
       <div className="border-b border-white/10 bg-zinc-950 px-4 py-4 text-center text-[11px] uppercase tracking-[0.12em] text-white/50">
@@ -126,10 +143,10 @@ export function Footer() {
 
           <p className="mt-4 text-[14px]">
             <a
-              href="mailto:clinvaraglobal@gmail.com"
+              href={`mailto:${supportEmail}`}
               className="text-white/80 transition hover:text-white"
             >
-              clinvaraglobal@gmail.com
+              {supportEmail}
             </a>
           </p>
 
@@ -148,14 +165,14 @@ export function Footer() {
 
           <div className="flex gap-4">
             <a
-              href="mailto:clinvaraglobal@gmail.com"
+              href={`mailto:${supportEmail}`}
               aria-label="Email CLINVARA"
               className="text-white/60 transition hover:text-white"
             >
               <Mail className="h-5 w-5" />
             </a>
 
-            {socialLinks.map((social) => (
+            {dynamicSocialLinks.map((social) => (
               <a
                 key={social.platform}
                 href={social.href}

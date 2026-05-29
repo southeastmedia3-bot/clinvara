@@ -36,6 +36,7 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const refreshLatestPrices = useCartStore((s) => s.refreshLatestPrices);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
@@ -47,6 +48,10 @@ export default function CartPage() {
   const [addressError, setAddressError] = useState("");
   const [highlightAddress, setHighlightAddress] = useState(false);
   const addressSectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    void refreshLatestPrices();
+  }, [refreshLatestPrices]);
 
   const subtotal = cartTotal(items);
   const completeAddresses = useMemo(

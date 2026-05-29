@@ -23,6 +23,7 @@ type CartState = {
 
   loadFromFirestore: () => Promise<void>;
   syncToFirestore: () => Promise<void>;
+  refreshLatestPrices: () => Promise<void>;
 
   openCart: () => void;
   closeCart: () => void;
@@ -165,6 +166,35 @@ export const useCartStore = create<CartState>()(
         if (!user) return;
 
         await Promise.all(get().items.map((item) => saveCartItem(item)));
+      },
+
+      refreshLatestPrices: async () => {
+        const items = get().items;
+        if (!items.length) return;
+
+        const response = await fetch("/api/products", { cache: "no-store" }).catch(
+          () => null,
+        );
+        if (!response?.ok) return;
+        const data = (await response.json().catch(() => null)) as {
+          products?: Array<Partial<CartItem> & { id?: string; slug?: string; price?: number; image?: string; name?: string }>;
+        } | null;
+        const products = data?.products || [];
+        const next = items.map((item) => {
+          const product = products.find(
+            (entry) => entry.id === item.productId || entry.slug === item.slug,
+          );
+          if (!product) return item;
+          return {
+            ...item,
+            price: Number(product.price ?? item.price),
+            name: product.name || item.name,
+            image: product.image || item.image,
+            slug: product.slug || item.slug,
+          };
+        });
+        set({ items: next });
+        await Promise.all(next.map((item) => saveCartItem(item)));
       },
     }),
     {

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { allProducts, bestSellers } from "@/lib/data/products";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { getStorefrontBestSellers, getStorefrontProducts } from "@/lib/firebase/products";
 
-export function BestSellers() {
+export async function BestSellers() {
+  const bestSellers = await getStorefrontBestSellers();
+  const allProducts = await getStorefrontProducts();
   const products = bestSellers.length ? bestSellers : allProducts.slice(0, 4);
 
   return (

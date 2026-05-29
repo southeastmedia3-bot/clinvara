@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,20 +20,37 @@ export function CartDrawer() {
   const closeCart = useCartStore((s) => s.closeCart);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const refreshLatestPrices = useCartStore((s) => s.refreshLatestPrices);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const { showToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
   const firstFocusable = useRef<HTMLButtonElement>(null);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(FREE_SHIPPING);
+
+  useEffect(() => {
+    async function loadSettings() {
+      const response = await fetch("/api/settings", { cache: "no-store" }).catch(() => null);
+      if (!response?.ok) return;
+      const data = (await response.json().catch(() => null)) as
+        | { settings?: { freeShippingThreshold?: number } }
+        | null;
+      if (data?.settings?.freeShippingThreshold) {
+        setFreeShippingThreshold(Number(data.settings.freeShippingThreshold));
+      }
+    }
+    void loadSettings();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
+    void refreshLatestPrices();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeCart();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, closeCart]);
+  }, [isOpen, closeCart, refreshLatestPrices]);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,7 +66,7 @@ export function CartDrawer() {
 
   const subtotal = cartTotal(items);
   const count = cartCount(items);
-  const remaining = Math.max(0, FREE_SHIPPING - subtotal);
+  const remaining = Math.max(0, freeShippingThreshold - subtotal);
 
   return (
     <AnimatePresence>
@@ -181,7 +199,7 @@ export function CartDrawer() {
                 <span>Subtotal</span>
                 <span className="font-semibold">{formatINR(subtotal)}</span>
               </div>
-              {subtotal >= FREE_SHIPPING ? (
+              {subtotal >= freeShippingThreshold ? (
                 <p className="mb-3 text-xs font-medium text-[var(--brand-green-check)]">
                   You qualify for free shipping.
                 </p>
