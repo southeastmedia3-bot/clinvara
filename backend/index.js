@@ -5,6 +5,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { allProducts } = require("./data/products");
 const {
   checkInstagramToken,
+  getInstagramFeed,
   getSocialFeed,
 } = require("./socialFeed");
 
@@ -111,6 +112,34 @@ function frontendBaseUrl() {
   return process.env.FRONTEND_BASE_URL || "http://127.0.0.1:3000";
 }
 
+function applyInstagramCors(req, res) {
+  const origin = req.headers.origin;
+  const allowedOrigins = new Set([
+    "https://clinvara.global",
+    "https://www.clinvara.global",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+  ]);
+
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "https://clinvara.global");
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Cache-Control", "public, max-age=300, s-maxage=600");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return true;
+  }
+
+  return false;
+}
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "clinvara-backend" });
 });
@@ -143,6 +172,11 @@ app.get("/social/feed", async (_req, res) => {
 app.get("/social/instagram-status", async (_req, res) => {
   const status = await checkInstagramToken();
   return res.status(status.ok ? 200 : 200).json(status);
+});
+
+app.get("/social/instagram-feed", async (_req, res) => {
+  const payload = await getInstagramFeed();
+  return res.status(200).json(payload);
 });
 
 app.post("/chat", async (req, res) => {
@@ -314,4 +348,29 @@ exports.api = onRequest(
     secrets: [instagramAccessToken, threadsAccessToken, youtubeApiKey],
   },
   app,
+);
+
+exports.getInstagramFeed = onRequest(
+  {
+    region: "asia-south1",
+    secrets: [instagramAccessToken],
+  },
+  async (req, res) => {
+    if (applyInstagramCors(req, res)) return;
+
+    try {
+      const payload = await getInstagramFeed();
+      return res.status(200).json(payload);
+    } catch (error) {
+      console.error("[CLINVARA social] getInstagramFeed failed", {
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+      return res.status(200).json({
+        posts: [],
+        error: {
+          message: "Instagram feed could not be loaded.",
+        },
+      });
+    }
+  },
 );

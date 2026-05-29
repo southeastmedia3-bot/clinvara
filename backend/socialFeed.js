@@ -102,13 +102,19 @@ async function fetchJson(url, label) {
 
   if (!response.ok) {
     const message = data?.error?.message || data?.message || response.statusText;
-    console.error(`[CLINVARA social] ${label} failed`, {
+    const error = {
       status: response.status,
       message,
       code: data?.error?.code,
       type: data?.error?.type,
+    };
+    console.error(`[CLINVARA social] ${label} failed`, {
+      status: error.status,
+      message: error.message,
+      code: error.code,
+      type: error.type,
     });
-    return { data: null, error: { status: response.status, message } };
+    return { data: null, error };
   }
 
   return { data, error: null };
@@ -134,7 +140,7 @@ async function checkInstagramToken() {
   return { ok: true, id: data?.id, username: data?.username };
 }
 
-async function fetchInstagramPosts() {
+async function getInstagramFeed() {
   const token = process.env.INSTAGRAM_ACCESS_TOKEN;
   console.info("[CLINVARA social] Instagram token configured", {
     configured: Boolean(token),
@@ -143,12 +149,14 @@ async function fetchInstagramPosts() {
   if (!token) {
     return {
       posts: [],
-      error: "INSTAGRAM_ACCESS_TOKEN is not set.",
+      error: {
+        message: "INSTAGRAM_ACCESS_TOKEN is not set.",
+      },
     };
   }
 
   const params = new URLSearchParams({
-    fields: "id,media_type,media_url,thumbnail_url,permalink,timestamp",
+    fields: "id,media_type,media_url,thumbnail_url,permalink,caption,timestamp",
     limit: "7",
     access_token: token,
   });
@@ -157,9 +165,25 @@ async function fetchInstagramPosts() {
     "Instagram media",
   );
 
+  if (error) {
+    return {
+      posts: [],
+      error,
+    };
+  }
+
   return {
     posts: normalizeInstagramMedia(data?.data || []),
-    error: error?.message || null,
+    error: null,
+  };
+}
+
+async function fetchInstagramPosts() {
+  const payload = await getInstagramFeed();
+
+  return {
+    posts: payload.posts || [],
+    error: payload.error?.message || null,
   };
 }
 
@@ -232,5 +256,6 @@ async function getSocialFeed() {
 
 module.exports = {
   checkInstagramToken,
+  getInstagramFeed,
   getSocialFeed,
 };

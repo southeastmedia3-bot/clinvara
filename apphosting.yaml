@@ -24,6 +24,12 @@ env:
       - BUILD
       - RUNTIME
 
+  - variable: NEXT_PUBLIC_INSTAGRAM_FEED_URL
+    value: "https://asia-south1-clinvara-f6235.cloudfunctions.net/getInstagramFeed"
+    availability:
+      - BUILD
+      - RUNTIME
+
   - variable: GOOGLE_CLIENT_ID
     value: "667821786923-gf5lcilhq4ip6qvueqnoqcvmee7jj4d4.apps.googleusercontent.com"
     availability:

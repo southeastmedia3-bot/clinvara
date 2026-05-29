@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Instagram, MessageCircle, Play } from "lucide-react";
-import { apiUrl } from "@/lib/api/client";
 
 type SocialPlatform = "instagram" | "youtube" | "threads";
 
@@ -21,7 +20,12 @@ type SocialPost = {
 
 type SocialApiResponse = {
   posts?: SocialPost[];
-  diagnostics?: unknown;
+  error?: {
+    message?: string;
+    code?: string | number;
+    type?: string;
+    status?: number;
+  } | null;
 };
 
 type SocialCard = {
@@ -113,52 +117,15 @@ function SkeletonCard() {
   );
 }
 
-const placeholderCards: SocialCard[] = [
-  {
-    id: "instagram-placeholder-1",
-    platform: "instagram",
-    label: "Instagram",
-    title: "Routine updates",
-    caption:
-      "Follow CLINVARA on Instagram for product textures, launch notes, and skincare routines.",
-    href: "https://www.instagram.com/clinvaraglobal/",
-    cta: "View Post",
-    timestamp: "",
-  },
-  {
-    id: "instagram-placeholder-2",
-    platform: "instagram",
-    label: "Instagram",
-    title: "Ingredient notes",
-    caption:
-      "Explore clinical skincare education and ingredient transparency from CLINVARA.",
-    href: "https://www.instagram.com/clinvaraglobal/",
-    cta: "View Post",
-    timestamp: "",
-  },
-  {
-    id: "instagram-placeholder-3",
-    platform: "instagram",
-    label: "Instagram",
-    title: "Launch stories",
-    caption:
-      "See the latest CLINVARA launches and routine tips directly on Instagram.",
-    href: "https://www.instagram.com/clinvaraglobal/",
-    cta: "View Post",
-    timestamp: "",
-  },
-];
-
-
 function toCard(post: SocialPost): SocialCard {
+  const caption = post.caption || post.title || "";
+
   return {
     id: `${post.platform}-${post.id || post.permalink}`,
     platform: post.platform,
     label: platformLabel(post.platform),
     title: platformTitle(post),
-    caption:
-      post.caption ||
-      "Follow CLINVARA for skincare routines, launch updates, and product education.",
+    caption: caption.length > 100 ? `${caption.slice(0, 100).trim()}...` : caption,
     image: postImage(post),
     href: post.permalink,
     cta: platformCta(post.platform),
@@ -173,15 +140,27 @@ function sortAndLimit(posts: SocialPost[]) {
     .map(toCard);
 }
 
+function instagramFeedUrl() {
+  return (
+    process.env.NEXT_PUBLIC_INSTAGRAM_FEED_URL ||
+    "https://asia-south1-clinvara-f6235.cloudfunctions.net/getInstagramFeed"
+  );
+}
+
+function formattedTimestamp(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 function CardMedia({ card }: { card: SocialCard }) {
   if (!card.image) {
-    return (
-      <div className="flex aspect-[4/5] items-end rounded-lg bg-[var(--brand-light-gray)] p-5">
-        <p className="font-display text-3xl font-semibold leading-none">
-          CLINVARA
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -197,49 +176,27 @@ function CardMedia({ card }: { card: SocialCard }) {
 }
 
 async function fetchSocialFeed() {
-  const primaryUrl = apiUrl("/api/social/feed");
-  const urls =
-    primaryUrl === "/api/social/feed"
-      ? [primaryUrl]
-      : [primaryUrl, "/api/social/feed"];
+  const url = instagramFeedUrl();
+  const response = await fetch(url, { cache: "no-store" });
+  const data = (await response.json().catch(() => null)) as SocialApiResponse | null;
 
-  const errors: string[] = [];
-
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, { cache: "no-store" });
-      const data = (await response.json().catch(() => null)) as
-        | SocialApiResponse
-        | null;
-
-      if (!response.ok) {
-        const message = `Social feed failed at ${url}: ${response.status} ${response.statusText}`;
-        console.error(message, data);
-        errors.push(message);
-        continue;
-      }
-
-      if (data?.diagnostics) {
-        console.log("CLINVARA social feed diagnostics", data.diagnostics);
-      }
-
-      return Array.isArray(data?.posts) ? data.posts : [];
-    } catch (error) {
-      const message = `Social feed request failed at ${url}: ${
-        error instanceof Error ? error.message : String(error)
-      }`;
-      console.error(message);
-      errors.push(message);
-    }
+  if (!response.ok) {
+    throw new Error(
+      `Instagram feed failed at ${url}: ${response.status} ${response.statusText}`,
+    );
   }
 
-  console.error("CLINVARA social feed unavailable", errors);
-  return [];
+  if (data?.error?.message) {
+    throw new Error(data.error.message);
+  }
+
+  return Array.isArray(data?.posts) ? data.posts : [];
 }
 
 export function SocialFeedStrip() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -247,12 +204,26 @@ export function SocialFeedStrip() {
     let active = true;
 
     async function loadPosts() {
-      const nextPosts = await fetchSocialFeed();
+      try {
+        const nextPosts = await fetchSocialFeed();
 
-      if (!active) return;
+        if (!active) return;
 
-      setPosts(nextPosts);
-      setLoaded(true);
+        setPosts(nextPosts);
+        setError(nextPosts.length ? null : "No Instagram posts were returned.");
+      } catch (requestError) {
+        if (!active) return;
+
+        const message =
+          requestError instanceof Error
+            ? requestError.message
+            : "Instagram feed could not be loaded.";
+        console.error("CLINVARA Instagram feed error", message);
+        setPosts([]);
+        setError(message);
+      } finally {
+        if (active) setLoaded(true);
+      }
     }
 
     void loadPosts();
@@ -263,9 +234,8 @@ export function SocialFeedStrip() {
   }, []);
 
   const cards = useMemo(() => {
-    const liveCards = sortAndLimit(posts);
-    return liveCards.length ? liveCards : loaded ? placeholderCards : [];
-  }, [loaded, posts]);
+    return sortAndLimit(posts).filter((card) => Boolean(card.image));
+  }, [posts]);
 
   useEffect(() => {
     const track = scrollRef.current;
@@ -359,6 +329,11 @@ export function SocialFeedStrip() {
                     <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
                       {card.caption}
                     </p>
+                    {card.timestamp && (
+                      <p className="mt-3 text-xs uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
+                        {formattedTimestamp(card.timestamp)}
+                      </p>
+                    )}
                     <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
                       {card.cta}
                     </span>
@@ -367,6 +342,13 @@ export function SocialFeedStrip() {
               );
             })}
           </div>
+        )}
+
+        {loaded && cards.length === 0 && (
+          <p className="max-w-2xl text-sm text-[var(--brand-text-muted)]">
+            Instagram posts could not be loaded right now. Please refresh after
+            the Instagram token is updated.
+          </p>
         )}
       </div>
     </section>
