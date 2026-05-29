@@ -149,3 +149,9 @@ env:
     availability:
     - BUILD
     - RUNTIME
+
+  - variable: NEXT_PUBLIC_ADMIN_EMAILS
+    value: "clinvaraglobal@gmail.com"
+    availability:
+    - BUILD
+    - RUNTIME
