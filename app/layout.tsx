@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
 
 import { ChatBot } from "@/components/ui/ChatBot";
+import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
 
 const siteUrl = "https://clinvara.global";
 
@@ -144,6 +145,7 @@ export default function RootLayout({
   return (
     <html lang="en-IN" className={`${display.variable} ${body.variable}`}>
       <body className="font-body antialiased">
+        <GoogleAnalytics />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

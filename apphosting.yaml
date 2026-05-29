@@ -137,3 +137,9 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
+    value: "G-E39XJ8VE7Z"
+    availability:
+    - BUILD
+    - RUNTIME
