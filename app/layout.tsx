@@ -66,6 +66,10 @@ export const metadata: Metadata = {
 
   manifest: "/manifest.json",
 
+  verification: {
+    google: "K6c6ABaXQyQ9BPRbTYXGB-pnpFSCYbxOg52YarzGJFE",
+  },
+
   openGraph: {
     title:
       "Clinical Skincare Products | Dermatologist-Tested Skin Care | CLINVARA",
