@@ -1,7 +1,16 @@
 const crypto = require("crypto");
 const express = require("express");
 const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const { allProducts } = require("./data/products");
+const {
+  checkInstagramToken,
+  getSocialFeed,
+} = require("./socialFeed");
+
+const instagramAccessToken = defineSecret("INSTAGRAM_ACCESS_TOKEN");
+const threadsAccessToken = defineSecret("THREADS_ACCESS_TOKEN");
+const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
 
 const app = express();
 app.use(express.json());
@@ -118,190 +127,22 @@ app.post("/contact", (req, res) => {
   return res.json({ ok: true });
 });
 
-function normalizeText(value = "") {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function mediaForPost(post) {
-  if (post.media_type === "VIDEO") {
-    return post.thumbnail_url || post.media_url || "";
-  }
-
-  return post.media_url || post.thumbnail_url || "";
-}
-
-function postTimestamp(post) {
-  const time = Date.parse(post.timestamp || "");
-  return Number.isFinite(time) ? time : 0;
-}
-
-function uniqueLatestSocialPosts(posts) {
-  const seen = new Set();
-
-  return posts
-    .filter((post) => {
-      const media = mediaForPost(post);
-      const keys = [
-        post.id ? `${post.platform}:id:${post.id}` : "",
-        post.permalink ? `permalink:${post.permalink}` : "",
-        media ? `media:${media}` : "",
-      ].filter(Boolean);
-
-      if (!post.id || !post.permalink || keys.some((key) => seen.has(key))) {
-        return false;
-      }
-
-      keys.forEach((key) => seen.add(key));
-      return Boolean(media || post.caption || post.title);
-    })
-    .sort((a, b) => postTimestamp(b) - postTimestamp(a))
-    .slice(0, 7);
-}
-
-function normalizeInstagramMedia(items = []) {
-  return items.map((item) => ({
-    id: item.id,
-    platform: "instagram",
-    title: item.media_type === "VIDEO" ? "Latest Instagram Reel" : "Latest Instagram Post",
-    caption: normalizeText(item.caption),
-    thumbnail_url: item.media_type === "VIDEO" ? item.thumbnail_url || item.media_url || "" : item.media_url || "",
-    media_url: item.media_url || item.thumbnail_url || "",
-    permalink: item.permalink || "",
-    timestamp: item.timestamp || "",
-    media_type: item.media_type || "IMAGE",
-  }));
-}
-
-function normalizeYouTubeItems(items = []) {
-  return items
-    .filter((item) => item.id?.videoId && item.snippet?.title)
-    .map((item) => {
-      const thumbnail =
-        item.snippet?.thumbnails?.high?.url ||
-        item.snippet?.thumbnails?.medium?.url ||
-        item.snippet?.thumbnails?.default?.url ||
-        "";
-
-      return {
-        id: item.id.videoId,
-        platform: "youtube",
-        title: item.snippet.title,
-        caption: normalizeText(item.snippet.description || item.snippet.title),
-        thumbnail_url: thumbnail,
-        media_url: thumbnail,
-        permalink: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-        timestamp: item.snippet.publishedAt || "",
-        media_type: "VIDEO",
-      };
-    });
-}
-
-function normalizeThreadsItems(items = []) {
-  return items.map((item) => ({
-    id: item.id,
-    platform: "threads",
-    title: "Latest Thread",
-    caption: normalizeText(item.text),
-    thumbnail_url: item.thumbnail_url || item.media_url || "",
-    media_url: item.media_url || item.thumbnail_url || "",
-    permalink: item.permalink || "",
-    timestamp: item.timestamp || "",
-    media_type: item.media_type || "TEXT",
-  }));
-}
-
-async function fetchJson(url, label) {
-  const response = await fetch(url, { cache: "no-store" });
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    console.error(`[CLINVARA social] ${label} failed`, {
-      status: response.status,
-      message: data?.error?.message || data?.message || response.statusText,
-      code: data?.error?.code,
-      type: data?.error?.type,
-    });
-    return null;
-  }
-
-  return data;
-}
-
-async function fetchInstagramPosts() {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  if (!token) return [];
-
-  const params = new URLSearchParams({
-    fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp",
-    access_token: token,
-  });
-  const data = await fetchJson(
-    `https://graph.instagram.com/me/media?${params.toString()}`,
-    "Instagram",
-  );
-
-  return normalizeInstagramMedia(data?.data || []);
-}
-
-async function fetchYouTubePosts() {
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  const channelId = process.env.YOUTUBE_CHANNEL_ID || "UCi5HxfxaBwjAGqXEbWT_QYQ";
-  if (!apiKey || !channelId) return [];
-
-  const params = new URLSearchParams({
-    key: apiKey,
-    channelId,
-    part: "snippet",
-    order: "date",
-    maxResults: "7",
-    type: "video",
-  });
-  const data = await fetchJson(
-    `https://www.googleapis.com/youtube/v3/search?${params.toString()}`,
-    "YouTube",
-  );
-
-  return normalizeYouTubeItems(data?.items || []);
-}
-
-async function fetchThreadsPosts() {
-  const token = process.env.THREADS_ACCESS_TOKEN;
-  const userId = process.env.THREADS_USER_ID;
-  if (!token || !userId) return [];
-
-  const params = new URLSearchParams({
-    fields: "id,text,media_type,media_url,thumbnail_url,permalink,timestamp",
-    access_token: token,
-  });
-  const data = await fetchJson(
-    `https://graph.threads.net/v1.0/${userId}/threads?${params.toString()}`,
-    "Threads",
-  );
-
-  return normalizeThreadsItems(data?.data || []);
-}
-
 app.get("/social/feed", async (_req, res) => {
   try {
-    const [instagramResult, youtubeResult, threadsResult] = await Promise.allSettled([
-      fetchInstagramPosts(),
-      fetchYouTubePosts(),
-      fetchThreadsPosts(),
-    ]);
-    const instagram =
-      instagramResult.status === "fulfilled" ? instagramResult.value : [];
-    const youtube = youtubeResult.status === "fulfilled" ? youtubeResult.value : [];
-    const threads = threadsResult.status === "fulfilled" ? threadsResult.value : [];
-    const posts = uniqueLatestSocialPosts([...instagram, ...youtube, ...threads]);
-
+    const payload = await getSocialFeed();
     res.setHeader("Cache-Control", "public, max-age=300, s-maxage=600");
-    return res.json({ posts });
+    return res.json(payload);
   } catch (error) {
     console.error("[CLINVARA social] feed failed", {
       message: error instanceof Error ? error.message : "Unknown error",
     });
     return res.json({ posts: [] });
   }
+});
+
+app.get("/social/instagram-status", async (_req, res) => {
+  const status = await checkInstagramToken();
+  return res.status(status.ok ? 200 : 200).json(status);
 });
 
 app.post("/chat", async (req, res) => {
@@ -467,4 +308,10 @@ app.get("/auth/oauth/callback/:provider", async (req, res) => {
   return res.redirect(`${frontendBaseUrl()}/account?authError=unsupported`);
 });
 
-exports.api = onRequest({ region: "asia-south1" }, app);
+exports.api = onRequest(
+  {
+    region: "asia-south1",
+    secrets: [instagramAccessToken, threadsAccessToken, youtubeApiKey],
+  },
+  app,
+);

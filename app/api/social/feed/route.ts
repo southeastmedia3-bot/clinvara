@@ -22,9 +22,11 @@ function normalizeText(value = "") {
 }
 
 function postMedia(post: SocialPost) {
-  return post.media_type === "VIDEO"
-    ? post.thumbnail_url || post.media_url
-    : post.media_url || post.thumbnail_url;
+  if (post.media_type === "VIDEO") {
+    return post.thumbnail_url || post.media_url;
+  }
+
+  return post.media_url || post.thumbnail_url;
 }
 
 function postTime(post: SocialPost) {
@@ -66,42 +68,55 @@ async function fetchJson(url: string, label: string) {
       code: data?.error?.code,
       type: data?.error?.type,
     });
-    return null;
+    return { data: null, error: data?.error?.message || response.statusText };
   }
 
-  return data;
+  return { data, error: null };
 }
 
-async function fetchInstagramPosts(): Promise<SocialPost[]> {
+async function fetchInstagramPosts() {
   const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  if (!token) return [];
+  console.info("Social feed Instagram token configured", {
+    configured: Boolean(token),
+  });
+
+  if (!token) {
+    return {
+      posts: [] as SocialPost[],
+      error: "INSTAGRAM_ACCESS_TOKEN is not set.",
+    };
+  }
 
   const params = new URLSearchParams({
-    fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp",
+    fields: "id,media_type,media_url,thumbnail_url,permalink,timestamp",
+    limit: "7",
     access_token: token,
   });
-  const data = await fetchJson(
+  const { data, error } = await fetchJson(
     `https://graph.instagram.com/me/media?${params.toString()}`,
     "Instagram",
   );
 
-  return (data?.data ?? []).map((item: any) => ({
-    id: item.id ?? "",
-    platform: "instagram",
-    title:
-      item.media_type === "VIDEO"
-        ? "Latest Instagram Reel"
-        : "Latest Instagram Post",
-    caption: normalizeText(item.caption),
-    thumbnail_url:
-      item.media_type === "VIDEO"
-        ? item.thumbnail_url || item.media_url || ""
-        : item.media_url || "",
-    media_url: item.media_url || item.thumbnail_url || "",
-    permalink: item.permalink || "",
-    timestamp: item.timestamp || "",
-    media_type: item.media_type || "IMAGE",
-  }));
+  return {
+    posts: (data?.data ?? []).map((item: any) => ({
+      id: item.id ?? "",
+      platform: "instagram",
+      title:
+        item.media_type === "VIDEO"
+          ? "Latest Instagram Reel"
+          : "Latest Instagram Post",
+      caption: "",
+      thumbnail_url:
+        item.media_type === "VIDEO"
+          ? item.thumbnail_url || item.media_url || ""
+          : item.media_url || "",
+      media_url: item.media_url || item.thumbnail_url || "",
+      permalink: item.permalink || "",
+      timestamp: item.timestamp || "",
+      media_type: item.media_type || "IMAGE",
+    })) as SocialPost[],
+    error,
+  };
 }
 
 async function fetchYouTubePosts(): Promise<SocialPost[]> {
@@ -117,7 +132,7 @@ async function fetchYouTubePosts(): Promise<SocialPost[]> {
     maxResults: "7",
     type: "video",
   });
-  const data = await fetchJson(
+  const { data } = await fetchJson(
     `https://www.googleapis.com/youtube/v3/search?${params.toString()}`,
     "YouTube",
   );
@@ -154,7 +169,7 @@ async function fetchThreadsPosts(): Promise<SocialPost[]> {
     fields: "id,text,media_type,media_url,thumbnail_url,permalink,timestamp",
     access_token: token,
   });
-  const data = await fetchJson(
+  const { data } = await fetchJson(
     `https://graph.threads.net/v1.0/${userId}/threads?${params.toString()}`,
     "Threads",
   );
@@ -180,15 +195,30 @@ export async function GET() {
         fetchYouTubePosts(),
         fetchThreadsPosts(),
       ]);
-    const instagram =
-      instagramResult.status === "fulfilled" ? instagramResult.value : [];
+    const instagramPayload =
+      instagramResult.status === "fulfilled"
+        ? instagramResult.value
+        : { posts: [], error: "Instagram request failed." };
     const youtube =
       youtubeResult.status === "fulfilled" ? youtubeResult.value : [];
     const threads =
       threadsResult.status === "fulfilled" ? threadsResult.value : [];
 
     return NextResponse.json({
-      posts: uniqueLatestPosts([...instagram, ...youtube, ...threads]),
+      posts: uniqueLatestPosts([
+        ...instagramPayload.posts,
+        ...youtube,
+        ...threads,
+      ]),
+      diagnostics: {
+        instagram: {
+          count: instagramPayload.posts.length,
+          error: instagramPayload.error,
+          tokenConfigured: Boolean(process.env.INSTAGRAM_ACCESS_TOKEN),
+        },
+        youtube: { count: youtube.length },
+        threads: { count: threads.length },
+      },
     });
   } catch (error) {
     console.error("Social feed route failed", {

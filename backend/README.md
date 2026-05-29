@@ -6,6 +6,7 @@ Firebase Functions backend for CLINVARA.
 
 - `GET /health`
 - `GET /social/feed`
+- `GET /social/instagram-status`
 - `POST /contact`
 - `POST /chat`
 - `GET /auth/session`

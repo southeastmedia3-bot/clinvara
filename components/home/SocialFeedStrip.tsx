@@ -21,6 +21,7 @@ type SocialPost = {
 
 type SocialApiResponse = {
   posts?: SocialPost[];
+  diagnostics?: unknown;
 };
 
 type SocialCard = {
@@ -112,39 +113,42 @@ function SkeletonCard() {
   );
 }
 
-function EmptySocialState() {
-  const links = [
-    ["Instagram", "https://www.instagram.com/clinvaraglobal/"],
-    ["YouTube", "https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ"],
-    ["Threads", "https://www.threads.net/@clinvaraglobal"],
-  ];
+const placeholderCards: SocialCard[] = [
+  {
+    id: "instagram-placeholder-1",
+    platform: "instagram",
+    label: "Instagram",
+    title: "Routine updates",
+    caption:
+      "Follow CLINVARA on Instagram for product textures, launch notes, and skincare routines.",
+    href: "https://www.instagram.com/clinvaraglobal/",
+    cta: "View Post",
+    timestamp: "",
+  },
+  {
+    id: "instagram-placeholder-2",
+    platform: "instagram",
+    label: "Instagram",
+    title: "Ingredient notes",
+    caption:
+      "Explore clinical skincare education and ingredient transparency from CLINVARA.",
+    href: "https://www.instagram.com/clinvaraglobal/",
+    cta: "View Post",
+    timestamp: "",
+  },
+  {
+    id: "instagram-placeholder-3",
+    platform: "instagram",
+    label: "Instagram",
+    title: "Launch stories",
+    caption:
+      "See the latest CLINVARA launches and routine tips directly on Instagram.",
+    href: "https://www.instagram.com/clinvaraglobal/",
+    cta: "View Post",
+    timestamp: "",
+  },
+];
 
-  return (
-    <div className="rounded-xl border border-[var(--brand-border)] bg-white p-6">
-      <p className="font-display text-2xl font-semibold">
-        Follow CLINVARA for skincare updates
-      </p>
-      <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--brand-text-muted)]">
-        Our latest social posts could not be loaded right now. Follow CLINVARA
-        on Instagram, YouTube and Threads for skincare routines, launches, and
-        product education.
-      </p>
-      <div className="mt-5 flex flex-wrap gap-3">
-        {links.map(([label, href]) => (
-          <Link
-            key={label}
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full border border-black/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition hover:border-black"
-          >
-            {label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function toCard(post: SocialPost): SocialCard {
   return {
@@ -192,6 +196,47 @@ function CardMedia({ card }: { card: SocialCard }) {
   );
 }
 
+async function fetchSocialFeed() {
+  const primaryUrl = apiUrl("/api/social/feed");
+  const urls =
+    primaryUrl === "/api/social/feed"
+      ? [primaryUrl]
+      : [primaryUrl, "/api/social/feed"];
+
+  const errors: string[] = [];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      const data = (await response.json().catch(() => null)) as
+        | SocialApiResponse
+        | null;
+
+      if (!response.ok) {
+        const message = `Social feed failed at ${url}: ${response.status} ${response.statusText}`;
+        console.error(message, data);
+        errors.push(message);
+        continue;
+      }
+
+      if (data?.diagnostics) {
+        console.log("CLINVARA social feed diagnostics", data.diagnostics);
+      }
+
+      return Array.isArray(data?.posts) ? data.posts : [];
+    } catch (error) {
+      const message = `Social feed request failed at ${url}: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
+      console.error(message);
+      errors.push(message);
+    }
+  }
+
+  console.error("CLINVARA social feed unavailable", errors);
+  return [];
+}
+
 export function SocialFeedStrip() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -202,15 +247,11 @@ export function SocialFeedStrip() {
     let active = true;
 
     async function loadPosts() {
-      const result = await fetch(apiUrl("/api/social/feed"), {
-        cache: "no-store",
-      })
-        .then((response) => response.json() as Promise<SocialApiResponse>)
-        .catch(() => null);
+      const nextPosts = await fetchSocialFeed();
 
       if (!active) return;
 
-      setPosts(Array.isArray(result?.posts) ? result.posts : []);
+      setPosts(nextPosts);
       setLoaded(true);
     }
 
@@ -222,8 +263,9 @@ export function SocialFeedStrip() {
   }, []);
 
   const cards = useMemo(() => {
-    return sortAndLimit(posts);
-  }, [posts]);
+    const liveCards = sortAndLimit(posts);
+    return liveCards.length ? liveCards : loaded ? placeholderCards : [];
+  }, [loaded, posts]);
 
   useEffect(() => {
     const track = scrollRef.current;
@@ -281,8 +323,6 @@ export function SocialFeedStrip() {
             ))}
           </div>
         )}
-
-        {loaded && cards.length === 0 && <EmptySocialState />}
 
         {loaded && cards.length > 0 && (
           <div
