@@ -1,30 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Instagram, MessageCircle, Play } from "lucide-react";
 
-type SocialPlatform = "instagram" | "youtube" | "threads";
+type SocialPlatform = "instagram" | "threads" | "youtube" | string;
 
 type SocialPost = {
   id: string;
   platform: SocialPlatform;
   title?: string;
-  caption: string;
-  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | "TEXT";
-  media_url?: string | null;
-  thumbnail_url?: string | null;
+  caption?: string;
+  thumbnail_url?: string;
+  media_url?: string;
   permalink: string;
   timestamp: string;
+  media_type?: string;
 };
 
 type SocialApiResponse = {
   posts?: SocialPost[];
   error?: {
     message?: string;
-    code?: string | number;
-    type?: string;
-    status?: number;
   } | null;
 };
 
@@ -41,19 +38,20 @@ type SocialCard = {
 };
 
 function platformLabel(platform: SocialPlatform) {
-  if (platform === "youtube") return "YouTube";
   if (platform === "threads") return "Threads";
+  if (platform === "youtube") return "YouTube";
   return "Instagram";
 }
 
 function platformCta(platform: SocialPlatform) {
-  if (platform === "youtube") return "Watch Video";
   if (platform === "threads") return "View Thread";
+  if (platform === "youtube") return "Watch Video";
   return "View Post";
 }
 
 function platformTitle(post: SocialPost) {
-  if (post.title?.trim()) return post.title.trim();
+  const title = post.title || "";
+  if (title.trim()) return title.trim();
   if (post.platform === "youtube") return "Latest YouTube Video";
   if (post.platform === "threads") return "Latest Thread";
   if (post.media_type === "VIDEO") return "Latest Instagram Reel";
@@ -75,7 +73,7 @@ function postImage(post: SocialPost) {
 }
 
 function postTime(post: Pick<SocialPost, "timestamp">) {
-  const time = Date.parse(post.timestamp);
+  const time = Date.parse(post.timestamp || "");
   return Number.isFinite(time) ? time : 0;
 }
 
@@ -93,11 +91,12 @@ function uniquePosts(posts: SocialPost[]) {
       post.permalink ? `permalink:${post.permalink}` : "",
       image ? `media:${image}` : "",
       post.caption || post.timestamp
-        ? `caption-time:${normalizeText(post.caption)}:${post.timestamp}`
+        ? `caption-time:${normalizeText(post.caption || "")}:${post.timestamp}`
         : "",
     ].filter(Boolean);
 
     if (!post.permalink || keys.some((key) => seen.has(key))) return false;
+
     keys.forEach((key) => seen.add(key));
     return Boolean(image || post.caption || post.title);
   });
@@ -140,10 +139,10 @@ function sortAndLimit(posts: SocialPost[]) {
     .map(toCard);
 }
 
-function instagramFeedUrl() {
+function socialFeedUrl() {
   return (
-    process.env.NEXT_PUBLIC_INSTAGRAM_FEED_URL ||
-    "https://asia-south1-clinvara-f6235.cloudfunctions.net/getInstagramFeed"
+    process.env.NEXT_PUBLIC_SOCIAL_FEED_URL ||
+    "https://asia-south1-clinvara-f6235.cloudfunctions.net/api/social/feed"
   );
 }
 
@@ -159,9 +158,7 @@ function formattedTimestamp(value: string) {
 }
 
 function CardMedia({ card }: { card: SocialCard }) {
-  if (!card.image) {
-    return null;
-  }
+  if (!card.image) return null;
 
   return (
     <div className="aspect-[4/5] overflow-hidden rounded-lg bg-[var(--brand-light-gray)]">
@@ -176,13 +173,13 @@ function CardMedia({ card }: { card: SocialCard }) {
 }
 
 async function fetchSocialFeed() {
-  const url = instagramFeedUrl();
+  const url = socialFeedUrl();
   const response = await fetch(url, { cache: "no-store" });
   const data = (await response.json().catch(() => null)) as SocialApiResponse | null;
 
   if (!response.ok) {
     throw new Error(
-      `Instagram feed failed at ${url}: ${response.status} ${response.statusText}`,
+      `Social feed failed at ${url}: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -196,7 +193,6 @@ async function fetchSocialFeed() {
 export function SocialFeedStrip() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -208,19 +204,17 @@ export function SocialFeedStrip() {
         const nextPosts = await fetchSocialFeed();
 
         if (!active) return;
-
         setPosts(nextPosts);
-        setError(nextPosts.length ? null : "No Instagram posts were returned.");
       } catch (requestError) {
-        if (!active) return;
-
         const message =
           requestError instanceof Error
             ? requestError.message
-            : "Instagram feed could not be loaded.";
-        console.error("CLINVARA Instagram feed error", message);
+            : "Social feed could not be loaded.";
+
+        console.error("CLINVARA social feed error", message);
+
+        if (!active) return;
         setPosts([]);
-        setError(message);
       } finally {
         if (active) setLoaded(true);
       }
@@ -244,6 +238,7 @@ export function SocialFeedStrip() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+
     if (prefersReducedMotion) return;
 
     let frameId = 0;
@@ -254,6 +249,7 @@ export function SocialFeedStrip() {
       if (!track) return;
 
       const maxScroll = track.scrollWidth - track.clientWidth;
+
       if (maxScroll <= 0) {
         frameId = requestAnimationFrame(animate);
         return;
@@ -315,6 +311,7 @@ export function SocialFeedStrip() {
                   className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
                 >
                   <CardMedia card={card} />
+
                   <div className="p-2 pt-4">
                     <div className="flex items-center justify-between gap-4">
                       <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
@@ -323,17 +320,21 @@ export function SocialFeedStrip() {
                       </span>
                       <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </div>
+
                     <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
                       {card.title}
                     </h3>
+
                     <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
                       {card.caption}
                     </p>
+
                     {card.timestamp && (
                       <p className="mt-3 text-xs uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
                         {formattedTimestamp(card.timestamp)}
                       </p>
                     )}
+
                     <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
                       {card.cta}
                     </span>
@@ -346,8 +347,8 @@ export function SocialFeedStrip() {
 
         {loaded && cards.length === 0 && (
           <p className="max-w-2xl text-sm text-[var(--brand-text-muted)]">
-            Instagram posts could not be loaded right now. Please refresh after
-            the Instagram token is updated.
+            Social posts could not be loaded right now. Please refresh after the
+            social feed tokens are updated.
           </p>
         )}
       </div>

@@ -131,3 +131,9 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  - variable: NEXT_PUBLIC_SOCIAL_FEED_URL
+    value: "https://asia-south1-clinvara-f6235.cloudfunctions.net/api/social/feed"
+    availability:
+      - BUILD
+      - RUNTIME
