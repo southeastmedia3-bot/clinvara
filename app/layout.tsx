@@ -12,6 +12,8 @@ import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
 
 import { ChatBot } from "@/components/ui/ChatBot";
 
+const siteUrl = "https://clinvara.global";
+
 const display = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -27,34 +29,110 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+
   title: {
-    default: "CLINVARA | Clinical Skincare",
+    default:
+      "Clinical Skincare Products | Dermatologist-Tested Skin Care | CLINVARA",
     template: "%s | CLINVARA",
   },
 
   description:
-    "Science-backed, ingredient-transparent skincare. Dermatologist-tested formulas inspired by clinical simplicity.",
+    "Discover dermatologist-tested clinical skincare powered by active ingredients for pigmentation, hydration, oil control and skin barrier repair.",
 
-  metadataBase: new URL("https://clinvara.global"),
+  applicationName: "CLINVARA",
+
+  keywords: [
+    "clinical skincare",
+    "dermatologist tested skincare",
+    "niacinamide serum",
+    "ceramide moisturizer",
+    "pigmentation skincare",
+    "skin barrier repair",
+    "oily skin skincare",
+    "clinical actives skincare",
+    "skincare for pigmentation",
+    "sensitive skin skincare",
+  ],
+
+  authors: [{ name: "CLINVARA" }],
+  creator: "CLINVARA",
+  publisher: "CLINVARA",
+
+  alternates: {
+    canonical: "/",
+  },
 
   manifest: "/manifest.json",
 
   openGraph: {
-    title: "CLINVARA",
+    title:
+      "Clinical Skincare Products | Dermatologist-Tested Skin Care | CLINVARA",
     description:
-      "Clinical skincare with transparent ingredients.",
+      "Dermatologist-tested clinical skincare powered by active ingredients for pigmentation, hydration, oil control and skin barrier repair.",
     siteName: "CLINVARA",
     type: "website",
-    url: "https://clinvara.global",
-    images: ["/images/brand/clinvara-logo.png"],
+    locale: "en_IN",
+    url: siteUrl,
+    images: [
+      {
+        url: "/images/brand/clinvara-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "CLINVARA clinical skincare",
+      },
+    ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "CLINVARA",
+    title:
+      "Clinical Skincare Products | Dermatologist-Tested Skin Care | CLINVARA",
     description:
-      "Science-backed, ingredient-transparent skincare.",
+      "Science-backed, ingredient-transparent skincare powered by clinical actives.",
     images: ["/images/brand/clinvara-logo.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "CLINVARA",
+  url: siteUrl,
+  logo: `${siteUrl}/images/brand/clinvara-logo.png`,
+  description:
+    "Clinical skincare powered by active ingredients and dermatologist-tested formulations.",
+  sameAs: [
+    "https://www.instagram.com/clinvaraglobal",
+    "https://www.threads.net/@clinvaraglobal",
+  ],
+  brand: {
+    "@type": "Brand",
+    name: "CLINVARA",
+  },
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "CLINVARA",
+  url: siteUrl,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteUrl}/shop?search={search_term_string}`,
+    "query-input": "required name=search_term_string",
   },
 };
 
@@ -64,11 +142,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${body.variable}`}
-    >
+    <html lang="en-IN" className={`${display.variable} ${body.variable}`}>
       <body className="font-body antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteJsonLd),
+          }}
+        />
+
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[300] focus:bg-black focus:px-4 focus:py-2 focus:text-white"
@@ -81,9 +169,7 @@ export default function RootLayout({
             <AnnouncementBar />
             <Navbar />
 
-            <main id="main-content">
-              {children}
-            </main>
+            <main id="main-content">{children}</main>
 
             <ChatBot />
             <Footer />

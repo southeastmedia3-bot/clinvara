@@ -19,7 +19,7 @@ export const allProducts: Product[] = [
     reviewCount: 24,
     category: "serums",
     description:
-      "With matmarine, zinc, and acetyl glucosamine. Regulates sebum and evens tone for all skin types.",
+      "A dermatologist-inspired niacinamide serum formulated for oily skin, visible pores, uneven tone and post-acne marks. Powered by niacinamide, zinc PCA and hydrating actives to support balanced, clearer-looking skin without heaviness.",
     ingredients:
       "Aqua, Niacinamide, Zinc PCA, Acetyl Glucosamine, Sodium Hyaluronate, Pentylene Glycol, Xanthan Gum, Phenoxyethanol.",
     keyIngredients: [
@@ -68,7 +68,7 @@ export const allProducts: Product[] = [
     reviewCount: 19,
     category: "cleansers",
     description:
-      "Surface hydration formula with Natural Moisturizing Factors and hyaluronic acid. Clinical formulations with integrity.",
+      "A gentle hydrating cleanser formulated with Natural Moisturizing Factors and hyaluronic acid to cleanse without stripping the skin barrier. Suitable for dry, dehydrated and sensitive skin types.",
     ingredients:
       "Aqua, Glycerin, Coco-Glucoside, Sodium Cocoyl Glutamate, Sodium Hyaluronate, Panthenol, Sodium PCA, Amino Acids, Phenoxyethanol.",
     keyIngredients: [
@@ -121,7 +121,7 @@ export const allProducts: Product[] = [
     reviewCount: 12,
     category: "moisturizers",
     description:
-      "A targeted tone-care cream for the look of dark spots, uneven tone, and visible pigmentation.",
+      "A clinical pigmentation cream formulated for dark spots, uneven skin tone and post-acne pigmentation using alpha arbutin, kojic acid derivatives and barrier-supporting ingredients.",
     ingredients:
       "Aqua, Glycerin, Alpha Arbutin, Kojic Acid Dipalmitate, Licorice Root Extract, Panthenol, Ceramide NP, Dimethicone, Phenoxyethanol.",
     keyIngredients: [
@@ -174,7 +174,7 @@ export const allProducts: Product[] = [
     reviewCount: 31,
     category: "moisturizers",
     description:
-      "A ceramide-rich barrier moisturizer with cholesterol, fatty acids, panthenol, and Natural Moisturizing Factors.",
+      "A ceramide moisturizer formulated to support skin barrier repair, hydration and long-lasting comfort using ceramides, cholesterol, fatty acids and panthenol.",
     ingredients:
       "Aqua, Glycerin, Ceramide NP, Ceramide AP, Cholesterol, Fatty Acids, Panthenol, Sodium PCA, Sodium Hyaluronate, Phenoxyethanol.",
     keyIngredients: [

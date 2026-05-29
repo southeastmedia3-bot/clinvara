@@ -5,42 +5,39 @@ import { blogs } from "@/lib/data/blogs";
 const baseUrl = "https://clinvara.global";
 
 const staticRoutes = [
-  "",
-  "/shop",
-  "/routines",
-  "/blog",
-  "/track-order",
-  "/contact",
-  "/about-us",
-  "/our-values",
-  "/privacy-policy",
-  "/terms-and-conditions",
-  "/sustainability",
-  "/faqs",
-  "/shipping-policy",
-  "/return-refund-policy",
-  "/careers",
+  { route: "", priority: 1, changeFrequency: "weekly" as const },
+  { route: "/shop", priority: 0.9, changeFrequency: "weekly" as const },
+  { route: "/routines", priority: 0.75, changeFrequency: "monthly" as const },
+  { route: "/contact", priority: 0.7, changeFrequency: "monthly" as const },
+  { route: "/about-us", priority: 0.7, changeFrequency: "monthly" as const },
+  { route: "/our-values", priority: 0.65, changeFrequency: "monthly" as const },
+  { route: "/faqs", priority: 0.65, changeFrequency: "monthly" as const },
+  { route: "/sustainability", priority: 0.6, changeFrequency: "monthly" as const },
+  { route: "/shipping-policy", priority: 0.45, changeFrequency: "yearly" as const },
+  { route: "/return-refund-policy", priority: 0.45, changeFrequency: "yearly" as const },
+  { route: "/privacy-policy", priority: 0.35, changeFrequency: "yearly" as const },
+  { route: "/terms-and-conditions", priority: 0.35, changeFrequency: "yearly" as const },
+  { route: "/careers", priority: 0.4, changeFrequency: "monthly" as const },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   return [
-    ...staticRoutes.map((route) => ({
+    ...staticRoutes.map(({ route, priority, changeFrequency }) => ({
       url: `${baseUrl}${route}`,
       lastModified: now,
-      changeFrequency:
-        route === "" || route === "/shop"
-          ? ("weekly" as const)
-          : ("monthly" as const),
-      priority: route === "" ? 1 : route === "/shop" ? 0.9 : 0.7,
+      changeFrequency,
+      priority,
     })),
+
     ...allProducts.map((product) => ({
       url: `${baseUrl}/shop/${product.slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
-      priority: 0.8,
+      priority: product.badge ? 0.85 : 0.8,
     })),
+
     ...blogs.map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: now,
