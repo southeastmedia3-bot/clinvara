@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Facebook, Instagram, Youtube } from "lucide-react";
+import { Mail, Facebook, Instagram, MessageCircle, Youtube } from "lucide-react";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 
 export function Footer() {
@@ -104,14 +104,6 @@ export function Footer() {
               clinvaraglobal@gmail.com
             </a>
           </p>
-          <p className="mt-1 text-sm">
-            <a
-              href="mailto:clinvaraglobal@gmail.com"
-              className="hover:text-[var(--brand-accent)]"
-            >
-              clinvaraglobal@gmail.com
-            </a>
-          </p>
           <Link
             href="/contact"
             className="mt-3 inline-block text-sm font-semibold underline"
@@ -125,31 +117,38 @@ export function Footer() {
           <div className="flex gap-4">
             <a
               href="mailto:clinvaraglobal@gmail.com"
-              aria-label="Email"
+              aria-label="Email CLINVARA"
               className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
             >
               <Mail className="h-6 w-6" />
             </a>
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/people/Clinvara-global/61590268716995/"
               aria-label="Facebook"
               className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
             >
               <Facebook className="h-6 w-6" />
             </a>
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/clinvaraglobal/"
               aria-label="Instagram"
               className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
             >
               <Instagram className="h-6 w-6" />
             </a>
             <a
-              href="https://youtube.com"
+              href="https://www.youtube.com/channel/UCi5HxfxaBwjAGqXEbWT_QYQ"
               aria-label="YouTube"
               className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
             >
               <Youtube className="h-6 w-6" />
+            </a>
+            <a
+              href="https://www.threads.net/@clinvaraglobal"
+              aria-label="Threads"
+              className="text-[var(--brand-primary)] hover:text-[var(--brand-accent)]"
+            >
+              <MessageCircle className="h-6 w-6" />
             </a>
           </div>
         </div>

@@ -133,15 +133,6 @@ export function Footer() {
             </a>
           </p>
 
-          <p className="mt-2 text-[14px]">
-            <a
-              href="mailto:clinvaraglobal@gmail.com"
-              className="text-white/80 transition hover:text-white"
-            >
-              clinvaraglobal@gmail.com
-            </a>
-          </p>
-
           <Link
             href="/contact"
             className="mt-5 inline-block text-[12px] font-semibold uppercase tracking-[0.14em] underline transition hover:text-white/80"
@@ -158,7 +149,7 @@ export function Footer() {
           <div className="flex gap-4">
             <a
               href="mailto:clinvaraglobal@gmail.com"
-              aria-label="Email"
+              aria-label="Email CLINVARA"
               className="text-white/60 transition hover:text-white"
             >
               <Mail className="h-5 w-5" />

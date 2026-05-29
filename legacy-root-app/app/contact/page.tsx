@@ -48,6 +48,16 @@ export default function ContactPage() {
         Questions about ingredients, orders, or wholesale? We typically respond within
         one business day.
       </p>
+      <p className="mt-4 text-sm text-[var(--brand-text-muted)]">
+        Email us directly at{" "}
+        <a
+          href="mailto:clinvaraglobal@gmail.com"
+          className="font-semibold text-black underline"
+        >
+          clinvaraglobal@gmail.com
+        </a>
+        .
+      </p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         <label className="block text-sm font-medium">
           Name

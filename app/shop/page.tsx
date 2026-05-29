@@ -242,7 +242,7 @@ export default function ShopPage({ searchParams = {} }: ShopPageProps) {
       </div>
 
       {hasProducts ? (
-        <ProductGrid products={products} />
+        <ProductGrid products={products} mobileColumns={1} />
       ) : (
         <section className="rounded-2xl border border-[var(--brand-border)] bg-white p-8 text-center">
           <h2 className="font-display text-3xl font-semibold">

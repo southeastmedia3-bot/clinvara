@@ -205,40 +205,45 @@ export function ProductDetail({ product }: { product: Product }) {
                   {sec.title}
                   <span>{openSection === sec.id ? "−" : "+"}</span>
                 </button>
-                {openSection === sec.id && sec.id === "ingredients" && (
-                  <ul className="space-y-2 pb-4 text-sm text-[var(--brand-text-muted)]">
-                    {highlights.map((h) => (
-                      <li key={h.name}>
-                        <strong className="text-black">{h.name}:</strong>{" "}
-                        {h.benefit}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {openSection === sec.id && sec.id === "howto" && (
-                  <p className="pb-4 text-sm text-[var(--brand-text-muted)]">
-                    {product.howToUse ||
-                      "Apply to clean skin as directed for your routine. Follow with moisturizer and use sunscreen in the morning."}
-                  </p>
-                )}
-                {openSection === sec.id && sec.id === "inci" && (
-                  <div className="pb-4">
-                    <p
-                      className={`font-mono text-xs leading-relaxed text-[var(--brand-text-muted)] ${
-                        showFullInci ? "" : "line-clamp-3"
-                      }`}
-                    >
-                      {product.ingredients || "Full ingredient list coming soon."}
+                <div hidden={openSection !== sec.id}>
+                  {sec.id === "ingredients" && (
+                    <ul className="space-y-2 pb-4 text-sm text-[var(--brand-text-muted)]">
+                      {highlights.map((h) => (
+                        <li key={h.name}>
+                          <strong className="text-black">{h.name}:</strong>{" "}
+                          {h.benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {sec.id === "howto" && (
+                    <p className="pb-4 text-sm text-[var(--brand-text-muted)]">
+                      {product.howToUse ||
+                        "Apply to clean skin as directed for your routine. Follow with moisturizer and use sunscreen in the morning."}{" "}
+                      Patch test before first use and reduce frequency if skin
+                      feels uncomfortable.
                     </p>
-                    <button
-                      type="button"
-                      className="mt-2 text-xs font-semibold underline"
-                      onClick={() => setShowFullInci((v) => !v)}
-                    >
-                      {showFullInci ? "Show less" : "Show full list"}
-                    </button>
-                  </div>
-                )}
+                  )}
+                  {sec.id === "inci" && (
+                    <div className="pb-4">
+                      <p
+                        className={`font-mono text-xs leading-relaxed text-[var(--brand-text-muted)] ${
+                          showFullInci ? "" : "line-clamp-3"
+                        }`}
+                      >
+                        {product.ingredients ||
+                          "Refer to the product packaging for the full ingredient list before use."}
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-2 text-xs font-semibold underline"
+                        onClick={() => setShowFullInci((v) => !v)}
+                      >
+                        {showFullInci ? "Show less" : "Show full list"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

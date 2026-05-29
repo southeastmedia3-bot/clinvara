@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { ContactClient } from "@/app/contact/ContactClient";
 
 export const metadata: Metadata = {
-  title: "Contact Us",
-  description: "Contact CLINVARA for product, ingredient, order, wholesale, and support questions.",
+  title: { absolute: "Contact Us | CLINVARA" },
+  description:
+    "Contact CLINVARA for product, ingredient, order, wholesale, and customer support questions.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact Us | CLINVARA",

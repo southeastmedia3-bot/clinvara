@@ -4,9 +4,11 @@ import { ProductCard } from "@/components/product/ProductCard";
 export function ProductGrid({
   products,
   mobileScroll = false,
+  mobileColumns = 2,
 }: {
   products: Product[];
   mobileScroll?: boolean;
+  mobileColumns?: 1 | 2;
 }) {
   if (mobileScroll) {
     return (
@@ -23,7 +25,11 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+    <div
+      className={`grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 ${
+        mobileColumns === 1 ? "grid-cols-1" : "grid-cols-2"
+      }`}
+    >
       {products.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}

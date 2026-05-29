@@ -123,23 +123,23 @@ export const allProducts: Product[] = [
     description:
       "A targeted tone-care cream for the look of dark spots, uneven tone, and visible pigmentation.",
     ingredients:
-      "Aqua, Glycerin, Niacinamide, Alpha Arbutin, Kojic Acid, Licorice Root Extract, Ceramide NP, Panthenol, Dimethicone, Phenoxyethanol.",
+      "Aqua, Glycerin, Alpha Arbutin, Kojic Acid Dipalmitate, Licorice Root Extract, Panthenol, Ceramide NP, Dimethicone, Phenoxyethanol.",
     keyIngredients: [
-      {
-        name: "Niacinamide",
-        benefit: "Helps refine the look of uneven tone and dullness.",
-      },
       {
         name: "Alpha Arbutin",
         benefit: "Helps improve the look of visible uneven tone.",
       },
       {
-        name: "Kojic Acid",
+        name: "Kojic Acid Dipalmitate",
         benefit: "Supports a brighter-looking, more balanced complexion.",
       },
       {
         name: "Licorice Extract",
         benefit: "Helps soothe the look of stressed, uneven skin.",
+      },
+      {
+        name: "Panthenol",
+        benefit: "Helps keep targeted tone-care routines comfortable.",
       },
       {
         name: "Ceramides",
