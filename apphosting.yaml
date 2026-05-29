@@ -24,6 +24,12 @@ env:
       - BUILD
       - RUNTIME
 
+  - variable: NEXT_PUBLIC_SOCIAL_FEED_URL
+    value: "https://asia-south1-clinvara-f6235.cloudfunctions.net/api/social/feed"
+    availability:
+      - BUILD
+      - RUNTIME
+
   - variable: NEXT_PUBLIC_INSTAGRAM_FEED_URL
     value: "https://asia-south1-clinvara-f6235.cloudfunctions.net/getInstagramFeed"
     availability:
@@ -31,7 +37,13 @@ env:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_ADMIN_EMAILS
-    value: ""
+    value: "clinvaraglobal@gmail.com"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
+    value: "G-E39XJ8VE7Z"
     availability:
       - BUILD
       - RUNTIME
@@ -137,21 +149,3 @@ env:
     availability:
       - BUILD
       - RUNTIME
-
-  - variable: NEXT_PUBLIC_SOCIAL_FEED_URL
-    value: "https://asia-south1-clinvara-f6235.cloudfunctions.net/api/social/feed"
-    availability:
-      - BUILD
-      - RUNTIME
-
-  - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
-    value: "G-E39XJ8VE7Z"
-    availability:
-    - BUILD
-    - RUNTIME
-
-  - variable: NEXT_PUBLIC_ADMIN_EMAILS
-    value: "clinvaraglobal@gmail.com"
-    availability:
-    - BUILD
-    - RUNTIME
