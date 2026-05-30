@@ -228,7 +228,7 @@ export function SocialFeedStrip() {
   }, []);
 
   const cards = useMemo(() => {
-    return sortAndLimit(posts).filter((card) => Boolean(card.image));
+    return sortAndLimit(posts);
   }, [posts]);
 
   useEffect(() => {
@@ -242,7 +242,6 @@ export function SocialFeedStrip() {
     if (prefersReducedMotion) return;
 
     let frameId = 0;
-    let direction = 1;
     let previousTime = performance.now();
 
     function animate(currentTime: number) {
@@ -257,10 +256,12 @@ export function SocialFeedStrip() {
 
       const elapsed = currentTime - previousTime;
       previousTime = currentTime;
-      track.scrollLeft += direction * elapsed * 0.025;
+      track.scrollLeft += elapsed * 0.04;
 
-      if (track.scrollLeft >= maxScroll - 1) direction = -1;
-      if (track.scrollLeft <= 1) direction = 1;
+      if (track.scrollLeft >= maxScroll - 1) {
+        track.scrollLeft = 0;
+        previousTime = currentTime;
+      }
 
       frameId = requestAnimationFrame(animate);
     }

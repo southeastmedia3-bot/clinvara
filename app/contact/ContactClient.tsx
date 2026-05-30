@@ -8,6 +8,7 @@ export function ContactClient() {
   const { showToast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -28,12 +29,13 @@ export function ContactClient() {
       const res = await fetch(apiUrl("/api/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, phone, message }),
       });
       if (!res.ok) throw new Error("Failed");
       showToast({ message: "Message sent! We'll reply within 24 hours.", variant: "success" });
       setName("");
       setEmail("");
+      setPhone("");
       setMessage("");
     } catch {
       showToast({ message: "Something went wrong", variant: "error" });
@@ -59,6 +61,12 @@ export function ContactClient() {
         </a>
         .
       </p>
+      <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+        Customer care:{" "}
+        <a href="tel:+917207118111" className="font-semibold text-black underline">
+          +91 72071 18111
+        </a>
+      </p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         <label className="block text-sm font-medium">
           Name
@@ -70,6 +78,15 @@ export function ContactClient() {
           {errors.name && (
             <span className="text-xs text-red-600">{errors.name}</span>
           )}
+        </label>
+        <label className="block text-sm font-medium">
+          Phone
+          <input
+            type="tel"
+            className="mt-1 w-full border border-[var(--brand-border)] px-3 py-3 text-sm"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
         </label>
         <label className="block text-sm font-medium">
           Email

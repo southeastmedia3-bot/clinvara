@@ -40,12 +40,23 @@ type Address = CustomerAddress;
 
 type OrderRecord = {
   id: string;
+  orderId?: string;
+  publicOrderId?: string;
   subtotal: number;
+  totalAmount?: number;
   status: string;
+  orderStatus?: string;
+  publicOrderStatus?: string;
+  adminDecision?: "pending" | "accepted" | "rejected";
   paymentStatus: string;
-  createdAt?: {
-    seconds: number;
-  };
+  rejectionReason?: string;
+  items?: Array<{ name?: string; quantity?: number; size?: string; price?: number }>;
+  shippingAddress?: Address;
+  createdAt?: { seconds: number } | string;
+  confirmedAt?: string;
+  packedAt?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
 };
 
 const emptyAddress: Address = {
@@ -70,6 +81,31 @@ function addressSummary(address: Address) {
   ]
     .filter(Boolean)
     .join(", ");
+}
+
+function orderDate(value: OrderRecord["createdAt"]) {
+  if (!value) return "Recently placed";
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Recently placed" : date.toLocaleString("en-IN");
+  }
+  return value.seconds
+    ? new Date(value.seconds * 1000).toLocaleString("en-IN")
+    : "Recently placed";
+}
+
+function displayOrderId(order: OrderRecord) {
+  return order.publicOrderId || order.orderId || order.id;
+}
+
+function customerStatus(order: OrderRecord) {
+  if (order.adminDecision === "pending") return "Waiting for confirmation";
+  if (order.adminDecision === "rejected" || order.orderStatus === "rejected") return "Rejected";
+  return String(order.publicOrderStatus || order.orderStatus || order.status || "Pending").replace(/_/g, " ");
+}
+
+function money(value: number | undefined) {
+  return `INR ${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
 export default function AccountClient() {
@@ -124,6 +160,7 @@ export default function AccountClient() {
     }
 
     const currentUser = user;
+    const currentUserId = currentUser.uid ?? "";
 
     void readCustomerProfile(currentUser.uid).then((profile) => {
       if (!active || !profile) return;
@@ -148,20 +185,44 @@ export default function AccountClient() {
       });
     });
 
-    const ordersQuery = query(
-      collection(firebaseDb, "orders"),
-      where("userId", "==", currentUser.uid),
-      orderBy("createdAt", "desc"),
-    );
+    async function readOrders() {
+      const filters: Array<[string, string]> = [["userId", currentUserId]];
+      filters.push(["uid", currentUserId], ["customerId", currentUserId]);
+      if (currentUser.email) filters.push(["email", currentUser.email], ["customerEmail", currentUser.email]);
 
-    void getDocs(ordersQuery).then((snapshot) => {
-      if (!active) return;
-      setOrders(
-        snapshot.docs.map((orderDoc) => ({
-          id: orderDoc.id,
-          ...(orderDoc.data() as Omit<OrderRecord, "id">),
-        })),
+      const snapshots = await Promise.all(
+        filters.map(([field, value]) =>
+          getDocs(
+            query(
+              collection(firebaseDb, "orders"),
+              where(field, "==", value),
+              orderBy("createdAt", "desc"),
+            ),
+          ).catch(() => null),
+        ),
       );
+
+      const byId = new Map<string, OrderRecord>();
+      snapshots.forEach((snapshot) => {
+        snapshot?.docs.forEach((orderDoc) => {
+          byId.set(orderDoc.id, {
+            id: orderDoc.id,
+            ...(orderDoc.data() as Omit<OrderRecord, "id">),
+          });
+        });
+      });
+
+      return Array.from(byId.values()).sort((a, b) => {
+        const aSeconds =
+          typeof a.createdAt === "object" && a.createdAt ? a.createdAt.seconds : 0;
+        const bSeconds =
+          typeof b.createdAt === "object" && b.createdAt ? b.createdAt.seconds : 0;
+        return bSeconds - aSeconds;
+      });
+    }
+
+    void readOrders().then((nextOrders) => {
+      if (active) setOrders(nextOrders);
     });
 
     return () => {
@@ -594,11 +655,9 @@ export default function AccountClient() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
                         Order ID
                       </p>
-                      <p className="mt-1 font-semibold">{order.id}</p>
+                      <p className="mt-1 font-semibold">{displayOrderId(order)}</p>
                       <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
-                        {order.createdAt?.seconds
-                          ? new Date(order.createdAt.seconds * 1000).toLocaleString("en-IN")
-                          : "Recently placed"}
+                        {orderDate(order.createdAt)}
                       </p>
                     </div>
 
@@ -610,18 +669,35 @@ export default function AccountClient() {
                         {order.paymentStatus}
                       </p>
                       <p className="mt-2 text-lg font-bold">
-                        INR {order.subtotal.toLocaleString("en-IN")}
+                        {money(order.totalAmount ?? order.subtotal)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  {order.items?.length ? (
+                    <div className="mt-4 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm text-[var(--brand-text-muted)]">
+                      {order.items.slice(0, 3).map((item, index) => (
+                        <p key={`${item.name}-${index}`}>
+                          {item.name || "CLINVARA product"} x {item.quantity || 1}
+                          {item.size ? ` · ${item.size}` : ""}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {order.rejectionReason && (
+                    <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                      {order.rejectionReason}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <span className="rounded-full bg-[var(--brand-off-white)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]">
-                      {order.status}
+                      {customerStatus(order)}
                     </span>
 
                     <Link
-                      href="/track-order"
+                      href={`/track-order?orderId=${encodeURIComponent(displayOrderId(order))}`}
                       className="text-sm font-semibold underline"
                     >
                       Track Order

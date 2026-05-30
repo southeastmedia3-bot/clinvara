@@ -3,7 +3,7 @@ import type { StoreSettings } from "@/lib/admin/types";
 export const defaultStoreSettings: StoreSettings = {
   storeName: "CLINVARA",
   supportEmail: "clinvaraglobal@gmail.com",
-  supportPhone: "",
+  supportPhone: "+91 72071 18111",
   shippingCharge: 0,
   freeShippingThreshold: 999,
   announcementBarText: "Free sunscreen on orders above Rs.999",

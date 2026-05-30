@@ -10,6 +10,7 @@ import {
   createFirebaseEmailAccount,
   firebaseAuth,
   sendFirebaseOtp,
+  sendFirebasePasswordReset,
   signInFirebaseFacebook,
   signInFirebaseEmail,
   signInFirebaseGoogle,
@@ -214,6 +215,8 @@ export function LoginModal() {
   const [stateName, setStateName] = useState("");
   const [pincode, setPincode] = useState("");
   const [updates, setUpdates] = useState(true);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   const anyOpen = loginOpen || registerOpen;
 
@@ -425,6 +428,27 @@ export function LoginModal() {
         durationMs: 5000,
       });
     }
+  };
+
+  const resetPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const targetEmail = resetEmail.trim() || email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
+      showToast({ message: "Enter a valid registered email address.", variant: "error" });
+      return;
+    }
+    try {
+      await sendFirebasePasswordReset(targetEmail);
+    } catch (error) {
+      console.info("Password reset request completed with safe response", getFirebaseErrorCode(error));
+    }
+    setResetOpen(false);
+    setResetEmail("");
+    showToast({
+      message: "If an account exists for this email, a reset link has been sent.",
+      variant: "success",
+      durationMs: 6000,
+    });
   };
 
   const signInWithMobile = async (event: React.FormEvent) => {
@@ -689,7 +713,14 @@ export function LoginModal() {
                     />
                     Keep me logged in
                   </label>
-                  <button type="button" className="font-semibold underline underline-offset-4">
+                  <button
+                    type="button"
+                    className="font-semibold underline underline-offset-4"
+                    onClick={() => {
+                      setResetEmail(email);
+                      setResetOpen(true);
+                    }}
+                  >
                     Reset password
                   </button>
                 </div>
@@ -845,6 +876,51 @@ export function LoginModal() {
                   </p>
                 </form>
               </div>
+            </motion.div>
+          )}
+
+          {resetOpen && (
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reset-password-title"
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.98 }}
+              className="relative z-[180] w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <button
+                type="button"
+                aria-label="Close password reset"
+                className="absolute right-4 top-4 rounded-full p-2 hover:bg-[var(--brand-off-white)]"
+                onClick={() => setResetOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+                Account support
+              </p>
+              <h2 id="reset-password-title" className="mt-2 font-display text-3xl font-semibold">
+                Reset password
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--brand-text-muted)]">
+                Enter your registered email and we will send a secure Firebase password reset link.
+              </p>
+              <form onSubmit={resetPassword} className="mt-5 space-y-4">
+                <Field
+                  label="Registered Email"
+                  type="email"
+                  value={resetEmail}
+                  onChange={setResetEmail}
+                  autoComplete="email"
+                />
+                <button
+                  type="submit"
+                  className="h-12 w-full rounded-full bg-black text-sm font-semibold text-white"
+                >
+                  Send Reset Link
+                </button>
+              </form>
             </motion.div>
           )}
         </div>

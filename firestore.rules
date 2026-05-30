@@ -99,5 +99,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    match /contactMessages/{messageId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
   }
 }

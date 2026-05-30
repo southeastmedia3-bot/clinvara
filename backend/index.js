@@ -13,6 +13,44 @@ const {
 const instagramAccessToken = defineSecret("INSTAGRAM_ACCESS_TOKEN");
 const threadsAccessToken = defineSecret("THREADS_ACCESS_TOKEN");
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
+const resendApiKey = defineSecret("RESEND_API_KEY");
+
+const SUPPORT_PHONE = "+91 72071 18111";
+
+function contactEmail() {
+  return process.env.CONTACT_TO_EMAIL || "clinvaraglobal@gmail.com";
+}
+
+async function sendEmail({ to, subject, html, replyTo }) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[CLINVARA email] RESEND_API_KEY missing; email skipped", { to, subject });
+    return { sent: false, warning: "RESEND_API_KEY missing" };
+  }
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || "CLINVARA <onboarding@resend.dev>",
+      to,
+      subject,
+      html,
+      reply_to: replyTo,
+    }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    console.warn("[CLINVARA email] send failed", { status: response.status, data });
+    return { sent: false, warning: data?.message || response.statusText };
+  }
+  return { sent: true };
+}
+
+function money(value) {
+  return `INR ${Number(value || 0).toLocaleString("en-IN")}`;
+}
 
 const app = express();
 app.use(express.json());
@@ -146,16 +184,39 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "clinvara-backend" });
 });
 
-app.post("/contact", (req, res) => {
-  const { name, email, message } = req.body || {};
+app.post("/contact", async (req, res) => {
+  const { name, email, phone, message } = req.body || {};
   if (!name?.trim() || !email?.trim() || !message?.trim()) {
     return res.status(400).json({ error: "All fields are required." });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: "Invalid email." });
   }
-  console.info("[CLINVARA contact]", { name, email, message });
-  return res.json({ ok: true });
+  const createdAt = new Date();
+  const db = admin.firestore();
+  const messageRef = await db.collection("contactMessages").add({
+    name: name.trim(),
+    email: email.trim(),
+    phone: phone?.trim() || "",
+    message: message.trim(),
+    status: "new",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  const emailResult = await sendEmail({
+    to: contactEmail(),
+    replyTo: email.trim(),
+    subject: `New CLINVARA contact enquiry from ${name.trim()}`,
+    html: `
+      <h2>New CLINVARA contact enquiry</h2>
+      <p><strong>Name:</strong> ${name.trim()}</p>
+      <p><strong>Email:</strong> ${email.trim()}</p>
+      <p><strong>Phone:</strong> ${phone?.trim() || "-"}</p>
+      <p><strong>Message:</strong></p>
+      <p>${message.trim().replace(/\n/g, "<br />")}</p>
+      <p><strong>Timestamp:</strong> ${createdAt.toISOString()}</p>
+    `,
+  });
+  return res.json({ ok: true, id: messageRef.id, emailSent: emailResult.sent });
 });
 
 app.get("/social/feed", async (_req, res) => {
@@ -197,6 +258,15 @@ app.post("/orders/track", async (req, res) => {
   }
 
   if (!orderDoc) {
+    const byPublicOrderId = await db
+      .collection("orders")
+      .where("publicOrderId", "==", orderId)
+      .limit(1)
+      .get();
+    orderDoc = byPublicOrderId.docs[0] || null;
+  }
+
+  if (!orderDoc) {
     return res.json({ order: null });
   }
 
@@ -218,7 +288,7 @@ app.post("/orders/track", async (req, res) => {
   return res.json({
     order: {
       id: orderDoc.id,
-      orderId: data.orderId || orderDoc.id,
+      orderId: data.publicOrderId || data.orderId || orderDoc.id,
       adminDecision: data.adminDecision || "pending",
       orderStatus: data.orderStatus || data.status || "pending_admin_confirmation",
       publicOrderStatus: data.publicOrderStatus || "waiting_for_confirmation",
@@ -234,6 +304,115 @@ app.post("/orders/track", async (req, res) => {
       updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAt || "",
     },
   });
+});
+
+async function isAdminUser(req) {
+  const authHeader = String(req.headers.authorization || "");
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return false;
+  const decoded = await admin.auth().verifyIdToken(token).catch(() => null);
+  if (!decoded?.uid) return false;
+  const userDoc = await admin.firestore().collection("users").doc(decoded.uid).get();
+  const customerDoc = await admin.firestore().collection("customers").doc(decoded.uid).get();
+  const allowedEmails = String(process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return (
+    userDoc.data()?.role === "admin" ||
+    customerDoc.data()?.role === "admin" ||
+    (decoded.email && allowedEmails.includes(decoded.email.toLowerCase()))
+  );
+}
+
+function publicOrderId(id) {
+  return `CLV-${String(id).replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase()}`;
+}
+
+function addressLines(address = {}) {
+  return [address.line1, address.line2, address.city, address.state, address.pincode]
+    .filter(Boolean)
+    .join(", ");
+}
+
+async function sendOrderEmail(order, type) {
+  const email = order.email || order.checkoutEmail || order.customerEmail;
+  if (!email) return { sent: false, warning: "No customer email" };
+  const id = order.publicOrderId || order.orderId || "CLINVARA order";
+  const products = Array.isArray(order.items)
+    ? order.items.map((item) => `<li>${item.name || "Product"} x ${item.quantity || 1}</li>`).join("")
+    : "";
+  const subject =
+    type === "accepted"
+      ? `Your CLINVARA order ${id} is confirmed`
+      : `Your CLINVARA order ${id} could not be confirmed`;
+  const body =
+    type === "accepted"
+      ? `
+        <h2>Your CLINVARA order is confirmed</h2>
+        <p>Order ID: <strong>${id}</strong></p>
+        <p>Status: Confirmed</p>
+        <p>Total: ${money(order.subtotal || order.totalAmount)}</p>
+        <p>Shipping address: ${addressLines(order.shippingAddress)}</p>
+        <ul>${products}</ul>
+        <p>Track your order: <a href="https://clinvara.global/track-order">https://clinvara.global/track-order</a></p>
+        <p>Support: ${SUPPORT_PHONE}</p>
+      `
+      : `
+        <h2>Your CLINVARA order could not be confirmed</h2>
+        <p>Order ID: <strong>${id}</strong></p>
+        <p>${order.rejectionReason || "Your order could not be confirmed. Please contact CLINVARA support."}</p>
+        <p>Support: ${SUPPORT_PHONE}</p>
+      `;
+  return sendEmail({ to: email, subject, html: body });
+}
+
+app.post("/orders/admin-update", async (req, res) => {
+  if (!(await isAdminUser(req))) {
+    return res.status(403).json({ error: "Admin access required." });
+  }
+  const { orderId, action, patch = {} } = req.body || {};
+  if (!orderId) return res.status(400).json({ error: "Order ID is required." });
+
+  const db = admin.firestore();
+  const ref = db.collection("orders").doc(String(orderId));
+  const snapshot = await ref.get();
+  if (!snapshot.exists) return res.status(404).json({ error: "Order not found." });
+  const existing = snapshot.data() || {};
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  let update = { ...patch, updatedAt: now };
+
+  if (action === "accept") {
+    update = {
+      ...update,
+      publicOrderId: existing.publicOrderId || publicOrderId(snapshot.id),
+      adminDecision: "accepted",
+      orderStatus: "confirmed",
+      publicOrderStatus: "confirmed",
+      confirmedAt: now,
+    };
+  }
+  if (action === "reject") {
+    update = {
+      ...update,
+      publicOrderId: existing.publicOrderId || publicOrderId(snapshot.id),
+      adminDecision: "rejected",
+      orderStatus: "rejected",
+      publicOrderStatus: "rejected",
+      rejectedAt: now,
+    };
+  }
+
+  await ref.set(update, { merge: true });
+  const nextSnapshot = await ref.get();
+  const nextOrder = { ...(nextSnapshot.data() || {}), ...update };
+  const emailResult =
+    action === "accept"
+      ? await sendOrderEmail(nextOrder, "accepted")
+      : action === "reject"
+        ? await sendOrderEmail(nextOrder, "rejected")
+        : { sent: false };
+  return res.json({ ok: true, emailSent: emailResult.sent });
 });
 
 app.get("/social/instagram-feed", async (_req, res) => {
@@ -407,7 +586,7 @@ app.get("/auth/oauth/callback/:provider", async (req, res) => {
 exports.api = onRequest(
   {
     region: "asia-south1",
-    secrets: [instagramAccessToken, threadsAccessToken, youtubeApiKey],
+    secrets: [instagramAccessToken, threadsAccessToken, youtubeApiKey, resendApiKey],
   },
   app,
 );

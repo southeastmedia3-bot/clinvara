@@ -197,19 +197,19 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             <button
               type="button"
-              aria-label="Search"
-              className="text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)]"
+              aria-label="Open search"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)]"
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-[22px] w-[22px]" />
+              <Search className="h-[18px] w-[18px]" />
             </button>
             <button
               type="button"
               aria-label="Open cart"
-              className="relative text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)]"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)]"
               onClick={() => openCart()}
             >
-              <ShoppingBag className="h-[22px] w-[22px]" />
+              <ShoppingBag className="h-[18px] w-[18px]" />
               {cartCount > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand-accent)] px-1 text-[10px] font-bold text-white">
                   {cartCount > 99 ? "99+" : cartCount}
@@ -231,12 +231,12 @@ export function Navbar() {
             </Link>
             <button
               type="button"
-              aria-label="Open account menu"
+              aria-label="Open account"
               aria-expanded={accountOpen}
-              className="hidden text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-accent)] sm:inline-flex"
+              className="hidden h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)] sm:inline-flex"
               onClick={() => setAccountOpen(true)}
             >
-              <User className="h-[22px] w-[22px]" />
+              <User className="h-[18px] w-[18px]" />
             </button>
           </div>
         </nav>

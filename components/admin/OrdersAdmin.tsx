@@ -6,6 +6,8 @@ import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { Header } from "@/components/admin/ProductsAdmin";
 import { listOrders, updateOrder } from "@/lib/admin/firestore";
 import type { AdminOrder, OrderStatus } from "@/lib/admin/types";
+import { firebaseAuth } from "@/lib/firebase/client";
+import { apiUrl } from "@/lib/api/client";
 
 const statuses: OrderStatus[] = [
   "pending_admin_confirmation",
@@ -66,6 +68,7 @@ export function OrdersAdmin() {
       const matchesQuery = [
         order.id,
         order.orderId,
+        order.publicOrderId,
         order.customerName,
         order.customerEmail,
         order.email,
@@ -83,8 +86,30 @@ export function OrdersAdmin() {
     setSelected((current) => (current?.id === order.id ? { ...current, ...patch } : current));
   }
 
+  async function adminOrderAction(order: AdminOrder, action: "accept" | "reject" | "status", patch: Partial<AdminOrder>) {
+    const token = await firebaseAuth.currentUser?.getIdToken();
+    if (!token) {
+      await saveOrder(order, patch);
+      return;
+    }
+    const response = await fetch(apiUrl("/api/orders/admin-update"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ orderId: order.id, action, patch }),
+    });
+    if (!response.ok) {
+      await saveOrder(order, patch);
+      return;
+    }
+    await refresh();
+    setSelected((current) => (current?.id === order.id ? { ...current, ...patch } : current));
+  }
+
   async function acceptOrder(order: AdminOrder) {
-    await saveOrder(order, {
+    await adminOrderAction(order, "accept", {
       adminDecision: "accepted",
       orderStatus: "confirmed",
       publicOrderStatus: "confirmed",
@@ -93,7 +118,7 @@ export function OrdersAdmin() {
   }
 
   async function rejectOrder(order: AdminOrder) {
-    await saveOrder(order, {
+    await adminOrderAction(order, "reject", {
       adminDecision: "rejected",
       orderStatus: "rejected",
       publicOrderStatus: "rejected",
@@ -139,7 +164,7 @@ export function OrdersAdmin() {
                 setRejectionReason(order.rejectionReason || "");
               }}
             >
-              <td className="px-4 py-4 font-medium">{order.orderId || order.id}</td>
+              <td className="px-4 py-4 font-medium">{order.publicOrderId || order.orderId || order.id}</td>
               <td className="px-4 py-4 text-[var(--brand-text-muted)]">
                 {order.customerName || order.customerEmail || order.email || "Customer"}
               </td>
@@ -158,7 +183,7 @@ export function OrdersAdmin() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="font-display text-3xl font-semibold">
-                Order {selected.orderId || selected.id}
+                Order {selected.publicOrderId || selected.orderId || selected.id}
               </h2>
               <p className="text-sm text-[var(--brand-text-muted)]">
                 {selected.customerEmail || selected.email || selected.checkoutEmail || "No email"}
@@ -169,22 +194,29 @@ export function OrdersAdmin() {
             </button>
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="flex flex-wrap gap-2 md:col-span-2">
-              <button
-                type="button"
-                onClick={() => void acceptOrder(selected)}
-                className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white"
-              >
-                Accept order
-              </button>
-              <button
-                type="button"
-                onClick={() => void rejectOrder(selected)}
-                className="rounded-full border border-red-700 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-red-700"
-              >
-                Reject order
-              </button>
-            </div>
+            {(!selected.adminDecision || selected.adminDecision === "pending") && (
+              <div className="flex flex-wrap gap-2 md:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => void acceptOrder(selected)}
+                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white"
+                >
+                  Accept order
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void rejectOrder(selected)}
+                  className="rounded-full border border-red-700 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-red-700"
+                >
+                  Reject order
+                </button>
+              </div>
+            )}
+            {selected.adminDecision === "rejected" && selected.rejectionReason && (
+              <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 md:col-span-2">
+                Rejected: {selected.rejectionReason}
+              </p>
+            )}
             <label className="space-y-2 text-sm md:col-span-2">
               <span className="font-medium">Rejection reason</span>
               <input
@@ -194,26 +226,30 @@ export function OrdersAdmin() {
                 className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
               />
             </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium">Order status</span>
-              <select
-                value={orderStatus(selected)}
-                onChange={(event) =>
-                  void saveOrder(selected, {
-                    orderStatus: event.target.value as OrderStatus,
-                    publicOrderStatus: event.target.value,
-                    ...timestampPatch(event.target.value),
-                  } as Partial<AdminOrder>)
-                }
-                className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
-              >
-                {statuses.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {selected.adminDecision === "accepted" && (
+              <label className="space-y-2 text-sm">
+                <span className="font-medium">Order status</span>
+                <select
+                  value={orderStatus(selected)}
+                  onChange={(event) =>
+                    void adminOrderAction(selected, "status", {
+                      orderStatus: event.target.value as OrderStatus,
+                      publicOrderStatus: event.target.value,
+                      ...timestampPatch(event.target.value),
+                    } as Partial<AdminOrder>)
+                  }
+                  className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
+                >
+                  {statuses
+                    .filter((item) => item !== "pending_admin_confirmation")
+                    .map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
             <label className="space-y-2 text-sm md:col-span-2">
               <span className="font-medium">Admin notes</span>
               <textarea

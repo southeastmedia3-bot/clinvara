@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, PackageCheck, SearchX, Truck } from "lucide-react";
 import { apiUrl } from "@/lib/api/client";
 
@@ -38,6 +38,12 @@ export function TrackOrderClient() {
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<TrackedOrder | null>(null);
   const [lookupError, setLookupError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextOrderId = params.get("orderId");
+    if (nextOrderId) setOrderId(nextOrderId);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,6 +246,12 @@ function OrderStatusPanel({ order }: { order: TrackedOrder }) {
       >
         Contact Support
       </a>
+      <a
+        href="tel:+917207118111"
+        className="ml-3 mt-6 inline-flex rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em]"
+      >
+        Call +91 72071 18111
+      </a>
     </section>
   );
 }
@@ -262,6 +274,20 @@ function StatusCard({
       <p className="mx-auto mt-2 max-w-md text-sm text-[var(--brand-text-muted)]">
         {message}
       </p>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <a
+          href="mailto:clinvaraglobal@gmail.com"
+          className="rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em]"
+        >
+          Email Support
+        </a>
+        <a
+          href="tel:+917207118111"
+          className="rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em]"
+        >
+          Call +91 72071 18111
+        </a>
+      </div>
     </section>
   );
 }

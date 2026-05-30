@@ -8,6 +8,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   RecaptchaVerifier,
+  sendPasswordResetEmail,
   sendEmailVerification,
   signInWithPhoneNumber,
   signInWithEmailAndPassword,
@@ -70,6 +71,13 @@ export async function signInFirebaseGoogle() {
 
 export async function signInFirebaseFacebook() {
   return signInWithPopup(firebaseAuth, new FacebookAuthProvider());
+}
+
+export async function sendFirebasePasswordReset(email: string) {
+  return sendPasswordResetEmail(firebaseAuth, email, {
+    url: "https://clinvara.global/account",
+    handleCodeInApp: false,
+  });
 }
 
 export async function createFirebaseEmailAccount({

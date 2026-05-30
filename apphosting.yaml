@@ -42,6 +42,16 @@ env:
       - BUILD
       - RUNTIME
 
+  - variable: CONTACT_TO_EMAIL
+    value: "clinvaraglobal@gmail.com"
+    availability:
+      - RUNTIME
+
+  - variable: RESEND_API_KEY
+    secret: "RESEND_API_KEY"
+    availability:
+      - RUNTIME
+
   - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
     value: "G-E39XJ8VE7Z"
     availability:

@@ -30,6 +30,7 @@ export type PaymentStatus = "pending" | "paid" | "failed" | "refunded" | "not_co
 export type AdminOrder = {
   id: string;
   orderId?: string;
+  publicOrderId?: string;
   userId?: string;
   uid?: string;
   customerName?: string;

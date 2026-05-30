@@ -11,6 +11,7 @@ import { getStoreSettings } from "@/lib/firebase/products";
 export async function Footer() {
   const settings = await getStoreSettings();
   const supportEmail = settings.supportEmail || "clinvaraglobal@gmail.com";
+  const supportPhone = settings.supportPhone || "+91 72071 18111";
   const dynamicSocialLinks = socialLinks.map((social) => ({
     ...social,
     href:
@@ -147,6 +148,12 @@ export async function Footer() {
               className="text-white/80 transition hover:text-white"
             >
               {supportEmail}
+            </a>
+          </p>
+          <p className="mt-3 text-[14px] text-white/65">
+            Customer care:{" "}
+            <a href={`tel:${supportPhone.replace(/\s/g, "")}`} className="text-white/80 transition hover:text-white">
+              {supportPhone}
             </a>
           </p>
 

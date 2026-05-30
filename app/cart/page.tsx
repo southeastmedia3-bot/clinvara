@@ -48,6 +48,7 @@ export default function CartPage() {
   const [addressError, setAddressError] = useState("");
   const [highlightAddress, setHighlightAddress] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState("");
+  const [createdOrderTotal, setCreatedOrderTotal] = useState(0);
   const addressSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -316,7 +317,7 @@ export default function CartPage() {
                   return;
                 }
 
-                const orderId = await createOrder({
+                const order = await createOrder({
                   userId: user.uid,
                   email: checkoutEmail,
                   items,
@@ -332,7 +333,8 @@ export default function CartPage() {
                   },
                 });
 
-                setCreatedOrderId(orderId);
+                setCreatedOrderId(order.publicOrderId);
+                setCreatedOrderTotal(subtotal);
                 showToast({
                   message: "Order placed and waiting for confirmation.",
                   variant: "success",
@@ -364,20 +366,44 @@ export default function CartPage() {
                   Your order has been received and is waiting for admin confirmation.
                   Order ID: <span className="font-semibold text-black">{createdOrderId}</span>
                 </p>
+                <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+                  Status: Waiting for confirmation
+                </p>
+                <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                  Total: <span className="font-semibold text-black">{formatINR(createdOrderTotal)}</span>
+                </p>
+                <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                  Support: <a href="tel:+917207118111" className="font-semibold text-black underline">+91 72071 18111</a>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(createdOrderId);
+                    showToast({ message: "Order ID copied.", variant: "success" });
+                  }}
+                  className="mt-4 text-sm font-semibold underline"
+                >
+                  Copy Order ID
+                </button>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link
-                    href={`/track-order`}
+                    href={`/track-order?orderId=${encodeURIComponent(createdOrderId)}`}
                     className="flex-1 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white"
                   >
-                    Track Order
+                    Track order
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => setCreatedOrderId("")}
+                  <Link
+                    href="/account"
                     className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
                   >
-                    Continue
-                  </button>
+                    View my orders
+                  </Link>
+                  <Link
+                    href="/shop"
+                    className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
+                  >
+                    Continue shopping
+                  </Link>
                 </div>
               </div>
             </div>
