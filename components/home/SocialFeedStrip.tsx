@@ -231,6 +231,8 @@ export function SocialFeedStrip() {
     return sortAndLimit(posts);
   }, [posts]);
 
+  const duplicatedCards = useMemo(() => [...cards, ...cards], [cards]);
+
   useEffect(() => {
     const track = scrollRef.current;
     if (!track || cards.length < 2 || isPaused) return;
@@ -247,20 +249,19 @@ export function SocialFeedStrip() {
     function animate(currentTime: number) {
       if (!track) return;
 
-      const maxScroll = track.scrollWidth - track.clientWidth;
+      const halfWidth = track.scrollWidth / 2;
 
-      if (maxScroll <= 0) {
+      if (halfWidth <= 0) {
         frameId = requestAnimationFrame(animate);
         return;
       }
 
       const elapsed = currentTime - previousTime;
       previousTime = currentTime;
-      track.scrollLeft += elapsed * 0.04;
+      track.scrollLeft += elapsed * 0.02;
 
-      if (track.scrollLeft >= maxScroll - 1) {
-        track.scrollLeft = 0;
-        previousTime = currentTime;
+      if (track.scrollLeft >= halfWidth) {
+        track.scrollLeft -= halfWidth;
       }
 
       frameId = requestAnimationFrame(animate);
@@ -292,58 +293,70 @@ export function SocialFeedStrip() {
         )}
 
         {loaded && cards.length > 0 && (
-          <div
-            ref={scrollRef}
-            className="social-scroll"
-            aria-label="Latest CLINVARA social posts"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            onTouchStart={() => setIsPaused(true)}
-          >
-            {cards.map((card) => {
-              const Icon = platformIcon(card.platform);
+          <>
+            <style>{`
+              .social-scroll {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
+              .social-scroll::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            <div
+              ref={scrollRef}
+              className="social-scroll"
+              aria-label="Latest CLINVARA social posts"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)}
+              onTouchEnd={() => setIsPaused(false)}
+            >
+              {duplicatedCards.map((card, index) => {
+                const Icon = platformIcon(card.platform);
 
-              return (
-                <Link
-                  key={card.id}
-                  href={card.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
-                >
-                  <CardMedia card={card} />
+                return (
+                  <Link
+                    key={`${card.id}-${index}`}
+                    href={card.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group social-card block w-[78vw] max-w-[360px] shrink-0 rounded-xl border border-[var(--brand-border)] bg-white p-3 transition hover:-translate-y-1 hover:border-black sm:w-[320px]"
+                  >
+                    <CardMedia card={card} />
 
-                  <div className="p-2 pt-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
-                        <Icon className="h-4 w-4 text-black" />
-                        {card.label}
-                      </span>
-                      <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </div>
+                    <div className="p-2 pt-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                          <Icon className="h-4 w-4 text-black" />
+                          {card.label}
+                        </span>
+                        <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </div>
 
-                    <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
-                      {card.title}
-                    </h3>
+                      <h3 className="mt-4 font-display text-2xl font-semibold leading-tight">
+                        {card.title}
+                      </h3>
 
-                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
-                      {card.caption}
-                    </p>
-
-                    {card.timestamp && (
-                      <p className="mt-3 text-xs uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
-                        {formattedTimestamp(card.timestamp)}
+                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+                        {card.caption}
                       </p>
-                    )}
 
-                    <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
-                      {card.cta}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                      {card.timestamp && (
+                        <p className="mt-3 text-xs uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
+                          {formattedTimestamp(card.timestamp)}
+                        </p>
+                      )}
+
+                      <span className="mt-5 inline-block text-xs font-semibold uppercase tracking-[0.12em] underline underline-offset-4">
+                        {card.cta}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {loaded && cards.length === 0 && (
