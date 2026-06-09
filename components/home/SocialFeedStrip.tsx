@@ -260,7 +260,7 @@ export function SocialFeedStrip() {
     const elapsed = currentTime - previousTime;
     previousTime = currentTime;
 
-    track.scrollLeft += 0.7;
+    track.scrollLeft += 0.6;
 
     if (track.scrollLeft >= halfWidth) {
       track.scrollLeft -= halfWidth;
