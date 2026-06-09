@@ -236,18 +236,11 @@ export function SocialFeedStrip() {
   useEffect(() => {
   const track = scrollRef.current;
 
-  console.log("AUTO SCROLL EFFECT STARTED");
-  console.log("track:", track);
-  console.log("cards length:", cards.length);
-  console.log("isPaused:", isPaused);
-
   if (!track || cards.length < 2 || isPaused) return;
 
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   ).matches;
-
-  console.log("prefersReducedMotion:", prefersReducedMotion);
 
   if (prefersReducedMotion) return;
 
@@ -255,22 +248,9 @@ export function SocialFeedStrip() {
   let previousTime = performance.now();
 
   function animate(currentTime: number) {
-    console.log("ANIMATING");
-
     if (!track) return;
 
     const halfWidth = track.scrollWidth / 2;
-
-    console.log(
-      "scrollLeft:",
-      track.scrollLeft,
-      "scrollWidth:",
-      track.scrollWidth,
-      "clientWidth:",
-      track.clientWidth,
-      "halfWidth:",
-      halfWidth
-    );
 
     if (halfWidth <= 0) {
       frameId = requestAnimationFrame(animate);

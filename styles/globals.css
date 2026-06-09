@@ -130,11 +130,15 @@ button {
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 0.75rem;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
+  scroll-behavior: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.social-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .social-card {
-  scroll-snap-align: start;
+  flex-shrink: 0;
 }
