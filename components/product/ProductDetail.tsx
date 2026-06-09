@@ -188,7 +188,7 @@ export function ProductDetail({
 
           <button
             type="button"
-            className="mt-3 flex w-full items-center justify-center gap-2 border border-[var(--brand-border)] py-3 text-sm font-semibold"
+            className="mt-3 flex w-full items-center justify-center gap-2 border border-[var(--brand-border)] py-3 text-[11px] font-semibold uppercase tracking-[0.14em]"
             onClick={() => {
               toggleWish(product.id);
               showToast({
