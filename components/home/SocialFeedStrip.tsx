@@ -234,43 +234,65 @@ export function SocialFeedStrip() {
   const duplicatedCards = useMemo(() => [...cards, ...cards], [cards]);
 
   useEffect(() => {
-    const track = scrollRef.current;
-    if (!track || cards.length < 2 || isPaused) return;
+  const track = scrollRef.current;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+  console.log("AUTO SCROLL EFFECT STARTED");
+  console.log("track:", track);
+  console.log("cards length:", cards.length);
+  console.log("isPaused:", isPaused);
 
-    if (prefersReducedMotion) return;
+  if (!track || cards.length < 2 || isPaused) return;
 
-    let frameId = 0;
-    let previousTime = performance.now();
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
 
-    function animate(currentTime: number) {
-      if (!track) return;
+  console.log("prefersReducedMotion:", prefersReducedMotion);
 
-      const halfWidth = track.scrollWidth / 2;
+  if (prefersReducedMotion) return;
 
-      if (halfWidth <= 0) {
-        frameId = requestAnimationFrame(animate);
-        return;
-      }
+  let frameId = 0;
+  let previousTime = performance.now();
 
-      const elapsed = currentTime - previousTime;
-      previousTime = currentTime;
-      track.scrollLeft += elapsed * 0.05;
+  function animate(currentTime: number) {
+    console.log("ANIMATING");
 
-      if (track.scrollLeft >= halfWidth) {
-        track.scrollLeft -= halfWidth;
-      }
+    if (!track) return;
 
+    const halfWidth = track.scrollWidth / 2;
+
+    console.log(
+      "scrollLeft:",
+      track.scrollLeft,
+      "scrollWidth:",
+      track.scrollWidth,
+      "clientWidth:",
+      track.clientWidth,
+      "halfWidth:",
+      halfWidth
+    );
+
+    if (halfWidth <= 0) {
       frameId = requestAnimationFrame(animate);
+      return;
+    }
+
+    const elapsed = currentTime - previousTime;
+    previousTime = currentTime;
+
+    track.scrollLeft += elapsed * 0.05;
+
+    if (track.scrollLeft >= halfWidth) {
+      track.scrollLeft -= halfWidth;
     }
 
     frameId = requestAnimationFrame(animate);
+  }
 
-    return () => cancelAnimationFrame(frameId);
-  }, [cards.length, isPaused]);
+  frameId = requestAnimationFrame(animate);
+
+  return () => cancelAnimationFrame(frameId);
+}, [cards.length, isPaused]);
 
   return (
     <section className="border-y border-[var(--brand-border)] bg-[var(--brand-off-white)] py-14">
