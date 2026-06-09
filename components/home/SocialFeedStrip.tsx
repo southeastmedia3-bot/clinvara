@@ -294,18 +294,25 @@ export function SocialFeedStrip() {
 
         {loaded && cards.length > 0 && (
           <>
-            <style>{`
-              .social-scroll {
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-              }
-              .social-scroll::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
+
+          <style>{`
+            .social-scroll {
+              display: flex;
+              gap: 1.5rem;
+              overflow-x: auto;
+              overflow-y: hidden;
+              scroll-behavior: auto;
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+            }
+
+            .social-scroll::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
             <div
               ref={scrollRef}
-              className="social-scroll"
+              className="social-scroll flex gap-6 overflow-x-auto overflow-y-hidden"
               aria-label="Latest CLINVARA social posts"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
