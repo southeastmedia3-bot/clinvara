@@ -100,7 +100,7 @@ export function ProductDetail({
               {product.badge}
             </span>
           )}
-          <h1 className="font-display text-3xl font-semibold md:text-[32px]">
+          <h1 className="font-display text-[48px] font-light leading-[1.05] tracking-[-0.01em]">
             {product.name}
           </h1>
           <button
@@ -117,7 +117,7 @@ export function ProductDetail({
               {product.reviewCount.toLocaleString()} reviews
             </span>
           </button>
-          <p className="mt-4 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+          <p className="mt-4 text-[15px] leading-[1.8] text-zinc-600">
             {product.description}
           </p>
           {outOfStock ? (
@@ -130,14 +130,16 @@ export function ProductDetail({
             </p>
           ) : null}
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-xl font-bold">{formatINR(product.price)}</span>
-            <span className="text-sm text-[var(--brand-mid-gray)] line-through">
+            <span className="text-[32px] font-semibold text-black">
+              {formatINR(product.price)}
+            </span>
+            <span className="text-[16px] text-[var(--brand-mid-gray)] line-through">
               {formatINR(product.mrp)}
             </span>
           </div>
 
           <div className="mt-6">
-            <p className="mb-2 text-sm font-semibold">Size</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em]">Size</p>
             <SizeSelector sizes={product.sizes} value={size} onChange={setSize} />
           </div>
 
@@ -166,7 +168,7 @@ export function ProductDetail({
           <button
             type="button"
             disabled={outOfStock}
-            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600 disabled:hover:ring-0"
+            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-[11px] font-semibold uppercase tracking-[0.14em] text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600 disabled:hover:ring-0"
             onClick={() => {
               if (outOfStock) return;
               addItem({

@@ -42,8 +42,8 @@ export async function Footer() {
             <BrandLogo className="h-full w-full invert" />
           </Link>
 
-          <p className="mt-5 text-[14px] leading-relaxed text-white/65">
-            Science-backed skincare formulated with clinical transparency. Every formula lists what matters — and nothing you don&apos;t need.
+          <p className="font-display mt-5 text-[15px] font-light italic leading-[1.7] text-white/65">
+            Science-backed skincare formulated with clinical transparency...
           </p>
 
           <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/45">
@@ -52,11 +52,11 @@ export async function Footer() {
         </div>
 
         <div>
-          <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
             Company
           </p>
 
-          <ul className="space-y-3 text-[14px] text-white/65">
+          <ul className="space-y-3 text-[12px] text-white/65">
             <li>
               <Link href="/about-us" className="transition hover:text-white">
                 About Us
@@ -94,7 +94,7 @@ export async function Footer() {
             Quick Links
           </p>
 
-          <ul className="space-y-3 text-[14px] text-white/65">
+          <ul className="space-y-3 text-[12px] text-white/65">
             <li>
               <Link href="/blog" className="transition hover:text-white">
                 Blog / Knowledge Base

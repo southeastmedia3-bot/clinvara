@@ -50,7 +50,7 @@ export function ProductCard({
       onMouseLeave={() => setHover(false)}
     >
       {product.badge && (
-        <span className="absolute left-2 top-2 z-10 bg-[var(--brand-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+        <span className="absolute left-2 top-2 z-10 bg-[var(--brand-accent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white">
           {product.badge}
         </span>
       )}
@@ -104,11 +104,11 @@ export function ProductCard({
 
       <div className="space-y-2 px-3 pb-4 pt-2">
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug hover:underline">
+          <h3 className="font-display line-clamp-2 text-[20px] font-normal leading-[1.2]">
             {product.name}
           </h3>
         </Link>
-        <p className="text-xs text-[var(--brand-mid-gray)]">{product.concern}</p>
+        <p className="text-[12px] leading-[1.6] text-[var(--brand-mid-gray)]">{product.concern}</p>
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-bold">{formatINR(product.price)}</span>
           <span className="text-sm text-[var(--brand-mid-gray)] line-through">

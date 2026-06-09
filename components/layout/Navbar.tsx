@@ -142,8 +142,8 @@ export function Navbar() {
             </button>
             <Link
               href="/"
-              className="font-display text-[22px] font-bold tracking-[0.04em] text-[var(--brand-primary)] md:text-[26px]"
-              style={{ fontWeight: 700 }}
+              className="font-display text-[26px] font-normal tracking-[0.10em] uppercase text-[var(--brand-primary)]"
+              style={{ fontWeight: 400 }}
               aria-label="CLINVARA home"
             >
               CLINVARA
@@ -158,7 +158,7 @@ export function Navbar() {
             >
               <button
                 type="button"
-                className="nav-link-underline flex items-center gap-1 text-sm font-medium text-[var(--brand-primary)]"
+                className="nav-link-underline flex items-center gap-1 text-[12px] font-medium uppercase tracking-[0.06em] text-[var(--brand-primary)]"
                 aria-expanded={shopOpen}
                 aria-haspopup="true"
                 onClick={() => setShopOpen((v) => !v)}

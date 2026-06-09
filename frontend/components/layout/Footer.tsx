@@ -25,7 +25,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="mb-3 text-sm font-semibold">Company</p>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em]">Company</p>
           <ul className="space-y-2 text-sm text-[var(--brand-text-muted)]">
             <li>
               <Link href="/about-us" className="hover:text-black">
@@ -56,7 +56,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="mb-3 text-sm font-semibold">Quick Links</p>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em]">Quick Links</p>
           <ul className="space-y-2 text-sm text-[var(--brand-text-muted)]">
             <li>
               <Link href="/blog" className="hover:text-black">
@@ -92,7 +92,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="mb-3 text-sm font-semibold">Contact Us</p>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em]">Contact Us</p>
           <p className="text-sm text-[var(--brand-text-muted)]">
             Have a question? We&apos;d love to help.
           </p>
@@ -113,7 +113,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="mb-3 text-sm font-semibold">Follow Us</p>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em]"> Follow Us</p>
           <div className="flex gap-4">
             <a
               href="mailto:clinvaraglobal@gmail.com"

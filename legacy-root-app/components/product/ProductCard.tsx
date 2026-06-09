@@ -104,7 +104,7 @@ export function ProductCard({
 
       <div className="space-y-2 px-3 pb-4 pt-2">
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug hover:underline">
+          <h3 className="font-display line-clamp-2 text-[20px] font-normal leading-[1.2]">
             {product.name}
           </h3>
         </Link>

@@ -146,21 +146,21 @@ export function ProductCard({
 
       <div className="space-y-3 px-5 pb-5 pt-4">
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="line-clamp-2 text-[15px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 hover:underline">
+          <h3 className="font-display line-clamp-2 text-[20px] font-normal leading-[1.2] text-zinc-900 hover:underline">
             {product.name}
           </h3>
         </Link>
 
-        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+        <p className="text-[12px] text-zinc-500 leading-relaxed">
           {product.concern}
         </p>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-[15px] font-semibold tracking-tight text-black">
+          <span className="text-[18px] font-semibold text-black">
             {formatINR(product.price)}
           </span>
 
-          <span className="text-sm text-zinc-400 line-through">
+          <span className="text-[13px] text-zinc-400 line-through">
             {formatINR(product.mrp)}
           </span>
         </div>

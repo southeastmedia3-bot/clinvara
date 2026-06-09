@@ -10,7 +10,7 @@ export async function BestSellers() {
   return (
     <section id="best-sellers" className="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
       <header className="mb-8 mt-14 md:mt-[60px]">
-        <h2 className="font-display text-3xl font-semibold md:text-4xl">
+        <h2 className="font-display text-[clamp(32px,4vw,48px)] font-light leading-[1.1]">
           Our Best Sellers
         </h2>
         <div className="mt-2 h-0.5 w-12 bg-black" />

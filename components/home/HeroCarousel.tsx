@@ -52,17 +52,17 @@ export function HeroCarousel() {
               style={{ backgroundColor: slide.bgColor }}
             >
               <Badge className="mb-4 w-fit bg-white">{slide.badge}</Badge>
-              <h1 className="font-display text-4xl font-semibold leading-[1.15] tracking-[-0.02em] md:text-[52px]">
+              <h1 className="font-display text-[clamp(40px,6vw,72px)] font-light leading-[1.0] tracking-[-0.01em]">
                 {slide.title}
               </h1>
-              <p className="mt-4 max-w-md text-[15px] text-[var(--brand-text-muted)]">
+              <p className="mt-4 max-w-md text-[14px] leading-[1.75] text-[var(--brand-text-muted)]">
                 {slide.subtitle}
               </p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="max-w-md text-[14px] leading-[1.75] text-[var(--brand-secondary)]">
                 {slide.benefits.map((b) => (
                   <span
                     key={b}
-                    className="rounded-full border border-[#DDDDDD] px-3 py-1 text-xs font-medium"
+                    className="rounded-full border border-[#DDDDDD] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.10em]"
                   >
                     {b}
                   </span>
@@ -70,7 +70,7 @@ export function HeroCarousel() {
               </div>
               <Link
                 href={slide.href}
-                className="mt-8 inline-flex h-12 w-[160px] items-center justify-center bg-[var(--brand-primary)] text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]"
+                className="inline-flex items-center justify-center px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.12em]"
               >
                 {slide.cta}
               </Link>

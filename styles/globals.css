@@ -11,7 +11,7 @@
   --brand-star: #f59e0b;
 
   --font-display: "Cormorant Garamond", serif;
-  --font-body: "Inter", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
 
   --radius-none: 0px;
   --radius-pill: 999px;
@@ -34,8 +34,13 @@ body {
   font-family: var(--font-body);
   color: var(--brand-primary);
   background: var(--brand-white);
-  text-rendering: optimizeLegibility;
+
+  font-size: 14px;
+  line-height: 1.75;
+
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -141,4 +146,35 @@ button {
 
 .social-card {
   flex-shrink: 0;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.product-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.overline {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
