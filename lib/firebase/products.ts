@@ -127,6 +127,7 @@ function normalizeProduct(doc: FirestoreDocument): Product {
     active: data.active === undefined ? fallback?.active ?? true : Boolean(data.active),
     seoTitle: String(data.seoTitle || fallback?.seoTitle || ""),
     seoDescription: String(data.seoDescription || fallback?.seoDescription || ""),
+    dispatchTimeDays: Number(data.dispatchTimeDays ?? fallback?.dispatchTimeDays ?? 1),
   };
 }
 

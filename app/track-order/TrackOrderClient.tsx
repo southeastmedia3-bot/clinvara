@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, PackageCheck, SearchX, Truck } from "lucide-react";
 import { apiUrl } from "@/lib/api/client";
+import {
+  normalizeOrderStatus,
+  type OrderStatusKey,
+  orderStatusIndex,
+  orderTimelineSteps,
+} from "@/lib/orders/status";
 
 type TrackedOrder = {
   id: string;
@@ -16,19 +22,33 @@ type TrackedOrder = {
   confirmedAt?: string;
   packedAt?: string;
   pickedUpAt?: string;
+  inTransitAt?: string;
   shippedAt?: string;
   outForDeliveryAt?: string;
   deliveredAt?: string;
 };
 
-const stages = [
-  { key: "confirmed", label: "Confirmed", icon: CheckCircle2, time: "confirmedAt" },
-  { key: "packed", label: "Packed", icon: PackageCheck, time: "packedAt" },
-  { key: "picked_up", label: "Picked Up", icon: Truck, time: "pickedUpAt" },
-  { key: "shipped", label: "In Transit", icon: Truck, time: "shippedAt" },
-  { key: "out_for_delivery", label: "Out for Delivery", icon: Truck, time: "outForDeliveryAt" },
-  { key: "delivered", label: "Delivered", icon: CheckCircle2, time: "deliveredAt" },
-] as const;
+const stageIcons: Partial<Record<OrderStatusKey, typeof CheckCircle2>> = {
+  placed: CheckCircle2,
+  waiting_confirmation: Clock,
+  confirmed: CheckCircle2,
+  packed: PackageCheck,
+  picked_up: Truck,
+  in_transit: Truck,
+  out_for_delivery: Truck,
+  delivered: CheckCircle2,
+};
+
+const stageTimes: Record<string, keyof TrackedOrder> = {
+  placed: "createdAt",
+  waiting_confirmation: "createdAt",
+  confirmed: "confirmedAt",
+  packed: "packedAt",
+  picked_up: "pickedUpAt",
+  in_transit: "inTransitAt",
+  out_for_delivery: "outForDeliveryAt",
+  delivered: "deliveredAt",
+};
 
 export function TrackOrderClient() {
   const [orderId, setOrderId] = useState("");
@@ -182,7 +202,8 @@ function OrderStatusPanel({ order }: { order: TrackedOrder }) {
     order.adminDecision === "rejected" ||
     ["rejected", "cancelled"].includes(order.orderStatus);
   const pending = order.adminDecision === "pending";
-  const currentIndex = stages.findIndex((stage) => stage.key === order.publicOrderStatus);
+  const currentStatus = normalizeOrderStatus(order.publicOrderStatus || order.orderStatus);
+  const currentIndex = orderStatusIndex(currentStatus);
 
   if (pending) {
     return (
@@ -217,10 +238,10 @@ function OrderStatusPanel({ order }: { order: TrackedOrder }) {
         Your CLINVARA order is moving through fulfilment.
       </p>
       <ol className="mt-6 space-y-4">
-        {stages.map((stage, index) => {
-          const Icon = stage.icon;
-          const done = currentIndex === -1 ? index === 0 : index <= currentIndex;
-          const timestamp = order[stage.time as keyof TrackedOrder] as string | undefined;
+        {orderTimelineSteps.map((stage, index) => {
+          const Icon = stageIcons[stage.key] || Clock;
+          const done = index <= currentIndex;
+          const timestamp = order[stageTimes[stage.key]] as string | undefined;
           return (
             <li key={stage.key} className="flex gap-3">
               <span

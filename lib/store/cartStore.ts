@@ -116,6 +116,11 @@ export const useCartStore = create<CartState>()(
       },
 
       updateQuantity: (productId, size, quantity) => {
+        if (quantity <= 0) {
+          get().removeItem(productId, size);
+          return;
+        }
+
         const q = Math.max(1, Math.min(10, quantity));
         const next = get().items.map((i) =>
           keyOf(i.productId, i.size) === keyOf(productId, size)
@@ -177,7 +182,7 @@ export const useCartStore = create<CartState>()(
         );
         if (!response?.ok) return;
         const data = (await response.json().catch(() => null)) as {
-          products?: Array<Partial<CartItem> & { id?: string; slug?: string; price?: number; image?: string; name?: string }>;
+          products?: Array<Partial<CartItem> & { id?: string; slug?: string; price?: number; image?: string; name?: string; dispatchTimeDays?: number }>;
         } | null;
         const products = data?.products || [];
         const next = items.map((item) => {
@@ -191,6 +196,7 @@ export const useCartStore = create<CartState>()(
             name: product.name || item.name,
             image: product.image || item.image,
             slug: product.slug || item.slug,
+            dispatchTimeDays: Number(product.dispatchTimeDays ?? item.dispatchTimeDays ?? 1),
           };
         });
         set({ items: next });

@@ -29,6 +29,7 @@ export interface Product {
   active?: boolean;
   seoTitle?: string;
   seoDescription?: string;
+  dispatchTimeDays?: number;
 }
 
 export interface Review {
@@ -88,4 +89,5 @@ export type CartItem = {
   size: string;
   price: number;
   quantity: number;
+  dispatchTimeDays?: number;
 };

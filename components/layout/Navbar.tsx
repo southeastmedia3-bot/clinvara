@@ -217,7 +217,7 @@ export function Navbar() {
               )}
             </button>
             <Link
-              href="/account#wishlist"
+              href="/wishlist"
               className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)] sm:inline-flex"
               aria-label="Open wishlist"
             >
@@ -471,7 +471,7 @@ export function Navbar() {
                 Cart {cartCount > 0 ? `(${cartCount})` : ""}
               </button>
               <Link
-                href="/account#wishlist"
+                href="/wishlist"
                 className="mt-3 block text-center text-sm font-semibold underline"
                 onClick={() => setMobileOpen(false)}
               >

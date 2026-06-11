@@ -15,9 +15,11 @@ export type AdminProduct = Product & {
 
 export type OrderStatus =
   | "pending_admin_confirmation"
+  | "waiting_confirmation"
   | "confirmed"
   | "packed"
   | "picked_up"
+  | "in_transit"
   | "shipped"
   | "out_for_delivery"
   | "delivered"
@@ -51,6 +53,14 @@ export type AdminOrder = {
   adminDecision?: "pending" | "accepted" | "rejected";
   publicOrderStatus?: string;
   rejectionReason?: string;
+  confirmedAt?: unknown;
+  packedAt?: unknown;
+  pickedUpAt?: unknown;
+  inTransitAt?: unknown;
+  shippedAt?: unknown;
+  outForDeliveryAt?: unknown;
+  deliveredAt?: unknown;
+  rejectedAt?: unknown;
   createdAt?: unknown;
   updatedAt?: unknown;
 };

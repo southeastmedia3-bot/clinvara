@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   collection,
   getDocs,
-  orderBy,
   query,
   where,
 } from "firebase/firestore";
@@ -27,7 +26,6 @@ import { useWishlistStore } from "@/lib/store/wishlistStore";
 import { cartCount, cartTotal, useCartStore } from "@/lib/store/cartStore";
 import { allProducts } from "@/lib/data/products";
 import type { Product } from "@/lib/types";
-import { ProductCard } from "@/components/product/ProductCard";
 import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import {
   readCustomerProfile,
@@ -35,6 +33,7 @@ import {
   saveCustomerCheckoutEmail,
   type CustomerAddress,
 } from "@/lib/firebase/customerData";
+import { orderStatusLabel } from "@/lib/orders/status";
 
 type Address = CustomerAddress;
 
@@ -101,7 +100,7 @@ function displayOrderId(order: OrderRecord) {
 function customerStatus(order: OrderRecord) {
   if (order.adminDecision === "pending") return "Waiting for confirmation";
   if (order.adminDecision === "rejected" || order.orderStatus === "rejected") return "Rejected";
-  return String(order.publicOrderStatus || order.orderStatus || order.status || "Pending").replace(/_/g, " ");
+  return orderStatusLabel(order.publicOrderStatus || order.orderStatus || order.status);
 }
 
 function money(value: number | undefined) {
@@ -192,13 +191,9 @@ export default function AccountClient() {
 
       const snapshots = await Promise.all(
         filters.map(([field, value]) =>
-          getDocs(
-            query(
-              collection(firebaseDb, "orders"),
-              where(field, "==", value),
-              orderBy("createdAt", "desc"),
-            ),
-          ).catch(() => null),
+          getDocs(query(collection(firebaseDb, "orders"), where(field, "==", value))).catch(
+            () => null,
+          ),
         ),
       );
 
@@ -417,7 +412,7 @@ export default function AccountClient() {
         {[
           { icon: UserRound, label: "Login Method", value: user?.provider || "email" },
           { icon: Package, label: "Orders", value: `${orders.length} orders` },
-          { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} saved products` },
+          { icon: Heart, label: "Wishlist", value: `${wishlistProducts.length} Items` },
           { icon: MapPin, label: "PIN Code", value: user?.pincode || "Add before checkout" },
         ].map((item) => (
           <article
@@ -697,10 +692,10 @@ export default function AccountClient() {
                     </span>
 
                     <Link
-                      href={`/track-order?orderId=${encodeURIComponent(displayOrderId(order))}`}
+                      href={`/account/orders/${encodeURIComponent(displayOrderId(order))}`}
                       className="text-sm font-semibold underline"
                     >
-                      Track Order
+                      View Details
                     </Link>
                   </div>
                 </div>
@@ -735,8 +730,8 @@ export default function AccountClient() {
               Your saved formulas for later review.
             </p>
           </div>
-          <Link href="/shop" className="text-sm font-semibold underline">
-            Browse Shop
+          <Link href="/wishlist" className="text-sm font-semibold underline">
+            View Wishlist
           </Link>
         </div>
 
@@ -745,10 +740,19 @@ export default function AccountClient() {
             No saved products yet.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {wishlistProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="mt-6 rounded-xl bg-[var(--brand-off-white)] p-5">
+            <p className="text-sm font-semibold">
+              Wishlist: {wishlistProducts.length} {wishlistProducts.length === 1 ? "Item" : "Items"}
+            </p>
+            <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+              Open your dedicated wishlist page to add saved products to cart or remove them.
+            </p>
+            <Link
+              href="/wishlist"
+              className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+            >
+              View Wishlist
+            </Link>
           </div>
         )}
       </section>

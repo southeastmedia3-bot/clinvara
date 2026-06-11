@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 
 import "../styles/globals.css";
 
@@ -24,7 +24,7 @@ const display = Cormorant_Garamond({
   display: "swap",
 });
 
-const body = Inter({
+const body = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-body",

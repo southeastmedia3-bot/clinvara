@@ -11,6 +11,7 @@ import { cartTotal, cartCount } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
+import { getDeliveryEstimate } from "@/lib/delivery/estimate";
 
 const FREE_SHIPPING = 999;
 
@@ -140,6 +141,12 @@ export function CartDrawer() {
                         </Link>
                         <p className="text-xs text-[var(--brand-mid-gray)]">
                           {item.size}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                          Delivery:{" "}
+                          {getDeliveryEstimate({
+                            dispatchTimeDays: item.dispatchTimeDays ?? 1,
+                          }).label}
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <button

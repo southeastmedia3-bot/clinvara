@@ -51,6 +51,7 @@ export function ProductCard({
       size,
       price: product.price,
       quantity: 1,
+      dispatchTimeDays: product.dispatchTimeDays ?? 1,
     });
 
     showToast({

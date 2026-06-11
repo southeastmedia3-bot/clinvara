@@ -17,6 +17,7 @@ export const allProducts: Product[] = [
     badge: "BESTSELLER",
     rating: 4.7,
     reviewCount: 24,
+    dispatchTimeDays: 1,
     category: "serums",
     description:
       "A dermatologist-inspired niacinamide serum formulated for oily skin, visible pores, uneven tone and post-acne marks. Powered by niacinamide, zinc PCA and hydrating actives to support balanced, clearer-looking skin without heaviness.",
@@ -66,6 +67,7 @@ export const allProducts: Product[] = [
     badge: "",
     rating: 4.6,
     reviewCount: 19,
+    dispatchTimeDays: 1,
     category: "cleansers",
     description:
       "A gentle hydrating cleanser formulated with Natural Moisturizing Factors and hyaluronic acid to cleanse without stripping the skin barrier. Suitable for dry, dehydrated and sensitive skin types.",
@@ -119,6 +121,7 @@ export const allProducts: Product[] = [
     badge: "NEW",
     rating: 4.5,
     reviewCount: 12,
+    dispatchTimeDays: 1,
     category: "moisturizers",
     description:
       "A clinical pigmentation cream formulated for dark spots, uneven skin tone and post-acne pigmentation using alpha arbutin, kojic acid derivatives and barrier-supporting ingredients.",
@@ -172,6 +175,7 @@ export const allProducts: Product[] = [
     badge: "BESTSELLER",
     rating: 4.8,
     reviewCount: 31,
+    dispatchTimeDays: 1,
     category: "moisturizers",
     description:
       "A ceramide moisturizer formulated to support skin barrier repair, hydration and long-lasting comfort using ceramides, cholesterol, fatty acids and panthenol.",

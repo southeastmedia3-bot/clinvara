@@ -51,9 +51,10 @@ export function AdminDashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    const pendingOrders = orders.filter((order) =>
-      String(orderStatus(order)).toLowerCase().includes("pending"),
-    ).length;
+    const pendingOrders = orders.filter((order) => {
+      const status = String(orderStatus(order)).toLowerCase();
+      return status.includes("pending") || status.includes("waiting");
+    }).length;
     const lowStockProducts = products.filter((product) => {
       const stock = Number(product.stock ?? 0);
       const threshold = Number(product.lowStockThreshold ?? 5);

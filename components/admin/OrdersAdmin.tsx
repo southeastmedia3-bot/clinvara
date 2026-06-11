@@ -10,11 +10,11 @@ import { firebaseAuth } from "@/lib/firebase/client";
 import { apiUrl } from "@/lib/api/client";
 
 const statuses: OrderStatus[] = [
-  "pending_admin_confirmation",
+  "waiting_confirmation",
   "confirmed",
   "packed",
   "picked_up",
-  "shipped",
+  "in_transit",
   "out_for_delivery",
   "delivered",
   "cancelled",
@@ -37,7 +37,7 @@ function timestampPatch(status: string) {
   const now = new Date().toISOString();
   if (status === "packed") return { packedAt: now };
   if (status === "picked_up") return { pickedUpAt: now };
-  if (status === "shipped") return { shippedAt: now };
+  if (status === "in_transit") return { inTransitAt: now, shippedAt: now };
   if (status === "out_for_delivery") return { outForDeliveryAt: now };
   if (status === "delivered") return { deliveredAt: now };
   return {};
@@ -64,7 +64,9 @@ export function OrdersAdmin() {
   const filtered = useMemo(() => {
     const needle = query.toLowerCase();
     return orders.filter((order) => {
-      const matchesStatus = status === "all" || orderStatus(order) === status;
+      const normalizedStatus =
+        orderStatus(order) === "pending_admin_confirmation" ? "waiting_confirmation" : orderStatus(order);
+      const matchesStatus = status === "all" || normalizedStatus === status;
       const matchesQuery = [
         order.id,
         order.orderId,
@@ -241,7 +243,7 @@ export function OrdersAdmin() {
                   className="w-full rounded-md border border-[var(--brand-border)] px-3 py-3"
                 >
                   {statuses
-                    .filter((item) => item !== "pending_admin_confirmation")
+                    .filter((item) => item !== "waiting_confirmation")
                     .map((item) => (
                       <option key={item} value={item}>
                         {item}

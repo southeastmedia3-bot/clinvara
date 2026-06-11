@@ -9,6 +9,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
 import { readCustomerProfile } from "@/lib/firebase/customerData";
 import { createOrder } from "@/lib/firebase/orders";
+import { getDeliveryEstimate } from "@/lib/delivery/estimate";
 
 type CheckoutAddress = {
   fullName?: string;
@@ -62,6 +63,10 @@ export default function CartPage() {
   );
   const selectedShippingAddress =
     selectedAddressIndex === null ? null : completeAddresses[selectedAddressIndex] ?? null;
+  const checkoutDeliveryEstimate = getDeliveryEstimate({
+    dispatchTimeDays: Math.max(1, ...items.map((item) => Number(item.dispatchTimeDays ?? 1))),
+    address: selectedShippingAddress,
+  });
 
   useEffect(() => {
     let active = true;
@@ -143,6 +148,13 @@ export default function CartPage() {
                   <p className="text-xs text-[var(--brand-mid-gray)]">
                     {item.size}
                   </p>
+                  <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                    Estimated delivery:{" "}
+                    {getDeliveryEstimate({
+                      dispatchTimeDays: item.dispatchTimeDays ?? 1,
+                      address: selectedShippingAddress,
+                    }).label}
+                  </p>
 
                   <div className="mt-2 flex items-center gap-2">
                     <button
@@ -189,6 +201,15 @@ export default function CartPage() {
           <div className="mt-8 flex items-center justify-between border-t border-[var(--brand-border)] pt-6">
             <span className="font-semibold">Subtotal</span>
             <span className="text-lg font-bold">{formatINR(subtotal)}</span>
+          </div>
+          <div className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-white p-4 text-sm">
+            <p className="font-semibold">Estimated Delivery</p>
+            <p className="mt-1 text-[var(--brand-text-muted)]">
+              {checkoutDeliveryEstimate.label}
+              {selectedShippingAddress
+                ? ` (${checkoutDeliveryEstimate.region})`
+                : " after you select a delivery address"}
+            </p>
           </div>
 
           {isAuthenticated && (

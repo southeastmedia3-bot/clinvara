@@ -14,6 +14,7 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { BackButton } from "@/components/ui/BackButton";
 import type { Review } from "@/lib/types";
 import { isLowStock, isOutOfStock } from "@/lib/productAvailability";
+import { getDeliveryEstimate } from "@/lib/delivery/estimate";
 
 export function ProductDetail({
   product,
@@ -37,6 +38,9 @@ export function ProductDetail({
 
   const outOfStock = isOutOfStock(product);
   const lowStock = isLowStock(product);
+  const deliveryEstimate = getDeliveryEstimate({
+    dispatchTimeDays: product.dispatchTimeDays ?? 1,
+  });
 
   const highlights =
     product.keyIngredients?.length
@@ -179,6 +183,7 @@ export function ProductDetail({
                 size,
                 price: product.price,
                 quantity: qty,
+                dispatchTimeDays: product.dispatchTimeDays ?? 1,
               });
               showToast({ message: "Added to cart!", variant: "success" });
             }}
@@ -208,6 +213,13 @@ export function ProductDetail({
           </button>
 
           <div className="mt-8 space-y-2 border-t border-[var(--brand-border)] pt-6">
+            <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm">
+              <p className="font-semibold">Estimated Delivery</p>
+              <p className="mt-1 text-[var(--brand-text-muted)]">
+                {deliveryEstimate.label} for most India locations. Final estimate
+                updates with your delivery address at checkout.
+              </p>
+            </div>
             {[
               { id: "ingredients", title: "Key Ingredients" },
               { id: "howto", title: "How to Use" },
