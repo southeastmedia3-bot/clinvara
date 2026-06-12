@@ -62,7 +62,7 @@ export function ProductDetail({
           <div className="relative aspect-square bg-white p-6">
             <SafeImage
               src={activeImage}
-              alt={product.name}
+              alt={`${product.name} by CLINVARA for ${product.concerns.join(", ")}`}
               label={product.name}
               fill
               priority
@@ -329,6 +329,55 @@ export function ProductDetail({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-16 border-t border-[var(--brand-border)] pt-12">
+        <h2 className="font-display text-2xl font-semibold">
+          Frequently Asked Questions
+        </h2>
+
+        <div className="mt-6 space-y-4">
+          <div className="border border-[var(--brand-border)] p-4">
+            <h3 className="font-semibold">
+              How often should I use {product.name}?
+            </h3>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Follow the recommended usage instructions on the product page. Most
+              skincare products are designed for consistent daily use as part of a
+              balanced skincare routine.
+            </p>
+          </div>
+
+          <div className="border border-[var(--brand-border)] p-4">
+            <h3 className="font-semibold">
+              Is {product.name} suitable for sensitive skin?
+            </h3>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Individual skin responses vary. Patch testing before first use is
+              recommended, especially for sensitive skin.
+            </p>
+          </div>
+
+          <div className="border border-[var(--brand-border)] p-4">
+            <h3 className="font-semibold">
+              Can I use {product.name} with other skincare products?
+            </h3>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Yes. This product can generally be incorporated into a broader skincare
+              routine. Follow product directions and introduce new products gradually.
+            </p>
+          </div>
+
+          <div className="border border-[var(--brand-border)] p-4">
+            <h3 className="font-semibold">
+              How long does it take to see results?
+            </h3>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Results vary depending on skin type, concerns, and consistency of use.
+              Maintaining a regular skincare routine is important.
+            </p>
+          </div>
+        </div>
       </section>
 
       {relatedProducts.length > 0 && (
