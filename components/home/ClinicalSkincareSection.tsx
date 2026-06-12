@@ -1,19 +1,26 @@
 export default function ClinicalSkincareSection() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <h2 className="mb-6 text-3xl font-semibold">
-        Clinical Skincare Backed by Science
-      </h2>
+    <section className="bg-[var(--brand-white)] px-4 py-14 lg:px-8">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="max-w-4xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+            Clinical Skincare
+          </p>
 
-      <p className="text-lg leading-8 text-neutral-700">
-        CLINVARA develops dermatologist-tested skincare products formulated
-        to address pigmentation, dehydration, oil imbalance, damaged skin
-        barrier and uneven skin tone. Our formulations combine
-        evidence-based ingredients such as niacinamide, ceramides and
-        hyaluronic acid to support healthy, resilient skin. Every product
-        is designed with a science-first approach to help improve skin
-        health while remaining suitable for everyday use.
-      </p>
+          <h2 className="mt-3 font-display text-4xl font-semibold leading-tight md:text-5xl">
+            Clinical Skincare Powered by Active Ingredients
+          </h2>
+
+          <p className="mt-5 max-w-3xl text-base leading-7 text-[var(--brand-text-muted)] md:text-lg">
+            CLINVARA creates dermatologist-tested skincare with ingredient-led
+            formulas for pigmentation, hydration, oil control, sensitive skin
+            and skin barrier repair. Our products combine clinically researched
+            ingredients such as niacinamide, ceramides and hyaluronic acid to
+            support healthy, resilient skin while remaining suitable for
+            everyday use.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
