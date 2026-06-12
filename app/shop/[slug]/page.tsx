@@ -12,6 +12,7 @@ import { isOutOfStock } from "@/lib/productAvailability";
 type Props = { params: { slug: string } };
 
 const siteUrl = "https://clinvara.global";
+
 function absoluteUrl(path: string) {
   if (/^https?:\/\//.test(path)) return path;
   return `${siteUrl}${path}`;
@@ -35,16 +36,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = product.seoTitle || `${product.name} | Clinical Skincare`;
-  const description = product.seoDescription || `${product.description} Shop ${product.name} by CLINVARA for ${product.concerns.join(
-    ", ",
-  )}.`;
+
+  const description =
+    product.seoDescription ||
+    `${product.description} Shop ${product.name} by CLINVARA for ${product.concerns.join(
+      ", "
+    )}.`;
 
   return {
     title,
     description,
+
+    keywords: [
+      product.name,
+      ...product.concerns,
+      "clinical skincare",
+      "dermatologist tested skincare",
+      "niacinamide serum",
+      "ceramide moisturizer",
+      "pigmentation skincare",
+      "skin barrier repair",
+      "CLINVARA",
+    ],
+
     alternates: {
       canonical: `/shop/${product.slug}`,
     },
+
     openGraph: {
       title: `${product.name} | CLINVARA`,
       description,
@@ -59,6 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         },
       ],
     },
+
     twitter: {
       card: "summary_large_image",
       title: `${product.name} | CLINVARA`,
@@ -72,6 +91,7 @@ export default async function ProductPage({ params }: Props) {
   const product = await getStorefrontProductBySlug(params.slug);
 
   if (!product) notFound();
+
   const relatedProducts = await getRelatedProducts(product);
   const approvedReviews = await getApprovedReviews(product.slug);
 
@@ -81,32 +101,44 @@ export default async function ProductPage({ params }: Props) {
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
+
     name: product.name,
+
     image: product.gallery?.length
       ? product.gallery.map((image) => absoluteUrl(image))
       : [imageUrl],
+
     description: product.description,
+
     sku: `CLINVARA-${product.id}`,
+
     brand: {
       "@type": "Brand",
       name: "CLINVARA",
     },
+
     category: product.category,
+
     url: productUrl,
+
     offers: {
       "@type": "Offer",
       url: productUrl,
       price: product.price,
       priceCurrency: "INR",
+
       availability: isOutOfStock(product)
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
+
       itemCondition: "https://schema.org/NewCondition",
+
       seller: {
         "@type": "Organization",
         name: "CLINVARA",
       },
     },
+
     aggregateRating:
       product.rating && product.reviewCount
         ? {
@@ -120,6 +152,7 @@ export default async function ProductPage({ params }: Props) {
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+
     itemListElement: [
       {
         "@type": "ListItem",
@@ -150,6 +183,7 @@ export default async function ProductPage({ params }: Props) {
           __html: JSON.stringify(productJsonLd),
         }}
       />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
