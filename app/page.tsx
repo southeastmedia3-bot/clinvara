@@ -58,9 +58,9 @@ export default function HomePage() {
 
       <ClinicalSkincareSection />
 
-      <WhyChooseClinvara />
-
       <BestSellers />
+
+      <WhyChooseClinvara />
 
       <CategoryFilter />
 
@@ -70,9 +70,9 @@ export default function HomePage() {
 
       <ReviewsSection />
 
-      <SkinConcernsSection />
-
       <SocialFeedStrip />
+
+      <SkinConcernsSection />
 
       <BlogPreview />
     </>
