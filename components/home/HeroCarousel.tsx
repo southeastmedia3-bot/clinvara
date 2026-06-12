@@ -41,7 +41,7 @@ export function HeroCarousel() {
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.href}
-            initial={{ opacity: 0, x: 40 }}
+            initial={false}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}

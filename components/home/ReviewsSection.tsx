@@ -79,7 +79,7 @@ export function ReviewsSection() {
               className="flex h-full flex-col border border-[var(--brand-border)] bg-white p-5"
             >
               <motion.div
-                initial={{ opacity: 0, y: 8 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
               >
