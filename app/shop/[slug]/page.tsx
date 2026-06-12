@@ -175,6 +175,45 @@ export default async function ProductPage({ params }: Props) {
     ],
   };
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `How often should I use ${product.name}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Follow the recommended usage instructions on the product page. Most skincare products are designed for consistent daily use as part of a balanced skincare routine.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Is ${product.name} suitable for sensitive skin?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Individual skin responses vary. Patch testing before first use is recommended, especially for sensitive skin.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Can I use ${product.name} with other skincare products?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. This product can generally be incorporated into a broader skincare routine. Follow product directions and introduce new products gradually.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How long does it take to see results?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Results vary depending on skin type, concerns, and consistency of use. Maintaining a regular skincare routine is important.",
+        },
+      },
+    ],
+  };
+
   return (
     <>
       <script
@@ -188,6 +227,13 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqJsonLd),
         }}
       />
 
