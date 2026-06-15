@@ -122,8 +122,8 @@ const organizationJsonLd = {
   description:
     "Clinical skincare powered by active ingredients and dermatologist-tested formulations.",
   sameAs: [
-    "https://www.instagram.com/clinvaraglobal",
-    "https://www.threads.net/@clinvaraglobal",
+    "https://www.instagram.com/clinvaraglobal/",
+    "https://www.threads.com/@clinvaraglobal",
   ],
   brand: {
     "@type": "Brand",
