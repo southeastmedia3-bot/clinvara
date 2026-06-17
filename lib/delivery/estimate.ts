@@ -25,6 +25,11 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
+function normalizeDispatchDays(value: unknown) {
+  const days = Number(value);
+  return Number.isFinite(days) && days > 0 ? Math.ceil(days) : 1;
+}
+
 export function deliveryBandForAddress(address?: DeliveryAddressInput | null): DeliveryBand {
   const city = address?.city?.trim().toLowerCase() || "";
   const state = address?.state?.trim().toLowerCase() || "";
@@ -44,12 +49,13 @@ export function getDeliveryEstimate({
   address?: DeliveryAddressInput | null;
   from?: Date;
 }) {
+  const safeDispatchTimeDays = normalizeDispatchDays(dispatchTimeDays);
   const band = deliveryBandForAddress(address);
-  const minDate = addDays(from, dispatchTimeDays + band.min);
-  const maxDate = addDays(from, dispatchTimeDays + band.max);
+  const minDate = addDays(from, safeDispatchTimeDays + band.min);
+  const maxDate = addDays(from, safeDispatchTimeDays + band.max);
 
   return {
-    dispatchTimeDays,
+    dispatchTimeDays: safeDispatchTimeDays,
     deliveryMinDays: band.min,
     deliveryMaxDays: band.max,
     region: band.region,

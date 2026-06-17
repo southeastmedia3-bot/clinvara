@@ -1,9 +1,8 @@
 import {
-  addDoc,
   collection,
   doc,
   serverTimestamp,
-  setDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 import { firebaseDb } from "@/lib/firebase/client";
@@ -69,12 +68,15 @@ export async function createOrder(payload: CreateOrderPayload) {
     updatedAt: serverTimestamp(),
   };
 
-  const orderRef = await addDoc(
-    collection(firebaseDb, "orders"),
-    order,
-  );
+  const orderRef = doc(collection(firebaseDb, "orders"));
+  const batch = writeBatch(firebaseDb);
 
-  await setDoc(
+  batch.set(orderRef, {
+    ...order,
+    id: orderRef.id,
+  });
+
+  batch.set(
     doc(firebaseDb, "customers", payload.userId, "orders", orderRef.id),
     {
       ...order,
@@ -82,6 +84,8 @@ export async function createOrder(payload: CreateOrderPayload) {
     },
     { merge: true },
   );
+
+  await batch.commit();
 
   return { internalOrderId: orderRef.id, publicOrderId };
 }

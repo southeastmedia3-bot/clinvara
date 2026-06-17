@@ -404,7 +404,20 @@ app.post("/orders/admin-update", async (req, res) => {
     };
   }
 
-  await ref.set(update, { merge: true });
+  const ownerId = existing.userId || existing.uid || existing.customerId;
+  const batch = db.batch();
+  batch.set(ref, update, { merge: true });
+  if (ownerId) {
+    batch.set(
+      db.collection("customers").doc(String(ownerId)).collection("orders").doc(snapshot.id),
+      {
+        ...update,
+        id: snapshot.id,
+      },
+      { merge: true },
+    );
+  }
+  await batch.commit();
   const nextSnapshot = await ref.get();
   const nextOrder = { ...(nextSnapshot.data() || {}), ...update };
   const emailResult =

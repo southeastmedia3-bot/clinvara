@@ -38,6 +38,22 @@ function safeCartId(productId: string, size: string) {
   return `${productId}_${size}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+const cartOperationQueues = new Map<string, Promise<void>>();
+
+function enqueueCartOperation(key: string, operation: () => Promise<void>) {
+  const previous = cartOperationQueues.get(key) || Promise.resolve();
+  const next = previous
+    .catch(() => undefined)
+    .then(operation)
+    .finally(() => {
+      if (cartOperationQueues.get(key) === next) {
+        cartOperationQueues.delete(key);
+      }
+    });
+  cartOperationQueues.set(key, next);
+  return next;
+}
+
 async function saveCartItem(item: CartItem) {
   const user = firebaseAuth.currentUser;
   if (!user) return;
@@ -102,17 +118,21 @@ export const useCartStore = create<CartState>()(
         const saved = next.find(
           (i) => keyOf(i.productId, i.size) === keyOf(item.productId, item.size),
         );
-        if (saved) void saveCartItem(saved);
+        if (saved) {
+          const key = keyOf(saved.productId, saved.size);
+          void enqueueCartOperation(key, () => saveCartItem(saved));
+        }
       },
 
       removeItem: (productId, size) => {
+        const key = keyOf(productId, size);
         set({
           items: get().items.filter(
-            (i) => keyOf(i.productId, i.size) !== keyOf(productId, size),
+            (i) => keyOf(i.productId, i.size) !== key,
           ),
         });
 
-        void deleteCartItem(productId, size);
+        void enqueueCartOperation(key, () => deleteCartItem(productId, size));
       },
 
       updateQuantity: (productId, size, quantity) => {
@@ -133,7 +153,10 @@ export const useCartStore = create<CartState>()(
         const updated = next.find(
           (i) => keyOf(i.productId, i.size) === keyOf(productId, size),
         );
-        if (updated) void saveCartItem(updated);
+        if (updated) {
+          const key = keyOf(updated.productId, updated.size);
+          void enqueueCartOperation(key, () => saveCartItem(updated));
+        }
       },
 
       clearCart: () => {
@@ -141,7 +164,8 @@ export const useCartStore = create<CartState>()(
         set({ items: [] });
 
         for (const item of oldItems) {
-          void deleteCartItem(item.productId, item.size);
+          const key = keyOf(item.productId, item.size);
+          void enqueueCartOperation(key, () => deleteCartItem(item.productId, item.size));
         }
       },
 
@@ -170,7 +194,11 @@ export const useCartStore = create<CartState>()(
         const user = firebaseAuth.currentUser;
         if (!user) return;
 
-        await Promise.all(get().items.map((item) => saveCartItem(item)));
+        await Promise.all(
+          get().items.map((item) =>
+            enqueueCartOperation(keyOf(item.productId, item.size), () => saveCartItem(item)),
+          ),
+        );
       },
 
       refreshLatestPrices: async () => {
@@ -200,7 +228,11 @@ export const useCartStore = create<CartState>()(
           };
         });
         set({ items: next });
-        await Promise.all(next.map((item) => saveCartItem(item)));
+        await Promise.all(
+          next.map((item) =>
+            enqueueCartOperation(keyOf(item.productId, item.size), () => saveCartItem(item)),
+          ),
+        );
       },
     }),
     {

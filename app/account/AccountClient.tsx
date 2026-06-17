@@ -692,7 +692,7 @@ export default function AccountClient() {
                     </span>
 
                     <Link
-                      href={`/account/orders/${encodeURIComponent(displayOrderId(order))}`}
+                      href={`/account/orders/${encodeURIComponent(order.id)}`}
                       className="text-sm font-semibold underline"
                     >
                       View Details

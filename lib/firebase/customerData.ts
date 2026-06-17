@@ -2,11 +2,11 @@
 
 import {
   collection,
-  addDoc,
   doc,
   getDoc,
   serverTimestamp,
   setDoc,
+  writeBatch,
   type FieldValue,
 } from "firebase/firestore";
 import type { User } from "firebase/auth";
@@ -112,11 +112,19 @@ export async function createPendingOrder({
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
-  const rootRef = await addDoc(collection(firebaseDb, "orders"), order);
-  await setDoc(doc(firebaseDb, "customers", uid, "orders", rootRef.id), {
+  const rootRef = doc(collection(firebaseDb, "orders"));
+  const batch = writeBatch(firebaseDb);
+  batch.set(rootRef, {
     ...order,
+    id: rootRef.id,
     orderId: rootRef.id,
   });
+  batch.set(doc(firebaseDb, "customers", uid, "orders", rootRef.id), {
+    ...order,
+    id: rootRef.id,
+    orderId: rootRef.id,
+  });
+  await batch.commit();
   return rootRef.id;
 }
 

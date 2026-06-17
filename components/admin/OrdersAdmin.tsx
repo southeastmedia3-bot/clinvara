@@ -33,6 +33,14 @@ function orderStatus(order: AdminOrder) {
   return String(order.orderStatus || order.status || "pending_admin_confirmation");
 }
 
+function canDecideOrder(order: AdminOrder) {
+  const status = orderStatus(order);
+  return (
+    (!order.adminDecision || order.adminDecision === "pending") &&
+    ["pending_admin_confirmation", "waiting_confirmation", "placed"].includes(status)
+  );
+}
+
 function timestampPatch(status: string) {
   const now = new Date().toISOString();
   if (status === "packed") return { packedAt: now };
@@ -196,7 +204,7 @@ export function OrdersAdmin() {
             </button>
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            {(!selected.adminDecision || selected.adminDecision === "pending") && (
+            {canDecideOrder(selected) && (
               <div className="flex flex-wrap gap-2 md:col-span-2">
                 <button
                   type="button"

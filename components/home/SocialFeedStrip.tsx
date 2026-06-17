@@ -231,8 +231,6 @@ export function SocialFeedStrip() {
     return sortAndLimit(posts);
   }, [posts]);
 
-  const duplicatedCards = useMemo(() => [...cards, ...cards], [cards]);
-
   useEffect(() => {
   const track = scrollRef.current;
 
@@ -250,9 +248,9 @@ export function SocialFeedStrip() {
   function animate(currentTime: number) {
     if (!track) return;
 
-    const halfWidth = track.scrollWidth / 2;
+    const maxScroll = track.scrollWidth - track.clientWidth;
 
-    if (halfWidth <= 0) {
+    if (maxScroll <= 0) {
       frameId = requestAnimationFrame(animate);
       return;
     }
@@ -262,8 +260,8 @@ export function SocialFeedStrip() {
 
     track.scrollLeft += 0.5;
 
-    if (track.scrollLeft >= halfWidth) {
-      track.scrollLeft -= halfWidth;
+    if (track.scrollLeft >= maxScroll) {
+      track.scrollLeft = 0;
     }
 
     frameId = requestAnimationFrame(animate);
@@ -321,12 +319,12 @@ export function SocialFeedStrip() {
               onTouchStart={() => setIsPaused(true)}
               onTouchEnd={() => setIsPaused(false)}
             >
-              {duplicatedCards.map((card, index) => {
+              {cards.map((card) => {
                 const Icon = platformIcon(card.platform);
 
                 return (
                   <Link
-                    key={`${card.id}-${index}`}
+                    key={card.id}
                     href={card.href}
                     target="_blank"
                     rel="noreferrer"

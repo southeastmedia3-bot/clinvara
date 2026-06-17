@@ -2,14 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { Check, Circle } from "lucide-react";
 import { firebaseDb } from "@/lib/firebase/client";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -115,16 +108,6 @@ async function findOrder(orderId: string) {
   const direct = await getDoc(doc(firebaseDb, "orders", orderId)).catch(() => null);
   if (direct?.exists()) {
     return { id: direct.id, ...(direct.data() as Omit<CustomerOrder, "id">) };
-  }
-
-  for (const field of ["publicOrderId", "orderId"]) {
-    const snapshot = await getDocs(
-      query(collection(firebaseDb, "orders"), where(field, "==", orderId)),
-    ).catch(() => null);
-    const found = snapshot?.docs[0];
-    if (found) {
-      return { id: found.id, ...(found.data() as Omit<CustomerOrder, "id">) };
-    }
   }
 
   return null;

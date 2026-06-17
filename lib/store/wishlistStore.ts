@@ -44,6 +44,10 @@ async function deleteWishlistItem(productId: string) {
   await deleteDoc(doc(firebaseDb, "customers", user.uid, "wishlist", productId));
 }
 
+function uniqueProductIds(ids: string[]) {
+  return Array.from(new Set(ids.map((id) => String(id).trim()).filter(Boolean)));
+}
+
 export const useWishlistStore = create<WishlistState>()(
   persist(
     (set, get) => ({
@@ -51,21 +55,21 @@ export const useWishlistStore = create<WishlistState>()(
       firestoreReady: false,
 
       toggle: (productId) => {
-        const cur = get().productIds;
+        const cur = uniqueProductIds(get().productIds);
         const exists = cur.includes(productId);
 
         if (exists) {
           set({ productIds: cur.filter((id) => id !== productId) });
           void deleteWishlistItem(productId);
         } else {
-          set({ productIds: [...cur, productId] });
+          set({ productIds: uniqueProductIds([...cur, productId]) });
           void saveWishlistItem(productId);
         }
       },
 
-      has: (productId) => get().productIds.includes(productId),
+      has: (productId) => uniqueProductIds(get().productIds).includes(productId),
 
-      count: () => get().productIds.length,
+      count: () => uniqueProductIds(get().productIds).length,
 
       clear: () => set({ productIds: [], firestoreReady: false }),
 
@@ -80,9 +84,9 @@ export const useWishlistStore = create<WishlistState>()(
         const snapshot = await getDocs(wishlistRef);
 
         set({
-          productIds: snapshot.docs
-            .map((itemDoc) => String(itemDoc.data().productId ?? itemDoc.id))
-            .filter(Boolean),
+          productIds: uniqueProductIds(
+            snapshot.docs.map((itemDoc) => String(itemDoc.data().productId ?? itemDoc.id)),
+          ),
           firestoreReady: true,
         });
       },
@@ -91,7 +95,9 @@ export const useWishlistStore = create<WishlistState>()(
         const user = firebaseAuth.currentUser;
         if (!user) return;
 
-        await Promise.all(get().productIds.map((productId) => saveWishlistItem(productId)));
+        const productIds = uniqueProductIds(get().productIds);
+        set({ productIds });
+        await Promise.all(productIds.map((productId) => saveWishlistItem(productId)));
       },
     }),
     {
