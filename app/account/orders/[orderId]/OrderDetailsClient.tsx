@@ -158,6 +158,12 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
   const [returnMessage, setReturnMessage] = useState("");
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#return-item") {
+      setShowReturnForm(true);
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function loadOrder() {
@@ -320,8 +326,8 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
           <p className="mt-3 text-sm text-[var(--brand-text-muted)]">
             We could not find this order for your signed-in account.
           </p>
-          <Link href="/account" className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold text-white">
-            Back to Account
+          <Link href="/account/orders" className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold text-white">
+            Back to Orders
           </Link>
         </section>
       </main>
@@ -330,15 +336,15 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 lg:px-8">
-      <Link href="/account" className="text-sm font-semibold underline">
-        Back to Account
+      <Link href="/account/orders" className="text-sm font-semibold underline">
+        Back to Orders
       </Link>
 
       <section className="mt-6 rounded-2xl border border-[var(--brand-border)] bg-white p-6">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
-              Order Details
+              Order Information
             </p>
             <h1 className="mt-2 font-display text-4xl font-semibold">
               {order.publicOrderId || order.orderId || order.id}
@@ -376,6 +382,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
               setShowReturnForm((value) => !value);
               setReturnMessage("");
             }}
+            id="return-item"
             className="inline-flex h-11 items-center gap-2 rounded-full border border-black px-5 text-sm font-semibold"
           >
             <RotateCcw className="h-4 w-4" />
@@ -477,7 +484,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <h2 className="font-display text-2xl font-semibold">Products Ordered</h2>
+            <h2 className="font-display text-2xl font-semibold">Product Information</h2>
             <div className="mt-4 space-y-3">
               {items.length ? (
                 items.map((item, index) => (
@@ -504,8 +511,8 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
               )}
             </div>
 
-            <div id="order-tracking" className="mt-6 rounded-xl border border-[var(--brand-border)] p-4">
-              <h2 className="font-display text-2xl font-semibold">Tracking Timeline</h2>
+            <div id="order-tracking" className="mt-6 scroll-mt-24 rounded-xl border border-[var(--brand-border)] p-4">
+              <h2 className="font-display text-2xl font-semibold">Tracking Information</h2>
               <ol className="mt-5 space-y-4">
                 {orderTimelineSteps.map((step, index) => {
                   const complete = index < currentIndex;
@@ -536,7 +543,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
 
           <aside className="space-y-4">
             <div className="rounded-xl border border-[var(--brand-border)] p-4">
-              <h2 className="font-display text-2xl font-semibold">Summary</h2>
+              <h2 className="font-display text-2xl font-semibold">Payment Information</h2>
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-[var(--brand-text-muted)]">Subtotal</span>
@@ -579,7 +586,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
         <section className="mt-8 rounded-xl border border-[var(--brand-border)] p-4">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <h2 className="font-display text-2xl font-semibold">Return History</h2>
+              <h2 className="font-display text-2xl font-semibold">Return Information</h2>
               <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
                 Return requests attached to this order.
               </p>
