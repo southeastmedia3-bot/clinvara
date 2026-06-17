@@ -98,10 +98,12 @@ export type AdminReview = {
   productSlug?: string;
   productName?: string;
   customerName?: string;
+  name?: string;
   rating?: number;
   title?: string;
   body?: string;
   status?: "pending" | "approved" | "rejected";
+  date?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
