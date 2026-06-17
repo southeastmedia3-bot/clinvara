@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { blogs, getBlogBySlug } from "@/lib/data/blogs";
-import { allProducts } from "@/lib/data/products";
+import { getProductsForBlog } from "@/lib/data/internalLinks";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { BackButton } from "@/components/ui/BackButton";
 
@@ -36,7 +36,7 @@ export function generateMetadata({ params }: Props): Metadata {
 export default function BlogPostPage({ params }: Props) {
   const post = getBlogBySlug(params.slug);
   if (!post) notFound();
-  const relatedProducts = allProducts.slice(0, 3);
+  const relatedProducts = getProductsForBlog(post.slug);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -89,25 +89,31 @@ export default function BlogPostPage({ params }: Props) {
           <p key={para.slice(0, 24)}>{para}</p>
         ))}
       </div>
-      <div className="mt-10 border-t border-[var(--brand-border)] pt-6">
+      <section className="mt-10 border-t border-[var(--brand-border)] pt-6">
         <h2 className="font-display text-2xl font-semibold">
-          Shop related formulas
+          Shop Related Products
         </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+          Formulas connected to this article&apos;s core skin concern and routine guidance.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {relatedProducts.map((product) => (
             <Link
-              key={product.id}
+              key={product.slug}
               href={`/shop/${product.slug}`}
-              className="rounded-xl border border-[var(--brand-border)] p-4 text-sm font-semibold hover:border-black"
+              className="rounded-xl border border-[var(--brand-border)] p-4 text-sm hover:border-black"
             >
-              {product.name}
+              <span className="block font-semibold">{product.name}</span>
+              <span className="mt-1 block text-xs text-[var(--brand-text-muted)]">
+                {product.concern}
+              </span>
             </Link>
           ))}
         </div>
         <Link href="/blog" className="mt-6 inline-flex text-sm font-semibold underline">
           Back to all journal articles
         </Link>
-      </div>
+      </section>
     </article>
   );
 }

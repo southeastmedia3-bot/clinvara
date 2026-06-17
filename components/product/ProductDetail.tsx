@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Star } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
@@ -13,6 +14,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { BackButton } from "@/components/ui/BackButton";
 import type { Review } from "@/lib/types";
+import type { BlogPost } from "@/lib/types";
 import { isLowStock, isOutOfStock } from "@/lib/productAvailability";
 import { getDeliveryEstimate } from "@/lib/delivery/estimate";
 
@@ -20,10 +22,12 @@ export function ProductDetail({
   product,
   relatedProducts = [],
   reviews = [],
+  relatedArticles = [],
 }: {
   product: Product;
   relatedProducts?: Product[];
   reviews?: Review[];
+  relatedArticles?: BlogPost[];
 }) {
   const gallery = product.gallery ?? [product.image, product.imageHover];
   const [activeImage, setActiveImage] = useState(gallery[0]);
@@ -379,6 +383,34 @@ export function ProductDetail({
           </div>
         </div>
       </section>
+
+      {relatedArticles.length > 0 && (
+        <section className="mt-16 border-t border-[var(--brand-border)] pt-12">
+          <h2 className="font-display text-2xl font-semibold">Related Reading</h2>
+          <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+            Learn more about the ingredients, concerns, and routines connected to {product.name}.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {relatedArticles.map((article) => (
+              <Link
+                key={article.slug}
+                href={`/blog/${article.slug}`}
+                className="rounded-xl border border-[var(--brand-border)] p-5 transition hover:border-black"
+              >
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                  {article.tag}
+                </span>
+                <span className="mt-2 block font-display text-2xl font-semibold">
+                  {article.title}
+                </span>
+                <span className="mt-2 line-clamp-2 block text-sm text-[var(--brand-text-muted)]">
+                  {article.excerpt}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {relatedProducts.length > 0 && (
         <section className="mt-16">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allProducts } from "@/lib/data/products";
+import { getBlogsForProduct } from "@/lib/data/internalLinks";
 import { ProductDetail } from "@/components/product/ProductDetail";
 import {
   getApprovedReviews,
@@ -94,6 +95,7 @@ export default async function ProductPage({ params }: Props) {
 
   const relatedProducts = await getRelatedProducts(product);
   const approvedReviews = await getApprovedReviews(product.slug);
+  const relatedArticles = getBlogsForProduct(product.slug);
 
   const productUrl = `${siteUrl}/shop/${product.slug}`;
   const imageUrl = absoluteUrl(product.image);
@@ -241,6 +243,7 @@ export default async function ProductPage({ params }: Props) {
         product={product}
         relatedProducts={relatedProducts}
         reviews={approvedReviews}
+        relatedArticles={relatedArticles}
       />
     </>
   );
