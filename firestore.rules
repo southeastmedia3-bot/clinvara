@@ -33,6 +33,16 @@ service cloud.firestore {
       return !request.resource.data.keys().hasAny(["role"]);
     }
 
+    function ownsOrder(orderId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/orders/$(orderId))
+        && (
+          get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid
+          || get(/databases/$(database)/documents/orders/$(orderId)).data.uid == request.auth.uid
+          || get(/databases/$(database)/documents/orders/$(orderId)).data.customerId == request.auth.uid
+        );
+    }
+
     match /users/{userId} {
       allow create: if isOwner(userId) && doesNotCreateRole();
       allow read: if isOwner(userId) || isAdmin();
@@ -92,6 +102,16 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if resource.data.status == "approved" || isAdmin();
       allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /returns/{returnId} {
+      allow create: if signedIn()
+                    && request.resource.data.customerId == request.auth.uid
+                    && request.resource.data.status == "requested"
+                    && ownsOrder(request.resource.data.orderId);
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.customerId == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 

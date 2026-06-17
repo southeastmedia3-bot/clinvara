@@ -108,6 +108,23 @@ export type AdminReview = {
   updatedAt?: unknown;
 };
 
+export type AdminReturn = {
+  id: string;
+  customerId?: string;
+  customerName?: string;
+  customerEmail?: string;
+  orderId?: string;
+  orderDisplayId?: string;
+  productId?: string;
+  productSlug?: string;
+  productName?: string;
+  reason?: string;
+  notes?: string;
+  status?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
 export type StoreSettings = {
   id?: string;
   storeName: string;

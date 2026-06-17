@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   collection,
   getDocs,
@@ -10,6 +10,8 @@ import {
 import Link from "next/link";
 import {
   Heart,
+  Check,
+  Circle,
   LogOut,
   MapPin,
   Package,
@@ -17,6 +19,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  RotateCcw,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -34,6 +37,18 @@ import {
   type CustomerAddress,
 } from "@/lib/firebase/customerData";
 import { orderStatusLabel } from "@/lib/orders/status";
+import {
+  createReturnRequest,
+  listCustomerReturns,
+  type CustomerReturnRequest,
+} from "@/lib/firebase/returns";
+import {
+  returnReasons,
+  returnStatusIndex,
+  returnStatusLabel,
+  returnStatusSteps,
+  type ReturnReason,
+} from "@/lib/returns/status";
 
 type Address = CustomerAddress;
 
@@ -49,7 +64,14 @@ type OrderRecord = {
   adminDecision?: "pending" | "accepted" | "rejected";
   paymentStatus: string;
   rejectionReason?: string;
-  items?: Array<{ name?: string; quantity?: number; size?: string; price?: number }>;
+  items?: Array<{
+    productId?: string;
+    slug?: string;
+    name?: string;
+    quantity?: number;
+    size?: string;
+    price?: number;
+  }>;
   shippingAddress?: Address;
   createdAt?: { seconds: number } | string;
   confirmedAt?: string;
@@ -57,6 +79,8 @@ type OrderRecord = {
   shippedAt?: string;
   deliveredAt?: string;
 };
+
+type ReturnRecord = CustomerReturnRequest;
 
 const emptyAddress: Address = {
   id: "",
@@ -107,6 +131,22 @@ function money(value: number | undefined) {
   return `INR ${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
+function genericDate(value: unknown) {
+  if (!value) return "Recently updated";
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Recently updated" : date.toLocaleString("en-IN");
+  }
+  if (typeof value === "object" && value && "seconds" in value) {
+    const seconds = Number((value as { seconds?: number }).seconds || 0);
+    return seconds ? new Date(seconds * 1000).toLocaleString("en-IN") : "Recently updated";
+  }
+  if (typeof value === "object" && value && "toDate" in value) {
+    return (value as { toDate: () => Date }).toDate().toLocaleString("en-IN");
+  }
+  return "Recently updated";
+}
+
 export default function AccountClient() {
   const isAuth = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -121,7 +161,34 @@ export default function AccountClient() {
   const [checkoutEmail, setCheckoutEmail] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [returns, setReturns] = useState<ReturnRecord[]>([]);
+  const [returnOrderId, setReturnOrderId] = useState("");
+  const [returnProductKey, setReturnProductKey] = useState("");
+  const [returnReason, setReturnReason] = useState<ReturnReason>("Damaged Product");
+  const [returnNotes, setReturnNotes] = useState("");
+  const [returnMessage, setReturnMessage] = useState("");
   const [products, setProducts] = useState<Product[]>(allProducts);
+
+  const refreshReturns = useCallback(async () => {
+    if (!user?.uid) {
+      setReturns([]);
+      return;
+    }
+    const nextReturns = await listCustomerReturns(user.uid).catch(() => []);
+    setReturns(
+      nextReturns.sort((a, b) => {
+        const aTime =
+          typeof a.createdAt === "object" && a.createdAt && "seconds" in a.createdAt
+            ? Number((a.createdAt as { seconds?: number }).seconds || 0)
+            : 0;
+        const bTime =
+          typeof b.createdAt === "object" && b.createdAt && "seconds" in b.createdAt
+            ? Number((b.createdAt as { seconds?: number }).seconds || 0)
+            : 0;
+        return bTime - aTime;
+      }),
+    );
+  }, [user?.uid]);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -155,6 +222,7 @@ export default function AccountClient() {
       setCheckoutEmail("");
       setAddresses([]);
       setOrders([]);
+      setReturns([]);
       return;
     }
 
@@ -220,6 +288,8 @@ export default function AccountClient() {
       if (active) setOrders(nextOrders);
     });
 
+    void refreshReturns();
+
     return () => {
       active = false;
     };
@@ -233,11 +303,20 @@ export default function AccountClient() {
     user?.pincode,
     user?.provider,
     user?.uid,
+    refreshReturns,
   ]);
 
   const wishlistProducts = useMemo(
     () => products.filter((product) => wishIds.includes(product.id)),
     [products, wishIds],
+  );
+  const selectedReturnOrder = useMemo(
+    () => orders.find((order) => order.id === returnOrderId) || null,
+    [orders, returnOrderId],
+  );
+  const selectedReturnItems = useMemo(
+    () => selectedReturnOrder?.items || [],
+    [selectedReturnOrder],
   );
 
   const displayName =
@@ -282,6 +361,45 @@ export default function AccountClient() {
   const saveContactDetails = () => {
     if (!user?.uid || user.email) return;
     void saveCustomerCheckoutEmail(user.uid, checkoutEmail);
+  };
+
+  const submitReturnRequest = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setReturnMessage("");
+
+    if (!user?.uid || !selectedReturnOrder) {
+      setReturnMessage("Select an order before requesting a return.");
+      return;
+    }
+
+    const selectedItem = selectedReturnItems.find(
+      (item, index) => `${item.productId || item.slug || item.name || "product"}-${index}` === returnProductKey,
+    );
+
+    if (!selectedItem) {
+      setReturnMessage("Select the product you want to return.");
+      return;
+    }
+
+    await createReturnRequest({
+      customerId: user.uid,
+      customerName: displayName,
+      customerEmail: user.email,
+      orderId: selectedReturnOrder.id,
+      orderDisplayId: displayOrderId(selectedReturnOrder),
+      productId: selectedItem.productId,
+      productSlug: selectedItem.slug,
+      productName: selectedItem.name || "CLINVARA product",
+      reason: returnReason,
+      notes: returnNotes.trim(),
+    });
+
+    setReturnMessage("Return request submitted. Our team will review it shortly.");
+    setReturnOrderId("");
+    setReturnProductKey("");
+    setReturnReason("Damaged Product");
+    setReturnNotes("");
+    await refreshReturns();
   };
 
   const logout = async () => {
@@ -716,6 +834,217 @@ export default function AccountClient() {
           <Link href="/routines" className="mt-5 inline-flex text-sm font-semibold underline">
             View Routines
           </Link>
+        </article>
+      </section>
+
+      <section className="mt-8 grid gap-8 xl:grid-cols-[0.44fr_0.56fr]">
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+          <RotateCcw className="h-5 w-5" />
+          <h2 className="mt-5 font-display text-3xl font-semibold">Returns</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--brand-text-muted)]">
+            Request a return for an item from your previous CLINVARA orders.
+          </p>
+
+          <form onSubmit={submitReturnRequest} className="mt-6 space-y-4">
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">Order ID</span>
+              <select
+                required
+                value={returnOrderId}
+                onChange={(event) => {
+                  setReturnOrderId(event.target.value);
+                  setReturnProductKey("");
+                  setReturnMessage("");
+                }}
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black"
+              >
+                <option value="">Select an order</option>
+                {orders.map((order) => (
+                  <option key={order.id} value={order.id}>
+                    {displayOrderId(order)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">Product</span>
+              <select
+                required
+                value={returnProductKey}
+                onChange={(event) => {
+                  setReturnProductKey(event.target.value);
+                  setReturnMessage("");
+                }}
+                disabled={!selectedReturnItems.length}
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black disabled:bg-[var(--brand-off-white)]"
+              >
+                <option value="">Select a product</option>
+                {selectedReturnItems.map((item, index) => (
+                  <option
+                    key={`${item.productId || item.slug || item.name || "product"}-${index}`}
+                    value={`${item.productId || item.slug || item.name || "product"}-${index}`}
+                  >
+                    {item.name || "CLINVARA product"}
+                    {item.size ? ` - ${item.size}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">Return Reason</span>
+              <select
+                required
+                value={returnReason}
+                onChange={(event) => {
+                  setReturnReason(event.target.value as ReturnReason);
+                  setReturnMessage("");
+                }}
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black"
+              >
+                {returnReasons.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {reason}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">
+                Additional Notes
+              </span>
+              <textarea
+                value={returnNotes}
+                onChange={(event) => {
+                  setReturnNotes(event.target.value);
+                  setReturnMessage("");
+                }}
+                rows={4}
+                placeholder="Share photos or details with support after submission if needed."
+                className="w-full rounded-2xl border border-[var(--brand-border)] bg-white px-4 py-3 text-sm outline-none focus:border-black"
+              />
+            </label>
+
+            {returnMessage && (
+              <p className="rounded-xl bg-[var(--brand-off-white)] p-3 text-sm font-semibold">
+                {returnMessage}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={!orders.length}
+              className="h-11 w-full rounded-full bg-black px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Request Return
+            </button>
+          </form>
+        </article>
+
+        <article className="rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-semibold">Return History</h2>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                Track each return request from review to refund.
+              </p>
+            </div>
+            <span className="rounded-full bg-[var(--brand-off-white)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]">
+              {returns.length} {returns.length === 1 ? "Return" : "Returns"}
+            </span>
+          </div>
+
+          {returns.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-dashed border-[var(--brand-border)] p-8 text-center">
+              <RotateCcw className="mx-auto h-8 w-8 text-[var(--brand-text-muted)]" />
+              <p className="mt-3 font-semibold">No return requests yet</p>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                Your submitted returns will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {returns.map((item) => {
+                const statusIndex = returnStatusIndex(item.status);
+                const isRejected = item.status === "rejected";
+
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-[var(--brand-border)] p-5"
+                  >
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                          {item.orderDisplayId || item.orderId}
+                        </p>
+                        <p className="mt-1 font-semibold">{item.productName}</p>
+                        <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                          {item.reason} - {genericDate(item.createdAt)}
+                        </p>
+                      </div>
+                      <span
+                        className={`h-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                          isRejected
+                            ? "bg-red-50 text-red-700"
+                            : item.status === "refunded"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-[var(--brand-off-white)]"
+                        }`}
+                      >
+                        {returnStatusLabel(item.status)}
+                      </span>
+                    </div>
+
+                    {item.notes && (
+                      <p className="mt-3 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm text-[var(--brand-text-muted)]">
+                        {item.notes}
+                      </p>
+                    )}
+
+                    {isRejected ? (
+                      <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                        This return was rejected. Contact support if you need help.
+                      </p>
+                    ) : (
+                      <ol className="mt-5 grid gap-3 sm:grid-cols-4">
+                        {returnStatusSteps.map((step, index) => {
+                          const complete = index < statusIndex;
+                          const active = index === statusIndex;
+
+                          return (
+                            <li key={step.key} className="flex gap-2 text-sm">
+                              <span
+                                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                                  complete || active
+                                    ? "border-black bg-black text-white"
+                                    : "border-[var(--brand-border)] text-[var(--brand-text-muted)]"
+                                }`}
+                              >
+                                {complete ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Circle className="h-3 w-3" />
+                                )}
+                              </span>
+                              <span>
+                                <span className="block font-semibold">{step.label}</span>
+                                <span className="text-xs text-[var(--brand-text-muted)]">
+                                  {active ? "Current" : complete ? "Completed" : "Pending"}
+                                </span>
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </article>
       </section>
 

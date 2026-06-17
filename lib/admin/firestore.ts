@@ -20,6 +20,7 @@ import type {
   AdminCustomer,
   AdminOrder,
   AdminProduct,
+  AdminReturn,
   AdminReview,
   StoreSettings,
 } from "@/lib/admin/types";
@@ -129,6 +130,20 @@ export async function updateReview(id: string, data: Partial<AdminReview>) {
 
 export async function deleteReview(id: string) {
   await deleteDoc(doc(firebaseDb, "reviews", id));
+}
+
+export async function listReturns(): Promise<AdminReturn[]> {
+  const snapshot = await getDocs(
+    query(collection(firebaseDb, "returns"), orderBy("createdAt", "desc"), limit(100)),
+  ).catch(() => getDocs(collection(firebaseDb, "returns")));
+  return snapshot.docs.map((entry) => withId(entry.id, entry.data())) as AdminReturn[];
+}
+
+export async function updateReturn(id: string, data: Partial<AdminReturn>) {
+  await updateDoc(doc(firebaseDb, "returns", id), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function readSettings(): Promise<StoreSettings> {
