@@ -35,6 +35,7 @@ export type AdminOrder = {
   publicOrderId?: string;
   userId?: string;
   uid?: string;
+  customerId?: string;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;

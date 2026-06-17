@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
-import { Check, Circle } from "lucide-react";
+import { Check, Circle, Download, RotateCcw } from "lucide-react";
 import { firebaseDb } from "@/lib/firebase/client";
 import { useAuthStore } from "@/lib/store/authStore";
 import { formatINR } from "@/lib/utils";
@@ -14,8 +14,22 @@ import {
   orderTimelineSteps,
 } from "@/lib/orders/status";
 import { formatDate, getDeliveryEstimate } from "@/lib/delivery/estimate";
+import {
+  createReturnRequest,
+  listCustomerReturns,
+  type CustomerReturnRequest,
+} from "@/lib/firebase/returns";
+import {
+  returnReasons,
+  returnStatusIndex,
+  returnStatusLabel,
+  returnStatusSteps,
+  type ReturnReason,
+} from "@/lib/returns/status";
 
 type OrderItem = {
+  productId?: string;
+  slug?: string;
   name?: string;
   quantity?: number;
   price?: number;
@@ -104,6 +118,22 @@ function addressText(address?: OrderAddress) {
     .join(", ");
 }
 
+function returnDateLabel(value: unknown) {
+  if (!value) return "Recently requested";
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Recently requested" : date.toLocaleString("en-IN");
+  }
+  if (typeof value === "object" && value && "seconds" in value) {
+    const seconds = Number((value as { seconds?: number }).seconds || 0);
+    return seconds ? new Date(seconds * 1000).toLocaleString("en-IN") : "Recently requested";
+  }
+  if (typeof value === "object" && value && "toDate" in value) {
+    return (value as { toDate: () => Date }).toDate().toLocaleString("en-IN");
+  }
+  return "Recently requested";
+}
+
 async function findOrder(orderId: string) {
   const direct = await getDoc(doc(firebaseDb, "orders", orderId)).catch(() => null);
   if (direct?.exists()) {
@@ -118,13 +148,21 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setLoginOpen = useAuthStore((state) => state.setLoginModalOpen);
   const [order, setOrder] = useState<CustomerOrder | null>(null);
+  const [returns, setReturns] = useState<CustomerReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [denied, setDenied] = useState(false);
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnProductKey, setReturnProductKey] = useState("");
+  const [returnReason, setReturnReason] = useState<ReturnReason>("Damaged Product");
+  const [returnNotes, setReturnNotes] = useState("");
+  const [returnMessage, setReturnMessage] = useState("");
 
   useEffect(() => {
     let active = true;
 
     async function loadOrder() {
+      const customerId = user?.uid;
+      if (!customerId) return;
       setLoading(true);
       setDenied(false);
       const next = await findOrder(orderId);
@@ -136,6 +174,23 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
         return;
       }
       setOrder(next);
+      const nextReturns = await listCustomerReturns(customerId).catch(() => []);
+      if (!active) return;
+      setReturns(
+        nextReturns
+          .filter((item) => item.orderId === next.id)
+          .sort((a, b) => {
+            const aSeconds =
+              typeof a.createdAt === "object" && a.createdAt && "seconds" in a.createdAt
+                ? Number((a.createdAt as { seconds?: number }).seconds || 0)
+                : 0;
+            const bSeconds =
+              typeof b.createdAt === "object" && b.createdAt && "seconds" in b.createdAt
+                ? Number((b.createdAt as { seconds?: number }).seconds || 0)
+                : 0;
+            return bSeconds - aSeconds;
+          }),
+      );
       setLoading(false);
     }
 
@@ -170,6 +225,64 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
       address,
     });
   }, [address, order]);
+  const selectedReturnItem = useMemo(() => {
+    return items.find(
+      (item, index) => `${item.productId || item.slug || item.name || "product"}-${index}` === returnProductKey,
+    );
+  }, [items, returnProductKey]);
+
+  const submitReturnRequest = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setReturnMessage("");
+
+    const customerId = user?.uid;
+    if (!order || !customerId) {
+      setReturnMessage("Sign in to request a return.");
+      return;
+    }
+    if (!selectedReturnItem) {
+      setReturnMessage("Select the product you want to return.");
+      return;
+    }
+
+    const returnId = await createReturnRequest({
+      customerId,
+      customerName: user.name || user.email || user.phone,
+      customerEmail: user.email,
+      orderId: order.id,
+      orderDisplayId: order.publicOrderId || order.orderId || order.id,
+      productId: selectedReturnItem.productId,
+      productSlug: selectedReturnItem.slug,
+      productName: selectedReturnItem.name || "CLINVARA product",
+      reason: returnReason,
+      notes: returnNotes.trim(),
+    });
+
+    setReturns((current) => [
+      {
+        id: returnId,
+        customerId,
+        customerName: user.name || user.email || user.phone,
+        customerEmail: user.email,
+        orderId: order.id,
+        orderDisplayId: order.publicOrderId || order.orderId || order.id,
+        productId: selectedReturnItem.productId,
+        productSlug: selectedReturnItem.slug,
+        productName: selectedReturnItem.name || "CLINVARA product",
+        reason: returnReason,
+        notes: returnNotes.trim(),
+        status: "requested",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setReturnProductKey("");
+    setReturnReason("Damaged Product");
+    setReturnNotes("");
+    setShowReturnForm(false);
+    setReturnMessage("Return request submitted. Our team will review it shortly.");
+  };
 
   if (!isAuthenticated) {
     return (
@@ -239,6 +352,129 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
           </span>
         </div>
 
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("order-tracking")?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white"
+          >
+            Track Order
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-black px-5 text-sm font-semibold"
+          >
+            <Download className="h-4 w-4" />
+            Download Invoice
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowReturnForm((value) => !value);
+              setReturnMessage("");
+            }}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-black px-5 text-sm font-semibold"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Return Item
+          </button>
+        </div>
+
+        {returnMessage && (
+          <p className="mt-4 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm font-semibold">
+            {returnMessage}
+          </p>
+        )}
+
+        {showReturnForm && (
+          <form
+            onSubmit={submitReturnRequest}
+            className="mt-6 grid gap-4 rounded-xl bg-[var(--brand-off-white)] p-5 md:grid-cols-2"
+          >
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">
+                Product
+              </span>
+              <select
+                required
+                value={returnProductKey}
+                onChange={(event) => {
+                  setReturnProductKey(event.target.value);
+                  setReturnMessage("");
+                }}
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black"
+              >
+                <option value="">Select a product</option>
+                {items.map((item, index) => (
+                  <option
+                    key={`${item.productId || item.slug || item.name || "product"}-${index}`}
+                    value={`${item.productId || item.slug || item.name || "product"}-${index}`}
+                  >
+                    {item.name || "CLINVARA product"}
+                    {item.size ? ` - ${item.size}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">
+                Return Reason
+              </span>
+              <select
+                required
+                value={returnReason}
+                onChange={(event) => {
+                  setReturnReason(event.target.value as ReturnReason);
+                  setReturnMessage("");
+                }}
+                className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black"
+              >
+                {returnReasons.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {reason}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium md:col-span-2">
+              <span className="mb-2 block text-[var(--brand-text-muted)]">
+                Additional Notes
+              </span>
+              <textarea
+                value={returnNotes}
+                onChange={(event) => {
+                  setReturnNotes(event.target.value);
+                  setReturnMessage("");
+                }}
+                rows={4}
+                className="w-full rounded-2xl border border-[var(--brand-border)] bg-white px-4 py-3 text-sm outline-none focus:border-black"
+                placeholder="Share details about the issue. Our support team may request photos after review."
+              />
+            </label>
+
+            <div className="flex gap-3 md:col-span-2">
+              <button
+                type="submit"
+                className="h-11 rounded-full bg-black px-6 text-sm font-semibold text-white"
+              >
+                Submit Return Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReturnForm(false)}
+                className="h-11 rounded-full border border-black px-6 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <h2 className="font-display text-2xl font-semibold">Products Ordered</h2>
@@ -268,7 +504,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
               )}
             </div>
 
-            <div className="mt-6 rounded-xl border border-[var(--brand-border)] p-4">
+            <div id="order-tracking" className="mt-6 rounded-xl border border-[var(--brand-border)] p-4">
               <h2 className="font-display text-2xl font-semibold">Tracking Timeline</h2>
               <ol className="mt-5 space-y-4">
                 {orderTimelineSteps.map((step, index) => {
@@ -339,6 +575,102 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
             </div>
           </aside>
         </div>
+
+        <section className="mt-8 rounded-xl border border-[var(--brand-border)] p-4">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="font-display text-2xl font-semibold">Return History</h2>
+              <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                Return requests attached to this order.
+              </p>
+            </div>
+            <span className="rounded-full bg-[var(--brand-off-white)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]">
+              {returns.length} {returns.length === 1 ? "Return" : "Returns"}
+            </span>
+          </div>
+
+          {returns.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-[var(--brand-off-white)] p-4 text-sm text-[var(--brand-text-muted)]">
+              No return requests have been created for this order.
+            </p>
+          ) : (
+            <div className="mt-5 space-y-4">
+              {returns.map((item) => {
+                const rejected = item.status === "rejected";
+                const statusIndex = returnStatusIndex(item.status);
+
+                return (
+                  <article
+                    key={item.id}
+                    className="rounded-xl border border-[var(--brand-border)] p-4"
+                  >
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                      <div>
+                        <p className="font-semibold">{item.productName}</p>
+                        <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                          {item.reason} - {returnDateLabel(item.createdAt)}
+                        </p>
+                        {item.notes && (
+                          <p className="mt-2 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm text-[var(--brand-text-muted)]">
+                            {item.notes}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`h-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                          rejected
+                            ? "bg-red-50 text-red-700"
+                            : item.status === "refunded"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-[var(--brand-off-white)]"
+                        }`}
+                      >
+                        {returnStatusLabel(item.status)}
+                      </span>
+                    </div>
+
+                    {rejected ? (
+                      <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                        This return was rejected. Contact CLINVARA support for help.
+                      </p>
+                    ) : (
+                      <ol className="mt-5 grid gap-3 sm:grid-cols-4">
+                        {returnStatusSteps.map((step, index) => {
+                          const complete = index < statusIndex;
+                          const active = index === statusIndex;
+
+                          return (
+                            <li key={step.key} className="flex gap-2 text-sm">
+                              <span
+                                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                                  complete || active
+                                    ? "border-black bg-black text-white"
+                                    : "border-[var(--brand-border)] text-[var(--brand-text-muted)]"
+                                }`}
+                              >
+                                {complete ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Circle className="h-3 w-3" />
+                                )}
+                              </span>
+                              <span>
+                                <span className="block font-semibold">{step.label}</span>
+                                <span className="text-xs text-[var(--brand-text-muted)]">
+                                  {active ? "Current" : complete ? "Completed" : "Pending"}
+                                </span>
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );
