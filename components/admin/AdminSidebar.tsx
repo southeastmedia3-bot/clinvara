@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Boxes,
+  Cable,
   LayoutDashboard,
   MessageSquareText,
   Package,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin/coupons", label: "Coupons", icon: Tags },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquareText },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/external-channels", label: "External Channels", icon: Cable },
   { href: "/admin/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

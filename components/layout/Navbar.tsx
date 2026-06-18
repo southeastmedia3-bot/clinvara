@@ -43,10 +43,10 @@ const shopColumns = {
 
 const featured = bestSellers[0];
 const headerActionClass =
-  "group relative inline-flex h-10 w-10 items-center justify-center rounded-[14px] border border-black/10 bg-white/95 text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-black/30 hover:bg-[#f8f6f1] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)] active:translate-y-0";
-const headerIconClass = "h-[18px] w-[18px] stroke-[1.8] transition-transform duration-200 group-hover:scale-105";
+  "group relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[var(--brand-primary)] transition-all duration-200 hover:-translate-y-0.5 hover:border-black/10 hover:bg-[#f7f4ef] hover:shadow-[0_10px_22px_rgba(0,0,0,0.07)] active:translate-y-0 sm:h-10 sm:w-10";
+const headerIconClass = "h-[18px] w-[18px] stroke-[1.65] transition-transform duration-200 group-hover:scale-105";
 const headerBadgeClass =
-  "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-black px-1 text-[10px] font-semibold leading-none text-white shadow-sm";
+  "absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-[1.5px] border-white bg-black px-1 text-[10px] font-semibold leading-none text-white shadow-[0_6px_14px_rgba(0,0,0,0.18)]";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -188,7 +188,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 rounded-full border border-black/10 bg-white/90 p-1 shadow-[0_8px_28px_rgba(0,0,0,0.045)] backdrop-blur">
             <button
               type="button"
               aria-label="Open search"

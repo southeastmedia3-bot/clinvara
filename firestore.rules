@@ -120,6 +120,34 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /externalChannels/{channelId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelProducts/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelInventory/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelOrders/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelRevenue/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelReturns/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /externalChannelSettlements/{recordId} {
+      allow read, write: if isAdmin();
+    }
+
     match /analyticsCache/{cacheId} {
       allow read, write, delete: if isAdmin();
     }
