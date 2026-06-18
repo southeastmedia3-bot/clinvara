@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { allProducts } from "@/lib/data/products";
 import { blogs } from "@/lib/data/blogs";
 import { debounce, formatINR } from "@/lib/utils";
@@ -21,7 +21,7 @@ export function SearchOverlay({ open, onClose }: Props) {
   const [products, setProducts] = useState<Product[]>(allProducts);
 
   const pushDebounced = useMemo(
-    () => debounce((val: string) => setDebounced(val), 300),
+    () => debounce((val: string) => setDebounced(val), 220),
     [],
   );
 
@@ -57,16 +57,18 @@ export function SearchOverlay({ open, onClose }: Props) {
   const results = useMemo(() => {
     const term = debounced.trim().toLowerCase();
     if (!term) return { products: [], concerns: [] as string[], posts: [] };
-    const matchedProducts = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) ||
-        p.concerns.some((c) => c.toLowerCase().includes(term)) ||
-        p.category.toLowerCase().includes(term) ||
-        (p.ingredients ?? "").toLowerCase().includes(term) ||
-        (p.keyIngredients ?? []).some((ingredient) =>
-          `${ingredient.name} ${ingredient.benefit}`.toLowerCase().includes(term),
-        ),
-    );
+    const matchedProducts = products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          p.concerns.some((c) => c.toLowerCase().includes(term)) ||
+          p.category.toLowerCase().includes(term) ||
+          (p.ingredients ?? "").toLowerCase().includes(term) ||
+          (p.keyIngredients ?? []).some((ingredient) =>
+            `${ingredient.name} ${ingredient.benefit}`.toLowerCase().includes(term),
+          ),
+      )
+      .slice(0, 8);
     const concerns = Array.from(
       new Set(
         products.flatMap((p) =>
@@ -74,17 +76,28 @@ export function SearchOverlay({ open, onClose }: Props) {
         ),
       ),
     ).slice(0, 6);
-    const posts = blogs.filter(
-      (b) =>
-        b.title.toLowerCase().includes(term) ||
-        b.excerpt.toLowerCase().includes(term) ||
-        b.tag.toLowerCase().includes(term),
-    );
+    const posts = blogs
+      .filter(
+        (b) =>
+          b.title.toLowerCase().includes(term) ||
+          b.excerpt.toLowerCase().includes(term) ||
+          b.tag.toLowerCase().includes(term),
+      )
+      .slice(0, 5);
     return { products: matchedProducts, concerns, posts };
   }, [debounced, products]);
 
   if (!open) return null;
 
+  const suggestions = [
+    "Niacinamide",
+    "Barrier repair",
+    "Pigmentation",
+    "Cleanser",
+    "Ceramides",
+    "Sensitive skin",
+  ];
+  const suggestedProducts = products.slice(0, 4);
   const empty =
     debounced.trim().length > 0 &&
     results.products.length === 0 &&
@@ -92,60 +105,120 @@ export function SearchOverlay({ open, onClose }: Props) {
     results.posts.length === 0;
 
   return (
-    <div className="fixed inset-0 z-[180] bg-white">
-      <div className="mx-auto flex max-w-3xl flex-col px-4 py-6">
+    <div className="fixed inset-0 z-[180] overflow-y-auto bg-white">
+      <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search products, ingredients, concerns..."
-            className="font-display w-full border-b border-black py-2 text-2xl outline-none md:text-3xl"
-            aria-label="Search"
-          />
+          <div className="flex w-full items-center gap-3 rounded-full border border-black px-4">
+            <Search className="h-5 w-5 shrink-0" />
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search products, ingredients, concerns..."
+              className="h-14 w-full bg-transparent font-display text-xl outline-none md:text-2xl"
+              aria-label="Search"
+            />
+          </div>
           <button
             type="button"
             aria-label="Close search"
-            className="ml-4 shrink-0"
+            className="ml-4 grid h-12 w-12 shrink-0 place-items-center rounded-full border border-[var(--brand-border)]"
             onClick={onClose}
           >
-            <X className="h-8 w-8" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
+        {!debounced.trim() && (
+          <div className="grid gap-8 md:grid-cols-[0.8fr_1.2fr]">
+            <section>
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
+                Popular Searches
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setQ(suggestion)}
+                    className="rounded-full border border-[var(--brand-border)] px-4 py-2 text-sm font-semibold transition hover:border-black hover:bg-black hover:text-white"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
+                Quick Product Discovery
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {suggestedProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/shop/${product.slug}`}
+                    onClick={onClose}
+                    className="flex gap-3 rounded-2xl border border-[var(--brand-border)] p-3 transition hover:border-black"
+                  >
+                    <div className="relative h-16 w-16 shrink-0 rounded-xl bg-[var(--brand-off-white)]">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-2"
+                        sizes="64px"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-sm font-semibold">{product.name}</p>
+                      <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                        {formatINR(product.price)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
         {empty && (
           <p className="text-sm text-[var(--brand-text-muted)]">
-            No results. Try &quot;niacinamide&quot;, &quot;sunscreen&quot;, or
-            &quot;hair serum&quot;.
+            No results. Try &quot;niacinamide&quot;, &quot;barrier repair&quot;, or
+            &quot;pigmentation&quot;.
           </p>
         )}
 
         {results.products.length > 0 && (
           <section className="mb-8">
-            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
               Products
             </h3>
-            <ul className="space-y-3">
+            <ul className="grid gap-3 sm:grid-cols-2">
               {results.products.map((p) => (
                 <li key={p.id}>
                   <Link
                     href={`/shop/${p.slug}`}
-                    className="flex gap-3 rounded-sm border border-transparent hover:border-[var(--brand-border)]"
+                    className="flex gap-3 rounded-2xl border border-[var(--brand-border)] p-3 transition hover:border-black"
                     onClick={onClose}
                   >
-                    <div className="relative h-14 w-14 shrink-0 bg-[var(--brand-off-white)]">
+                    <div className="relative h-16 w-16 shrink-0 rounded-xl bg-[var(--brand-off-white)]">
                       <Image
                         src={p.image}
                         alt={p.name}
                         fill
-                        className="object-contain p-1"
-                        sizes="56px"
+                        className="object-contain p-2"
+                        sizes="64px"
                       />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{p.name}</p>
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-sm font-semibold">{p.name}</p>
                       <p className="text-xs text-[var(--brand-mid-gray)]">
-                        {p.category} · {formatINR(p.price)}
+                        {p.category} - {formatINR(p.price)}
+                      </p>
+                      <p className="mt-1 line-clamp-1 text-xs text-[var(--brand-text-muted)]">
+                        {p.concern}
                       </p>
                     </div>
                   </Link>
@@ -157,7 +230,7 @@ export function SearchOverlay({ open, onClose }: Props) {
 
         {results.concerns.length > 0 && (
           <section className="mb-8">
-            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
               Concerns
             </h3>
             <ul className="flex flex-wrap gap-2">
@@ -180,7 +253,7 @@ export function SearchOverlay({ open, onClose }: Props) {
 
         {results.posts.length > 0 && (
           <section>
-            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-text-muted)]">
               Blog Posts
             </h3>
             <ul className="space-y-3">
@@ -188,10 +261,13 @@ export function SearchOverlay({ open, onClose }: Props) {
                 <li key={b.slug}>
                   <Link
                     href={`/blog/${b.slug}`}
-                    className="text-sm font-medium hover:underline"
+                    className="block rounded-2xl border border-[var(--brand-border)] p-4 text-sm font-medium hover:border-black"
                     onClick={onClose}
                   >
-                    {b.title}
+                    <span className="block font-semibold">{b.title}</span>
+                    <span className="mt-1 line-clamp-2 block text-xs text-[var(--brand-text-muted)]">
+                      {b.excerpt}
+                    </span>
                   </Link>
                 </li>
               ))}

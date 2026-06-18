@@ -2,7 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import {
+  FlaskConical,
+  Headphones,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  RotateCcw,
+  ShieldCheck,
+  Star,
+  Truck,
+} from "lucide-react";
 import type { Product } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
 import { SafeImage } from "@/components/shared/SafeImage";
@@ -56,14 +66,43 @@ export function ProductDetail({
           },
         ];
 
+  const addToCart = () => {
+    if (outOfStock) return;
+    addItem({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      image: product.image,
+      size,
+      price: product.price,
+      quantity: qty,
+      dispatchTimeDays: product.dispatchTimeDays ?? 1,
+    });
+    showToast({ message: "Added to cart!", variant: "success" });
+  };
+
+  const trustItems = [
+    { label: "Dermatologist Tested", icon: ShieldCheck },
+    { label: "Cruelty Free", icon: HeartHandshake },
+    { label: "Fragrance Free", icon: Leaf },
+    { label: "Made For Indian Skin", icon: FlaskConical },
+  ];
+
+  const confidenceItems = [
+    { label: "Secure Checkout", icon: Lock },
+    { label: "Easy Returns", icon: RotateCcw },
+    { label: "Fast Shipping", icon: Truck },
+    { label: "Customer Support", icon: Headphones },
+  ];
+
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-8 lg:px-8">
       <div className="mb-6">
         <BackButton fallbackHref="/shop" label="Back to Shop" />
       </div>
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr]">
         <div>
-          <div className="relative aspect-square bg-white p-6">
+          <div className="relative aspect-square rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[var(--brand-border)]">
             <SafeImage
               src={activeImage}
               alt={`${product.name} by CLINVARA for ${product.concerns.join(", ")}`}
@@ -108,7 +147,7 @@ export function ProductDetail({
               {product.badge}
             </span>
           )}
-          <h1 className="font-display text-[48px] font-light leading-[1.05] tracking-[-0.01em]">
+          <h1 className="font-display text-[44px] font-semibold leading-[1.05] md:text-[56px]">
             {product.name}
           </h1>
           <button
@@ -125,7 +164,7 @@ export function ProductDetail({
               {product.reviewCount.toLocaleString()} reviews
             </span>
           </button>
-          <p className="mt-4 text-[15px] leading-[1.8] text-zinc-600">
+          <p className="mt-5 max-w-2xl text-[15px] leading-[1.8] text-zinc-600">
             {product.description}
           </p>
           {outOfStock ? (
@@ -176,28 +215,15 @@ export function ProductDetail({
           <button
             type="button"
             disabled={outOfStock}
-            className="mt-4 flex h-[52px] w-full items-center justify-center bg-[var(--brand-primary)] text-[11px] font-semibold uppercase tracking-[0.14em] text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600 disabled:hover:ring-0"
-            onClick={() => {
-              if (outOfStock) return;
-              addItem({
-                productId: product.id,
-                slug: product.slug,
-                name: product.name,
-                image: product.image,
-                size,
-                price: product.price,
-                quantity: qty,
-                dispatchTimeDays: product.dispatchTimeDays ?? 1,
-              });
-              showToast({ message: "Added to cart!", variant: "success" });
-            }}
+            className="mt-4 flex h-[54px] w-full items-center justify-center rounded-full bg-[var(--brand-primary)] text-[11px] font-semibold uppercase tracking-[0.14em] text-white hover:bg-white hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600 disabled:hover:ring-0"
+            onClick={addToCart}
           >
             {outOfStock ? "Out of Stock" : "Add to Cart"}
           </button>
 
           <button
             type="button"
-            className="mt-3 flex w-full items-center justify-center gap-2 border border-[var(--brand-border)] py-3 text-[11px] font-semibold uppercase tracking-[0.14em]"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] py-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:border-black hover:bg-[var(--brand-off-white)]"
             onClick={() => {
               toggleWish(product.id);
               showToast({
@@ -215,6 +241,40 @@ export function ProductDetail({
             />
             {hasWish ? "In Wishlist" : "Add to Wishlist"}
           </button>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {trustItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="flex items-center gap-3 rounded-2xl border border-[var(--brand-border)] bg-white p-4 text-sm font-semibold"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--brand-off-white)]">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  {item.label}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+              Purchase Confidence
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {confidenceItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="flex items-center gap-2 text-sm">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="mt-8 space-y-2 border-t border-[var(--brand-border)] pt-6">
             <div className="rounded-xl bg-[var(--brand-off-white)] p-4 text-sm">
@@ -420,6 +480,23 @@ export function ProductDetail({
           <ProductGrid products={relatedProducts} />
         </section>
       )}
+
+      <div className="fixed inset-x-0 bottom-0 z-[120] border-t border-[var(--brand-border)] bg-white/95 px-4 py-3 shadow-2xl backdrop-blur md:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{product.name}</p>
+            <p className="text-sm font-bold">{formatINR(product.price)}</p>
+          </div>
+          <button
+            type="button"
+            disabled={outOfStock}
+            onClick={addToCart}
+            className="h-11 rounded-full bg-black px-5 text-xs font-semibold uppercase tracking-[0.12em] text-white disabled:bg-zinc-300 disabled:text-zinc-600"
+          >
+            {outOfStock ? "Out" : "Add"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

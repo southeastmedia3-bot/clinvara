@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Heart, ShoppingBag, Star } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cartStore";
@@ -64,7 +64,7 @@ export function ProductCard({
 
   return (
     <div
-      className={`group relative border border-zinc-200 bg-white transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:border-black ${
+      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:border-black hover:shadow-xl ${
         layout === "scroll"
           ? "min-w-[72vw] snap-start sm:min-w-0"
           : ""
@@ -73,16 +73,16 @@ export function ProductCard({
       onMouseLeave={() => setHover(false)}
     >
       {product.badge && (
-        <span className="absolute left-3 top-3 z-10 border border-black bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+        <span className="absolute left-3 top-3 z-10 rounded-full border border-black bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
           {product.badge}
         </span>
       )}
       {outOfStock ? (
-        <span className="absolute left-3 top-12 z-10 border border-red-700 bg-red-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+        <span className="absolute left-3 top-12 z-10 rounded-full border border-red-700 bg-red-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
           Out of Stock
         </span>
       ) : lowStock ? (
-        <span className="absolute left-3 top-12 z-10 border border-amber-700 bg-amber-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+        <span className="absolute left-3 top-12 z-10 rounded-full border border-amber-700 bg-amber-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
           Low Stock
         </span>
       ) : null}
@@ -94,7 +94,7 @@ export function ProductCard({
             ? "Remove from wishlist"
             : "Add to wishlist"
         }
-        className={`absolute right-3 top-3 z-10 rounded-full bg-white p-2 shadow-sm transition-opacity md:${
+        className={`absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-black/10 bg-white shadow-sm transition-all hover:border-black hover:bg-black hover:text-white md:${
           hover || hasWish
             ? "opacity-100"
             : "opacity-0"
@@ -110,7 +110,7 @@ export function ProductCard({
           });
         }}
       >
-        <Star
+        <Heart
           className={`h-4 w-4 ${
             hasWish
               ? "fill-[var(--brand-star)] text-[var(--brand-star)]"
@@ -120,14 +120,14 @@ export function ProductCard({
       </button>
 
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-square bg-[#fafafa] p-6">
+        <div className="relative aspect-square bg-[#f8f7f4] p-7 transition duration-300 group-hover:bg-[#f2f0ea]">
           <SafeImage
             src={hover ? product.imageHover : product.image}
             alt={product.name}
             label={product.name}
             fill
             sizes="(max-width:768px) 72vw, 25vw"
-            className="object-contain transition-opacity duration-300"
+            className="object-contain transition duration-500 group-hover:scale-[1.04]"
           />
 
           {flying && (
@@ -146,13 +146,26 @@ export function ProductCard({
       </Link>
 
       <div className="space-y-3 px-5 pb-5 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+            {product.category}
+          </p>
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-off-white)] px-2.5 py-1 text-xs font-semibold">
+            <Star className="h-3.5 w-3.5 fill-[var(--brand-star)] text-[var(--brand-star)]" />
+            {product.rating.toFixed(1)}
+            <span className="font-normal text-[var(--brand-text-muted)]">
+              ({product.reviewCount})
+            </span>
+          </span>
+        </div>
+
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="font-display line-clamp-2 text-[20px] font-normal leading-[1.2] text-zinc-900 hover:underline">
+          <h3 className="font-display line-clamp-2 min-h-[52px] text-[22px] font-semibold leading-[1.15] text-zinc-950 hover:underline">
             {product.name}
           </h3>
         </Link>
 
-        <p className="text-[12px] text-zinc-500 leading-relaxed">
+        <p className="min-h-[34px] text-[12px] leading-relaxed text-zinc-500">
           {product.concern}
         </p>
 
@@ -170,9 +183,10 @@ export function ProductCard({
           type="button"
           onClick={onAdd}
           disabled={outOfStock}
-          className="flex h-[44px] w-full items-center justify-center border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
+          className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
         >
-          {outOfStock ? "Out of Stock" : "Add to Cart"}
+          <ShoppingBag className="h-4 w-4" />
+          {outOfStock ? "Out of Stock" : "Quick Add"}
         </button>
       </div>
     </div>

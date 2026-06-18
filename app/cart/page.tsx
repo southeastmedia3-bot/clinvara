@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ProductGrid } from "@/components/product/ProductGrid";
 import { useCartStore, cartTotal } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -10,6 +11,7 @@ import { formatINR } from "@/lib/utils";
 import { readCustomerProfile } from "@/lib/firebase/customerData";
 import { createOrder } from "@/lib/firebase/orders";
 import { getDeliveryEstimate } from "@/lib/delivery/estimate";
+import { allProducts } from "@/lib/data/products";
 
 type CheckoutAddress = {
   fullName?: string;
@@ -57,6 +59,14 @@ export default function CartPage() {
   }, [refreshLatestPrices]);
 
   const subtotal = cartTotal(items);
+  const freeGiftThreshold = 999;
+  const giftRemaining = Math.max(0, freeGiftThreshold - subtotal);
+  const giftProgress = Math.min(100, Math.round((subtotal / freeGiftThreshold) * 100));
+  const recommendedProducts = useMemo(() => {
+    const inCart = new Set(items.map((item) => item.productId));
+    return allProducts.filter((product) => !inCart.has(product.id)).slice(0, 4);
+  }, [items]);
+
   const completeAddresses = useMemo(
     () => savedAddresses.filter(hasCompleteAddress),
     [savedAddresses],
@@ -109,108 +119,143 @@ export default function CartPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="font-display text-4xl font-semibold">Your Cart</h1>
+    <div className="mx-auto max-w-[1180px] px-4 py-12 lg:px-8">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+            Checkout
+          </p>
+          <h1 className="mt-2 font-display text-5xl font-semibold">Your Cart</h1>
+        </div>
+        <Link
+          href="/shop"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-black px-5 text-sm font-semibold transition hover:bg-black hover:text-white"
+        >
+          Continue Shopping
+        </Link>
+      </div>
 
       {items.length === 0 ? (
-        <p className="mt-6 text-sm text-[var(--brand-text-muted)]">
-          Your cart is empty.{" "}
-          <Link href="/shop" className="font-semibold underline">
-            Continue shopping
+        <section className="mt-8 rounded-3xl border border-dashed border-[var(--brand-border)] bg-white p-10 text-center">
+          <h2 className="font-display text-3xl font-semibold">Your cart is empty.</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--brand-text-muted)]">
+            Add your CLINVARA routine essentials and return here for checkout.
+          </p>
+          <Link
+            href="/shop"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+          >
+            Continue Shopping
           </Link>
-        </p>
+        </section>
       ) : (
         <>
-          <ul className="mt-8 space-y-4">
-            {items.map((item) => (
-              <li
-                key={`${item.productId}-${item.size}`}
-                className="flex gap-4 border-b border-[var(--brand-border)] pb-4"
-              >
-                <div className="relative h-20 w-20 shrink-0 bg-[var(--brand-off-white)]">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-contain p-1"
-                    sizes="80px"
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <Link
-                    href={`/shop/${item.slug}`}
-                    className="font-medium hover:underline"
-                  >
-                    {item.name}
-                  </Link>
-
-                  <p className="text-xs text-[var(--brand-mid-gray)]">
-                    {item.size}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
-                    Estimated delivery:{" "}
-                    {getDeliveryEstimate({
-                      dispatchTimeDays: item.dispatchTimeDays ?? 1,
-                      address: selectedShippingAddress,
-                    }).label}
-                  </p>
-
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      type="button"
-                      aria-label={`Decrease quantity for ${item.name}`}
-                      className="h-11 w-11 border"
-                      onClick={() =>
-                        updateQuantity(item.productId, item.size, item.quantity - 1)
-                      }
-                    >
-                      −
-                    </button>
-
-                    <span>{item.quantity}</span>
-
-                    <button
-                      type="button"
-                      aria-label={`Increase quantity for ${item.name}`}
-                      className="h-11 w-11 border"
-                      onClick={() =>
-                        updateQuantity(item.productId, item.size, item.quantity + 1)
-                      }
-                    >
-                      +
-                    </button>
-
-                    <button
-                      type="button"
-                      className="ml-auto text-sm underline"
-                      onClick={() => removeItem(item.productId, item.size)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-
+          <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-[var(--brand-border)] bg-white p-5">
                 <p className="font-semibold">
-                  {formatINR(item.price * item.quantity)}
+                  {giftRemaining > 0
+                    ? `Spend ${formatINR(giftRemaining)} more to get Free Sunscreen`
+                    : "Free Sunscreen unlocked"}
                 </p>
-              </li>
-            ))}
-          </ul>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--brand-off-white)]">
+                  <div className="h-full rounded-full bg-black" style={{ width: `${giftProgress}%` }} />
+                </div>
+              </div>
 
-          <div className="mt-8 flex items-center justify-between border-t border-[var(--brand-border)] pt-6">
-            <span className="font-semibold">Subtotal</span>
-            <span className="text-lg font-bold">{formatINR(subtotal)}</span>
-          </div>
-          <div className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-white p-4 text-sm">
-            <p className="font-semibold">Estimated Delivery</p>
-            <p className="mt-1 text-[var(--brand-text-muted)]">
-              {checkoutDeliveryEstimate.label}
-              {selectedShippingAddress
-                ? ` (${checkoutDeliveryEstimate.region})`
-                : " after you select a delivery address"}
-            </p>
-          </div>
+              <ul className="space-y-4">
+                {items.map((item) => (
+                  <li
+                    key={`${item.productId}-${item.size}`}
+                    className="flex flex-col gap-4 rounded-2xl border border-[var(--brand-border)] bg-white p-4 sm:flex-row"
+                  >
+                    <div className="relative h-24 w-24 shrink-0 rounded-xl bg-[var(--brand-off-white)]">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-2"
+                        sizes="96px"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/shop/${item.slug}`} className="font-semibold hover:underline">
+                        {item.name}
+                      </Link>
+                      <p className="text-xs text-[var(--brand-mid-gray)]">{item.size}</p>
+                      <p className="mt-1 text-xs text-[var(--brand-text-muted)]">
+                        Estimated delivery:{" "}
+                        {getDeliveryEstimate({
+                          dispatchTimeDays: item.dispatchTimeDays ?? 1,
+                          address: selectedShippingAddress,
+                        }).label}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <div className="flex items-center rounded-full border border-[var(--brand-border)]">
+                          <button
+                            type="button"
+                            aria-label={`Decrease quantity for ${item.name}`}
+                            className="h-10 w-10"
+                            onClick={() =>
+                              updateQuantity(item.productId, item.size, item.quantity - 1)
+                            }
+                          >
+                            -
+                          </button>
+                          <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                          <button
+                            type="button"
+                            aria-label={`Increase quantity for ${item.name}`}
+                            className="h-10 w-10"
+                            onClick={() =>
+                              updateQuantity(item.productId, item.size, item.quantity + 1)
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="text-sm font-semibold underline"
+                          onClick={() => removeItem(item.productId, item.size)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="font-semibold sm:text-right">
+                      {formatINR(item.price * item.quantity)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <aside className="h-fit rounded-3xl border border-[var(--brand-border)] bg-white p-5 shadow-sm lg:sticky lg:top-24">
+              <h2 className="font-display text-3xl font-semibold">Order Summary</h2>
+              <div className="mt-5 space-y-3 text-sm">
+                <div className="flex items-center justify-between border-b border-[var(--brand-border)] pb-3">
+                  <span className="text-[var(--brand-text-muted)]">Subtotal</span>
+                  <strong>{formatINR(subtotal)}</strong>
+                </div>
+                <div className="flex items-start justify-between gap-4 border-b border-[var(--brand-border)] pb-3">
+                  <span className="text-[var(--brand-text-muted)]">Delivery</span>
+                  <strong className="text-right">
+                    {checkoutDeliveryEstimate.label}
+                    {selectedShippingAddress ? ` (${checkoutDeliveryEstimate.region})` : ""}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total</span>
+                  <strong className="text-lg">{formatINR(subtotal)}</strong>
+                </div>
+              </div>
+            </aside>
+          </section>
 
           {isAuthenticated && (
             <section
@@ -223,9 +268,7 @@ export default function CartPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-display text-2xl font-semibold">
-                    Delivery Address
-                  </h2>
+                  <h2 className="font-display text-2xl font-semibold">Delivery Address</h2>
                   <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
                     Select where your CLINVARA order should be delivered.
                   </p>
@@ -264,9 +307,7 @@ export default function CartPage() {
                         }}
                       />
                       <span>
-                        <span className="block font-semibold">
-                          {address.fullName}
-                        </span>
+                        <span className="block font-semibold">{address.fullName}</span>
                         <span className="mt-1 block text-[var(--brand-text-muted)]">
                           {[address.line1, address.line2, address.city, address.state, address.pincode]
                             .filter(Boolean)
@@ -281,8 +322,7 @@ export default function CartPage() {
                 </div>
               ) : (
                 <div className="mt-4 rounded-xl border border-dashed border-[var(--brand-border)] p-5 text-sm text-[var(--brand-text-muted)]">
-                  No saved delivery address yet. Add one in your account to
-                  continue checkout.
+                  No saved delivery address yet. Add one in your account to continue checkout.
                 </div>
               )}
             </section>
@@ -291,7 +331,7 @@ export default function CartPage() {
           <button
             type="button"
             disabled={checkoutLoading}
-            className="mt-6 h-12 w-full bg-black text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-6 h-12 w-full rounded-full bg-black text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             onClick={async () => {
               if (checkoutLoading) return;
 
@@ -374,6 +414,7 @@ export default function CartPage() {
           >
             {checkoutLoading ? "Creating Order..." : "Proceed to Checkout"}
           </button>
+
           {createdOrderId && (
             <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
               <div className="w-full max-w-md rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-2xl">
@@ -384,8 +425,8 @@ export default function CartPage() {
                   Waiting for confirmation
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[var(--brand-text-muted)]">
-                  Your order has been received and is waiting for admin confirmation.
-                  Order ID: <span className="font-semibold text-black">{createdOrderId}</span>
+                  Your order has been received and is waiting for admin confirmation. Order ID:{" "}
+                  <span className="font-semibold text-black">{createdOrderId}</span>
                 </p>
                 <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
                   Status: Waiting for confirmation
@@ -394,7 +435,10 @@ export default function CartPage() {
                   Total: <span className="font-semibold text-black">{formatINR(createdOrderTotal)}</span>
                 </p>
                 <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-                  Support: <a href="tel:+917207118111" className="font-semibold text-black underline">+91 72071 18111</a>
+                  Support:{" "}
+                  <a href="tel:+917207118111" className="font-semibold text-black underline">
+                    +91 72071 18111
+                  </a>
                 </p>
                 <button
                   type="button"
@@ -414,7 +458,7 @@ export default function CartPage() {
                     Track order
                   </Link>
                   <Link
-                    href="/account"
+                    href="/account/orders"
                     className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
                   >
                     View my orders
@@ -428,6 +472,25 @@ export default function CartPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {recommendedProducts.length > 0 && (
+            <section className="mt-14 border-t border-[var(--brand-border)] pt-10">
+              <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+                    Complete Your Routine
+                  </p>
+                  <h2 className="mt-2 font-display text-3xl font-semibold">
+                    Recommended Products
+                  </h2>
+                </div>
+                <Link href="/shop" className="text-sm font-semibold underline">
+                  View all products
+                </Link>
+              </div>
+              <ProductGrid products={recommendedProducts} mobileColumns={2} />
+            </section>
           )}
         </>
       )}
