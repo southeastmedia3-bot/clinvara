@@ -9,6 +9,13 @@ const {
   getInstagramFeed,
   getSocialFeed,
 } = require("./socialFeed");
+const {
+  SUPPORT_PHONE,
+  contactEmail,
+  sendAdminEmail,
+  sendCustomerEmail,
+  sendEmail,
+} = require("./emailService");
 
 const instagramAccessToken = defineSecret("INSTAGRAM_ACCESS_TOKEN");
 const threadsAccessToken = defineSecret("THREADS_ACCESS_TOKEN");
@@ -18,43 +25,6 @@ const authSecretParam = defineSecret("AUTH_SECRET");
 const googleClientSecretParam = defineSecret("GOOGLE_CLIENT_SECRET");
 const facebookClientSecretParam = defineSecret("FACEBOOK_CLIENT_SECRET");
 const groqApiKeyParam = defineSecret("GROQ_API_KEY");
-
-const SUPPORT_PHONE = "+91 72071 18111";
-
-function contactEmail() {
-  return process.env.CONTACT_TO_EMAIL || "clinvaraglobal@gmail.com";
-}
-
-async function sendEmail({ to, subject, html, replyTo }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("[CLINVARA email] RESEND_API_KEY missing; email skipped", { to, subject });
-    return { sent: false, warning: "RESEND_API_KEY missing" };
-  }
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL || "CLINVARA <clinvaraglobal@gmail.com>",
-      to,
-      subject,
-      html,
-      reply_to: replyTo,
-    }),
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    console.warn("[CLINVARA email] send failed", { status: response.status, data });
-    return { sent: false, warning: data?.message || response.statusText };
-  }
-  return { sent: true };
-}
-
-function money(value) {
-  return `INR ${Number(value || 0).toLocaleString("en-IN")}`;
-}
 
 const app = express();
 app.use(express.json());
@@ -311,11 +281,15 @@ app.post("/orders/track", async (req, res) => {
   });
 });
 
-async function isAdminUser(req) {
+async function authenticatedUser(req) {
   const authHeader = String(req.headers.authorization || "");
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) return false;
-  const decoded = await admin.auth().verifyIdToken(token).catch(() => null);
+  if (!token) return null;
+  return admin.auth().verifyIdToken(token).catch(() => null);
+}
+
+async function isAdminUser(req) {
+  const decoded = await authenticatedUser(req);
   if (!decoded?.uid) return false;
   const userDoc = await admin.firestore().collection("users").doc(decoded.uid).get();
   const customerDoc = await admin.firestore().collection("customers").doc(decoded.uid).get();
@@ -334,43 +308,43 @@ function publicOrderId(id) {
   return `CLV-${String(id).replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase()}`;
 }
 
-function addressLines(address = {}) {
-  return [address.line1, address.line2, address.city, address.state, address.pincode]
-    .filter(Boolean)
-    .join(", ");
+async function sendOrderEmail(order, type) {
+  if (type === "accepted") return sendCustomerEmail("orderConfirmed", { order });
+  return sendCustomerEmail("orderCancelled", {
+    order: {
+      ...order,
+      cancellationReason:
+        order.rejectionReason || "Your order could not be confirmed. Please contact CLINVARA support.",
+    },
+  });
 }
 
-async function sendOrderEmail(order, type) {
-  const email = order.email || order.checkoutEmail || order.customerEmail;
-  if (!email) return { sent: false, warning: "No customer email" };
-  const id = order.publicOrderId || order.orderId || "CLINVARA order";
-  const products = Array.isArray(order.items)
-    ? order.items.map((item) => `<li>${item.name || "Product"} x ${item.quantity || 1}</li>`).join("")
-    : "";
-  const subject =
-    type === "accepted"
-      ? `Your CLINVARA order ${id} is confirmed`
-      : `Your CLINVARA order ${id} could not be confirmed`;
-  const body =
-    type === "accepted"
-      ? `
-        <h2>Your CLINVARA order is confirmed</h2>
-        <p>Order ID: <strong>${id}</strong></p>
-        <p>Status: Confirmed</p>
-        <p>Total: ${money(order.subtotal || order.totalAmount)}</p>
-        <p>Shipping address: ${addressLines(order.shippingAddress)}</p>
-        <ul>${products}</ul>
-        <p>Track your order: <a href="https://clinvara.global/track-order">https://clinvara.global/track-order</a></p>
-        <p>Support: ${SUPPORT_PHONE}</p>
-      `
-      : `
-        <h2>Your CLINVARA order could not be confirmed</h2>
-        <p>Order ID: <strong>${id}</strong></p>
-        <p>${order.rejectionReason || "Your order could not be confirmed. Please contact CLINVARA support."}</p>
-        <p>Support: ${SUPPORT_PHONE}</p>
-      `;
-  return sendEmail({ to: email, subject, html: body });
-}
+app.post("/emails/event", async (req, res) => {
+  const decoded = await authenticatedUser(req);
+  if (!decoded?.uid) {
+    return res.status(401).json({ error: "Sign in is required." });
+  }
+
+  const { eventName, order, returnRequest } = req.body || {};
+  const customerEvents = new Set([
+    "orderPlaced",
+    "orderCancelled",
+    "returnRequested",
+    "passwordReset",
+  ]);
+  const adminEvents = new Set(["adminNewOrder", "adminNewReturn"]);
+
+  if (!customerEvents.has(eventName) && !adminEvents.has(eventName)) {
+    return res.status(400).json({ error: "Unsupported email event." });
+  }
+
+  const payload = { order, returnRequest };
+  const result = customerEvents.has(eventName)
+    ? await sendCustomerEmail(eventName, payload)
+    : await sendAdminEmail(eventName, payload);
+
+  return res.json({ ok: true, emailSent: result.sent, warning: result.warning || "" });
+});
 
 app.post("/orders/admin-update", async (req, res) => {
   if (!(await isAdminUser(req))) {
@@ -421,6 +395,18 @@ app.post("/orders/admin-update", async (req, res) => {
       { merge: true },
     );
   }
+  if (action === "status") {
+    const status = String(update.orderStatus || update.publicOrderStatus || "");
+    if (status === "in_transit" || status === "shipped") {
+      update.shippedAt = update.shippedAt || now;
+    }
+    if (status === "delivered") {
+      update.deliveredAt = update.deliveredAt || now;
+    }
+    if (status === "cancelled") {
+      update.cancelledAt = update.cancelledAt || now;
+    }
+  }
   await batch.commit();
   const nextSnapshot = await ref.get();
   const nextOrder = { ...(nextSnapshot.data() || {}), ...update };
@@ -429,14 +415,18 @@ app.post("/orders/admin-update", async (req, res) => {
       ? await sendOrderEmail(nextOrder, "accepted")
       : action === "reject"
         ? await sendOrderEmail(nextOrder, "rejected")
-        : { sent: false };
+        : action === "status" && ["in_transit", "shipped"].includes(String(update.orderStatus || update.publicOrderStatus))
+          ? await sendCustomerEmail("orderShipped", { order: nextOrder })
+          : action === "status" && String(update.orderStatus || update.publicOrderStatus) === "delivered"
+            ? await sendCustomerEmail("orderDelivered", { order: nextOrder })
+            : action === "status" && String(update.orderStatus || update.publicOrderStatus) === "cancelled"
+              ? await sendCustomerEmail("orderCancelled", { order: nextOrder })
+              : { sent: false };
   return res.json({ ok: true, emailSent: emailResult.sent });
 });
 
 app.post("/orders/customer-cancel", async (req, res) => {
-  const authHeader = String(req.headers.authorization || "");
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  const decoded = token ? await admin.auth().verifyIdToken(token).catch(() => null) : null;
+  const decoded = await authenticatedUser(req);
   if (!decoded?.uid) {
     return res.status(401).json({ error: "Sign in is required." });
   }
@@ -485,6 +475,15 @@ app.post("/orders/customer-cancel", async (req, res) => {
     { merge: true },
   );
   await batch.commit();
+  await sendCustomerEmail("orderCancelled", {
+    order: {
+      ...order,
+      ...update,
+      id: snapshot.id,
+      publicOrderId: order.publicOrderId || order.orderId || snapshot.id,
+      cancellationReason: update.cancellationReason,
+    },
+  });
 
   return res.json({ ok: true, order: { id: snapshot.id, ...update } });
 });

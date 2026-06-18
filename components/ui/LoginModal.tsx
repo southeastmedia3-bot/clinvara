@@ -217,6 +217,8 @@ export function LoginModal() {
   const [updates, setUpdates] = useState(true);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const anyOpen = loginOpen || registerOpen;
 
@@ -437,13 +439,15 @@ export function LoginModal() {
       showToast({ message: "Enter a valid registered email address.", variant: "error" });
       return;
     }
+    setResetLoading(true);
     try {
       await sendFirebasePasswordReset(targetEmail);
     } catch (error) {
       console.info("Password reset request completed with safe response", getFirebaseErrorCode(error));
+    } finally {
+      setResetLoading(false);
     }
-    setResetOpen(false);
-    setResetEmail("");
+    setResetSent(true);
     showToast({
       message: "If an account exists for this email, a reset link has been sent.",
       variant: "success",
@@ -891,10 +895,14 @@ export function LoginModal() {
             >
               <button
                 type="button"
-                aria-label="Close password reset"
-                className="absolute right-4 top-4 rounded-full p-2 hover:bg-[var(--brand-off-white)]"
-                onClick={() => setResetOpen(false)}
-              >
+                  aria-label="Close password reset"
+                  className="absolute right-4 top-4 rounded-full p-2 hover:bg-[var(--brand-off-white)]"
+                  onClick={() => {
+                    setResetOpen(false);
+                    setResetSent(false);
+                    setResetLoading(false);
+                  }}
+                >
                 <X className="h-5 w-5" />
               </button>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
@@ -904,23 +912,32 @@ export function LoginModal() {
                 Reset password
               </h2>
               <p className="mt-2 text-sm leading-6 text-[var(--brand-text-muted)]">
-                Enter your registered email and we will send a secure Firebase password reset link.
+                {resetSent
+                  ? "If a CLINVARA account exists for that email, Firebase has sent a secure reset link."
+                  : "Enter your registered email and we will send a secure Firebase password reset link."}
               </p>
-              <form onSubmit={resetPassword} className="mt-5 space-y-4">
-                <Field
-                  label="Registered Email"
-                  type="email"
-                  value={resetEmail}
-                  onChange={setResetEmail}
-                  autoComplete="email"
-                />
-                <button
-                  type="submit"
-                  className="h-12 w-full rounded-full bg-black text-sm font-semibold text-white"
-                >
-                  Send Reset Link
-                </button>
-              </form>
+              {resetSent ? (
+                <div className="mt-5 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-4 text-sm leading-6 text-[var(--brand-text-muted)]">
+                  Check your inbox and spam folder. The link opens Firebase&apos;s secure reset page and then returns you to CLINVARA.
+                </div>
+              ) : (
+                <form onSubmit={resetPassword} className="mt-5 space-y-4">
+                  <Field
+                    label="Registered Email"
+                    type="email"
+                    value={resetEmail}
+                    onChange={setResetEmail}
+                    autoComplete="email"
+                  />
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="h-12 w-full rounded-full bg-black text-sm font-semibold text-white disabled:cursor-wait disabled:bg-black/60"
+                  >
+                    {resetLoading ? "Sending..." : "Send Reset Link"}
+                  </button>
+                </form>
+              )}
             </motion.div>
           )}
         </div>

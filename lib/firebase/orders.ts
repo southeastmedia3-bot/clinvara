@@ -5,9 +5,10 @@ import {
   writeBatch,
 } from "firebase/firestore";
 
-import { firebaseDb } from "@/lib/firebase/client";
+import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import type { CartItem } from "@/lib/types";
 import { getDeliveryEstimate } from "@/lib/delivery/estimate";
+import { sendEmailEvent } from "@/lib/email/events";
 
 function createPublicOrderId() {
   const code =
@@ -86,6 +87,19 @@ export async function createOrder(payload: CreateOrderPayload) {
   );
 
   await batch.commit();
+  const emailOrder = {
+    ...order,
+    id: orderRef.id,
+    publicOrderId,
+    placedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (firebaseAuth.currentUser) {
+    void sendEmailEvent("orderPlaced", { order: emailOrder });
+    void sendEmailEvent("adminNewOrder", { order: emailOrder });
+  }
 
   return { internalOrderId: orderRef.id, publicOrderId };
 }

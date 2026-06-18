@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { firebaseDb } from "@/lib/firebase/client";
+import { sendEmailEvent } from "@/lib/email/events";
 import type { ReturnReason, ReturnStatus } from "@/lib/returns/status";
 
 export type CustomerReturnRequest = {
@@ -52,6 +53,15 @@ export async function createReturnRequest(payload: CreateReturnRequestPayload) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  const returnRequest = {
+    ...payload,
+    id: ref.id,
+    status: "requested",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  void sendEmailEvent("returnRequested", { returnRequest });
+  void sendEmailEvent("adminNewReturn", { returnRequest });
 
   return ref.id;
 }
