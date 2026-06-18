@@ -10,6 +10,12 @@ function fromEmail() {
   return process.env.RESEND_FROM_EMAIL || AUTOMATED_SENDER;
 }
 
+function resendApiKey() {
+  const raw = String(process.env.RESEND_API_KEY || "").trim();
+  const unquoted = raw.replace(/^(["'])(.*)\1$/, "$2").trim();
+  return unquoted;
+}
+
 function money(value) {
   return `INR ${Number(value || 0).toLocaleString("en-IN")}`;
 }
@@ -152,13 +158,16 @@ const emailTemplates = {
 };
 
 async function sendEmail({ to, subject, html, replyTo }) {
+  const apiKey = resendApiKey();
   console.info("EMAIL_SERVICE_STARTED", {
     to,
     subject,
-    resendConfigured: Boolean(process.env.RESEND_API_KEY),
+    resendConfigured: Boolean(apiKey),
+    resendKeyFormat: apiKey.startsWith("re_") ? "expected-prefix" : "unexpected-prefix",
+    resendKeyLength: apiKey.length,
     sender: fromEmail(),
   });
-  if (!process.env.RESEND_API_KEY) {
+  if (!apiKey) {
     console.error("EMAIL_SENT_FAILED", {
       to,
       subject,
@@ -172,7 +181,7 @@ async function sendEmail({ to, subject, html, replyTo }) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
