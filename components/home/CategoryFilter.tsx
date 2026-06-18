@@ -3,10 +3,10 @@ import { SafeImage } from "@/components/shared/SafeImage";
 
 const tiles = [
   { src: "/images/categories/1st.png", label: "Skin & Body", href: "/shop?category=skin-body" },
-  { src: "/images/categories/2nd.png", label: "Hair Care", href: "/shop?category=hair" },
-  { src: "/images/categories/3rd.png", label: "Bath & Body", href: "/shop?category=bath" },
-  { src: "/images/categories/4th.png", label: "Lip", href: "/shop?category=lip" },
-  { src: "/images/categories/5th.png", label: "Eye", href: "/shop?category=eye" },
+  { src: "/images/categories/2nd.png", label: "Serums", href: "/shop?category=serums" },
+  { src: "/images/categories/3rd.png", label: "Moisturizers", href: "/shop?category=moisturizers" },
+  { src: "/images/categories/4th.png", label: "Cleansers", href: "/shop?category=cleansers" },
+  { src: "/images/categories/5th.png", label: "Best Sellers", href: "/shop?filter=bestsellers" },
 ];
 
 export function CategoryFilter() {

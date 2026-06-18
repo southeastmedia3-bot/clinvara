@@ -11,6 +11,6 @@ export const announcements: Announcement[] = [
   },
   {
     text: "☀️ Free Sunscreen on orders above ₹999",
-    href: "/shop?category=suncare",
+    href: "/shop",
   },
 ];
