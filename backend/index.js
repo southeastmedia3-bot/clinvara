@@ -33,7 +33,7 @@ async function sendEmail({ to, subject, html, replyTo }) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL || "CLINVARA <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM_EMAIL || "CLINVARA <clinvaraglobal@gmail.com>",
       to,
       subject,
       html,

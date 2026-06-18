@@ -138,7 +138,7 @@ export function TrackOrderClient() {
               className="mt-1 w-full rounded-xl border border-[var(--brand-border)] px-3 py-3 text-sm outline-none transition focus:border-black"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              placeholder="you@email.com or +91..."
+              placeholder="Email address or +91..."
               aria-invalid={Boolean(errors.contact)}
             />
             {errors.contact && (

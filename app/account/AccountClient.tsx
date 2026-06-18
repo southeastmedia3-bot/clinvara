@@ -440,7 +440,7 @@ export default function AccountClient() {
                 value={user?.email || checkoutEmail}
                 disabled={Boolean(user?.email)}
                 onChange={(event) => setCheckoutEmail(event.target.value)}
-                placeholder="you@example.com"
+                placeholder="Enter your email address"
                 className="h-11 w-full rounded-full border border-[var(--brand-border)] bg-white px-4 text-sm outline-none focus:border-black disabled:bg-[var(--brand-off-white)]"
               />
             </label>

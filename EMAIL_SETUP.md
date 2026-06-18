@@ -15,7 +15,7 @@ Paste the Resend API key when prompted.
 ## Optional Environment Values
 
 - `CONTACT_TO_EMAIL`: defaults to `clinvaraglobal@gmail.com`
-- `RESEND_FROM_EMAIL`: defaults to `CLINVARA <onboarding@resend.dev>`
+- `RESEND_FROM_EMAIL`: defaults to `CLINVARA <clinvaraglobal@gmail.com>`
 
 For production, verify a sender domain in Resend and set `RESEND_FROM_EMAIL` to that verified sender.
 

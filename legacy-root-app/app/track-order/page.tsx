@@ -61,7 +61,7 @@ export default function TrackOrderPage() {
             className="mt-1 w-full border border-[var(--brand-border)] px-3 py-3 text-sm outline-none focus:border-black"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
-            placeholder="you@email.com or +91..."
+            placeholder="Email address or +91..."
           />
           {errors.contact && (
             <span className="text-xs text-red-600">{errors.contact}</span>
