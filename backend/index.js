@@ -14,6 +14,10 @@ const instagramAccessToken = defineSecret("INSTAGRAM_ACCESS_TOKEN");
 const threadsAccessToken = defineSecret("THREADS_ACCESS_TOKEN");
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
 const resendApiKey = defineSecret("RESEND_API_KEY");
+const authSecretParam = defineSecret("AUTH_SECRET");
+const googleClientSecretParam = defineSecret("GOOGLE_CLIENT_SECRET");
+const facebookClientSecretParam = defineSecret("FACEBOOK_CLIENT_SECRET");
+const groqApiKeyParam = defineSecret("GROQ_API_KEY");
 
 const SUPPORT_PHONE = "+91 72071 18111";
 
@@ -600,7 +604,16 @@ app.get("/auth/oauth/callback/:provider", async (req, res) => {
 exports.api = onRequest(
   {
     region: "asia-south1",
-    secrets: [instagramAccessToken, threadsAccessToken, youtubeApiKey, resendApiKey],
+    secrets: [
+      instagramAccessToken,
+      threadsAccessToken,
+      youtubeApiKey,
+      resendApiKey,
+      authSecretParam,
+      googleClientSecretParam,
+      facebookClientSecretParam,
+      groqApiKeyParam,
+    ],
   },
   app,
 );

@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -84,10 +85,26 @@ export async function listOrders(): Promise<AdminOrder[]> {
 }
 
 export async function updateOrder(id: string, data: Partial<AdminOrder>) {
-  await updateDoc(doc(firebaseDb, "orders", id), {
+  const orderRef = doc(firebaseDb, "orders", id);
+  const snapshot = await getDoc(orderRef);
+  const existing = snapshot.exists() ? (snapshot.data() as Partial<AdminOrder>) : {};
+  const ownerId = data.userId || data.uid || data.customerId || existing.userId || existing.uid || existing.customerId;
+  const patch = {
     ...data,
     updatedAt: serverTimestamp(),
-  });
+  };
+  const batch = writeBatch(firebaseDb);
+
+  batch.set(orderRef, patch, { merge: true });
+
+  if (ownerId) {
+    batch.set(doc(firebaseDb, "customers", String(ownerId), "orders", id), {
+      ...patch,
+      id,
+    }, { merge: true });
+  }
+
+  await batch.commit();
 }
 
 export async function listCustomers(): Promise<AdminCustomer[]> {

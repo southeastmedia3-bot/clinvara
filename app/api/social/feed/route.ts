@@ -76,9 +76,6 @@ async function fetchJson(url: string, label: string) {
 
 async function fetchInstagramPosts() {
   const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  console.info("Social feed Instagram token configured", {
-    configured: Boolean(token),
-  });
 
   if (!token) {
     return {
@@ -210,15 +207,6 @@ export async function GET() {
         ...youtube,
         ...threads,
       ]),
-      diagnostics: {
-        instagram: {
-          count: instagramPayload.posts.length,
-          error: instagramPayload.error,
-          tokenConfigured: Boolean(process.env.INSTAGRAM_ACCESS_TOKEN),
-        },
-        youtube: { count: youtube.length },
-        threads: { count: threads.length },
-      },
     });
   } catch (error) {
     console.error("Social feed route failed", {

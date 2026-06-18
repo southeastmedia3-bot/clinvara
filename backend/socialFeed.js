@@ -242,15 +242,6 @@ async function getSocialFeed() {
 
   return {
     posts,
-    diagnostics: {
-      instagram: {
-        count: instagram.length,
-        error: instagramPayload.error || null,
-        tokenConfigured: Boolean(process.env.INSTAGRAM_ACCESS_TOKEN),
-      },
-      youtube: { count: youtube.length },
-      threads: { count: threads.length },
-    },
   };
 }
 

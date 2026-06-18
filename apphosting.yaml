@@ -78,7 +78,7 @@ env:
       - RUNTIME
 
   - variable: YOUTUBE_API_KEY
-    value: "AIzaSyAWJqn91Ut0i-4wzKV_3txEeJU6idKOazE"
+    secret: "YOUTUBE_API_KEY"
     availability:
       - BUILD
       - RUNTIME
@@ -90,7 +90,7 @@ env:
       - RUNTIME
 
   - variable: INSTAGRAM_ACCESS_TOKEN
-    value: "EAATLKkY0l28BRhd51D8DdZAhh7E6fftr9rYGtOPu757wRDWH3ceXLnmHoOWoDQjUiq9zSYmCOedqPS1ZC5wUUZAECEegbGb2ana4KsT4UKXosSr25LOkRMSehQElZA8jo5Qy3LDBOpoRf98uYZByda0r9vNiNcwwXN6vQPHhos77j4BpmUOMHLUQzao23aUuRnCJp4XyD7OC0h940ykcspx5ysUTNWfLxjdVKmmHHPf8N4lpZAlonxnKMgZCfC34dPuI39Aeefm0UY5jZBRTXDR2"
+    secret: "INSTAGRAM_ACCESS_TOKEN"
     availability:
       - BUILD
       - RUNTIME
@@ -102,7 +102,7 @@ env:
       - RUNTIME
 
   - variable: THREADS_ACCESS_TOKEN
-    value: "THAAax3pcQib1BYmFncXRobzVjQThEMkRlUzJyS193NlBWNVV5STJJX1BCdnBNN2puRE1FLTBqTTN0LWkxR3JSMUhJTFVzODE2Q3JMNkJWNzdVMnBUczYzRXZAvbUs3Ylo5cHVOUEhJOWFGT2hhcmNSdzdyb2h2dldoSTlZAYWZAXcUdJRWRFcnlqczFzdnI5Tm1IbWN6M2hsbHBUSFp3R1lmWlNOZAFZAGZAwZDZD"
+    secret: "THREADS_ACCESS_TOKEN"
     availability:
       - BUILD
       - RUNTIME
@@ -157,6 +157,12 @@ env:
 
   - variable: RESEND_API_KEY
     secret: "RESEND_API_KEY"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: GROQ_API_KEY
+    secret: "GROQ_API_KEY"
     availability:
       - BUILD
       - RUNTIME
