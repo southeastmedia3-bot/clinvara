@@ -14,6 +14,24 @@ type Props = {
   onClose: () => void;
 };
 
+const concernSlugByLabel: Record<string, string> = {
+  oiliness: "oiliness",
+  pores: "pore-minimizing",
+  "uneven tone": "uneven-tone",
+  dryness: "dryness-dehydration",
+  dehydration: "dryness-dehydration",
+  "sensitive skin": "sensitive-skin",
+  sensitivity: "sensitive-skin",
+  pigmentation: "pigmentation",
+  "dark spots": "pigmentation",
+  "barrier repair": "barrier-repair",
+};
+
+function concernSlug(label: string) {
+  const normalized = label.toLowerCase().trim();
+  return concernSlugByLabel[normalized] || normalized.replace(/\s+/g, "-");
+}
+
 export function SearchOverlay({ open, onClose }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
@@ -56,7 +74,7 @@ export function SearchOverlay({ open, onClose }: Props) {
 
   const results = useMemo(() => {
     const term = debounced.trim().toLowerCase();
-    if (!term) return { products: [], concerns: [] as string[], posts: [] };
+    if (!term) return { products: [], concerns: [] as Array<{ label: string; slug: string }>, posts: [] };
     const matchedProducts = products
       .filter(
         (p) =>
@@ -70,11 +88,12 @@ export function SearchOverlay({ open, onClose }: Props) {
       )
       .slice(0, 8);
     const concerns = Array.from(
-      new Set(
-        products.flatMap((p) =>
-          p.concerns.filter((c) => c.toLowerCase().includes(term)),
-        ),
-      ),
+      new Map(
+        products
+          .flatMap((p) => p.concerns)
+          .filter((c) => c.toLowerCase().includes(term))
+          .map((label) => [concernSlug(label), { label, slug: concernSlug(label) }]),
+      ).values(),
     ).slice(0, 6);
     const posts = blogs
       .filter(
@@ -235,15 +254,13 @@ export function SearchOverlay({ open, onClose }: Props) {
             </h3>
             <ul className="flex flex-wrap gap-2">
               {results.concerns.map((c) => (
-                <li key={c}>
+                <li key={c.slug}>
                   <Link
-                    href={`/shop?concern=${encodeURIComponent(
-                      c.toLowerCase().replace(/\s+/g, "-"),
-                    )}`}
+                    href={`/shop?concern=${encodeURIComponent(c.slug)}`}
                     className="inline-block rounded-full border border-[var(--brand-border)] px-3 py-1 text-sm hover:bg-black hover:text-white"
                     onClick={onClose}
                   >
-                    {c}
+                    {c.label}
                   </Link>
                 </li>
               ))}

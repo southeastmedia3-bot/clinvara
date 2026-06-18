@@ -39,6 +39,7 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const clearCart = useCartStore((s) => s.clearCart);
   const refreshLatestPrices = useCartStore((s) => s.refreshLatestPrices);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -396,6 +397,7 @@ export default function CartPage() {
 
                 setCreatedOrderId(order.publicOrderId);
                 setCreatedOrderTotal(subtotal);
+                clearCart();
                 showToast({
                   message: "Order placed and waiting for confirmation.",
                   variant: "success",
@@ -412,67 +414,8 @@ export default function CartPage() {
               }
             }}
           >
-            {checkoutLoading ? "Creating Order..." : "Proceed to Checkout"}
+            {checkoutLoading ? "Placing Order..." : "Place Order"}
           </button>
-
-          {createdOrderId && (
-            <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-              <div className="w-full max-w-md rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
-                  Order Placed
-                </p>
-                <h2 className="mt-2 font-display text-3xl font-semibold">
-                  Waiting for confirmation
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-[var(--brand-text-muted)]">
-                  Your order has been received and is waiting for admin confirmation. Order ID:{" "}
-                  <span className="font-semibold text-black">{createdOrderId}</span>
-                </p>
-                <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
-                  Status: Waiting for confirmation
-                </p>
-                <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-                  Total: <span className="font-semibold text-black">{formatINR(createdOrderTotal)}</span>
-                </p>
-                <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
-                  Support:{" "}
-                  <a href="tel:+917207118111" className="font-semibold text-black underline">
-                    +91 72071 18111
-                  </a>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(createdOrderId);
-                    showToast({ message: "Order ID copied.", variant: "success" });
-                  }}
-                  className="mt-4 text-sm font-semibold underline"
-                >
-                  Copy Order ID
-                </button>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href={`/track-order?orderId=${encodeURIComponent(createdOrderId)}`}
-                    className="flex-1 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white"
-                  >
-                    Track order
-                  </Link>
-                  <Link
-                    href="/account/orders"
-                    className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
-                  >
-                    View my orders
-                  </Link>
-                  <Link
-                    href="/shop"
-                    className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
-                  >
-                    Continue shopping
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
 
           {recommendedProducts.length > 0 && (
             <section className="mt-14 border-t border-[var(--brand-border)] pt-10">
@@ -493,6 +436,64 @@ export default function CartPage() {
             </section>
           )}
         </>
+      )}
+      {createdOrderId && (
+        <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--brand-border)] bg-white p-6 text-center shadow-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+              Order Placed
+            </p>
+            <h2 className="mt-2 font-display text-3xl font-semibold">
+              Waiting for confirmation
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--brand-text-muted)]">
+              Your order has been received and is waiting for admin confirmation. Order ID:{" "}
+              <span className="font-semibold text-black">{createdOrderId}</span>
+            </p>
+            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+              Status: Waiting for confirmation
+            </p>
+            <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+              Total: <span className="font-semibold text-black">{formatINR(createdOrderTotal)}</span>
+            </p>
+            <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+              Support:{" "}
+              <a href="tel:+917207118111" className="font-semibold text-black underline">
+                +91 72071 18111
+              </a>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(createdOrderId);
+                showToast({ message: "Order ID copied.", variant: "success" });
+              }}
+              className="mt-4 text-sm font-semibold underline"
+            >
+              Copy Order ID
+            </button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={`/track-order?orderId=${encodeURIComponent(createdOrderId)}`}
+                className="flex-1 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white"
+              >
+                Track order
+              </Link>
+              <Link
+                href="/account/orders"
+                className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
+              >
+                View my orders
+              </Link>
+              <Link
+                href="/shop"
+                className="flex-1 rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
+              >
+                Continue shopping
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

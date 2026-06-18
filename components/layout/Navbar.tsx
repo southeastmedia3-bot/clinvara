@@ -30,25 +30,14 @@ const shopColumns = {
     { label: "Serums", href: "/shop?category=serums" },
     { label: "Moisturizers", href: "/shop?category=moisturizers" },
     { label: "Cleansers", href: "/shop?category=cleansers" },
-    { label: "Toners", href: "/shop?category=serums" },
-    { label: "Suncare", href: "/shop?category=suncare" },
-    { label: "Eye Care", href: "/shop?category=serums" },
-    { label: "Exfoliators", href: "/shop?category=cleansers" },
-  ],
-  hair: [
-    { label: "Shampoo", href: "/shop?category=hair" },
-    { label: "Conditioner", href: "/shop?category=hair" },
-    { label: "Scalp Treatments", href: "/shop?category=hair" },
-    { label: "Hair Serums", href: "/shop?category=hair" },
   ],
   concerns: [
-    { label: "Acne", href: "/shop?concern=acne-control" },
     { label: "Dryness", href: "/shop?concern=dryness-dehydration" },
     { label: "Dark Spots", href: "/shop?concern=pigmentation" },
-    { label: "Fine Lines", href: "/shop?concern=fine-lines-wrinkles" },
     { label: "Oiliness", href: "/shop?concern=oiliness" },
     { label: "Sensitivity", href: "/shop?concern=sensitive-skin" },
-    { label: "Hair Fall", href: "/shop?concern=hair-fall" },
+    { label: "Barrier Repair", href: "/shop?concern=barrier-repair" },
+    { label: "Pores", href: "/shop?concern=pore-minimizing" },
   ],
 };
 
@@ -249,31 +238,13 @@ export function Navbar() {
         >
           {shopOpen && (
             <div className="absolute left-0 right-0 top-0 border-b border-[var(--brand-border)] bg-white shadow-lg">
-              <div className="mx-auto grid max-w-[1440px] grid-cols-3 gap-10 px-8 py-8 lg:grid-cols-4">
+              <div className="mx-auto grid max-w-[1440px] grid-cols-2 gap-10 px-8 py-8 lg:grid-cols-3">
                 <div>
                   <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
                     Skin &amp; Body
                   </p>
                   <ul className="space-y-2 text-sm font-medium">
                     {shopColumns.skin.map((l) => (
-                      <li key={l.href}>
-                        <Link
-                          href={l.href}
-                          className="hover:text-[var(--brand-accent)]"
-                          onClick={() => setShopOpen(false)}
-                        >
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
-                    Hair Care
-                  </p>
-                  <ul className="space-y-2 text-sm font-medium">
-                    {shopColumns.hair.map((l) => (
                       <li key={l.href}>
                         <Link
                           href={l.href}
@@ -381,20 +352,6 @@ export function Navbar() {
                     </p>
                     <ul className="space-y-2">
                       {shopColumns.skin.map((l) => (
-                        <li key={l.href}>
-                          <Link href={l.href} onClick={() => setMobileOpen(false)}>
-                            {l.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-text-muted)]">
-                      Hair Care
-                    </p>
-                    <ul className="space-y-2">
-                      {shopColumns.hair.map((l) => (
                         <li key={l.href}>
                           <Link href={l.href} onClick={() => setMobileOpen(false)}>
                             {l.label}
