@@ -96,7 +96,7 @@ function MiniBars({
 
   return (
     <section className="rounded-lg border border-[var(--brand-border)] bg-white p-5">
-      <h2 className="font-display text-2xl font-semibold">{title}</h2>
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
       <div className="mt-5 space-y-4">
         {rows.map((row) => {
           const width = Math.round((row.value / max) * 100);

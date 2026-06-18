@@ -11,7 +11,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-[var(--brand-off-white)] text-black">
+      <div className="min-h-screen bg-zinc-50 text-zinc-950">
         <div className="fixed inset-y-0 left-0 z-30 hidden w-72 lg:block">
           <AdminSidebar />
         </div>
@@ -40,7 +40,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
         <div className="lg:pl-72">
           <AdminTopbar onMenuClick={() => setMobileOpen(true)} />
-          <main className="px-4 py-6 lg:px-8">{children}</main>
+          <main className="mx-auto w-full max-w-[1500px] px-4 py-6 lg:px-8">
+            {children}
+          </main>
         </div>
       </div>
     </AdminGuard>

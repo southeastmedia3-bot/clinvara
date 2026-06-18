@@ -80,7 +80,7 @@ export function AdminDashboard() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
           Operations
         </p>
-        <h1 className="mt-2 font-display text-4xl font-semibold">Dashboard</h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">Dashboard</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -94,7 +94,7 @@ export function AdminDashboard() {
 
       <section className="grid gap-6 xl:grid-cols-2">
         <div>
-          <h2 className="mb-4 font-display text-2xl font-semibold">Recent orders</h2>
+          <h2 className="mb-4 text-xl font-semibold tracking-tight">Recent orders</h2>
           <AdminTable columns={["Order", "Customer", "Status", "Total"]} empty={!orders.length}>
             {orders.slice(0, 6).map((order) => (
               <tr key={order.id}>
@@ -111,7 +111,7 @@ export function AdminDashboard() {
           </AdminTable>
         </div>
         <div>
-          <h2 className="mb-4 font-display text-2xl font-semibold">Low stock warning</h2>
+          <h2 className="mb-4 text-xl font-semibold tracking-tight">Low stock warning</h2>
           <AdminTable columns={["Product", "Stock", "Status"]} empty={!products.length}>
             {products
               .filter((product) => Number(product.stock ?? 0) <= Number(product.lowStockThreshold ?? 5))

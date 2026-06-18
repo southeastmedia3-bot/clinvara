@@ -120,6 +120,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /analyticsCache/{cacheId} {
+      allow read, write, delete: if isAdmin();
+    }
+
     match /contactMessages/{messageId} {
       allow read, update, delete: if isAdmin();
       allow create: if false;

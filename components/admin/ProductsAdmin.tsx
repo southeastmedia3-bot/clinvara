@@ -134,14 +134,14 @@ export function Header({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
           Admin
         </p>
-        <h1 className="mt-2 font-display text-4xl font-semibold">{title}</h1>
-        <p className="mt-2 text-sm text-[var(--brand-text-muted)]">{description}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{title}</h1>
+        <p className="mt-2 text-sm leading-6 text-zinc-500">{description}</p>
       </div>
       {actionLabel && onAction && (
         <button
           type="button"
           onClick={onAction}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-zinc-800"
         >
           <Plus className="h-4 w-4" />
           {actionLabel}

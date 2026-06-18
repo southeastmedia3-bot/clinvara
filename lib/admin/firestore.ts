@@ -12,6 +12,9 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
+  type CollectionReference,
+  type DocumentData,
 } from "firebase/firestore";
 import { firebaseDb } from "@/lib/firebase/client";
 import { allProducts } from "@/lib/data/products";
@@ -144,6 +147,49 @@ export async function updateReturn(id: string, data: Partial<AdminReturn>) {
     ...data,
     updatedAt: serverTimestamp(),
   });
+}
+
+async function deleteCollectionRef(
+  ref: CollectionReference<DocumentData>,
+  pageSize = 250,
+): Promise<number> {
+  let deleted = 0;
+
+  while (true) {
+    const snapshot = await getDocs(query(ref, limit(pageSize)));
+    if (snapshot.empty) break;
+
+    const batch = writeBatch(firebaseDb);
+    snapshot.docs.forEach((entry) => batch.delete(entry.ref));
+    await batch.commit();
+    deleted += snapshot.size;
+
+    if (snapshot.size < pageSize) break;
+  }
+
+  return deleted;
+}
+
+export async function resetOrdersForMaintenance() {
+  const rootOrders = await deleteCollectionRef(collection(firebaseDb, "orders"));
+  const customers = await getDocs(collection(firebaseDb, "customers"));
+  let customerOrderMirrors = 0;
+
+  for (const customer of customers.docs) {
+    customerOrderMirrors += await deleteCollectionRef(
+      collection(firebaseDb, "customers", customer.id, "orders"),
+    );
+  }
+
+  return {
+    rootOrders,
+    customerOrderMirrors,
+    total: rootOrders + customerOrderMirrors,
+  };
+}
+
+export async function resetCollectionForMaintenance(collectionName: string) {
+  return deleteCollectionRef(collection(firebaseDb, collectionName));
 }
 
 export async function readSettings(): Promise<StoreSettings> {
