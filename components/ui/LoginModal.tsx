@@ -440,9 +440,22 @@ export function LoginModal() {
       return;
     }
     setResetLoading(true);
+    console.info("EMAIL_TRIGGERED", {
+      eventName: "passwordReset",
+      provider: "Firebase Authentication",
+    });
     try {
       await sendFirebasePasswordReset(targetEmail);
+      console.info("EMAIL_SENT_SUCCESS", {
+        eventName: "passwordReset",
+        provider: "Firebase Authentication",
+      });
     } catch (error) {
+      console.error("EMAIL_SENT_FAILED", {
+        eventName: "passwordReset",
+        provider: "Firebase Authentication",
+        code: getFirebaseErrorCode(error),
+      });
       console.info("Password reset request completed with safe response", getFirebaseErrorCode(error));
     } finally {
       setResetLoading(false);

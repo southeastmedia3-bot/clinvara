@@ -152,11 +152,23 @@ const emailTemplates = {
 };
 
 async function sendEmail({ to, subject, html, replyTo }) {
+  console.info("EMAIL_SERVICE_STARTED", {
+    to,
+    subject,
+    resendConfigured: Boolean(process.env.RESEND_API_KEY),
+    sender: fromEmail(),
+  });
   if (!process.env.RESEND_API_KEY) {
+    console.error("EMAIL_SENT_FAILED", {
+      to,
+      subject,
+      reason: "RESEND_API_KEY missing at runtime",
+    });
     console.warn("[CLINVARA email] RESEND_API_KEY missing; email skipped", { to, subject });
     return { sent: false, warning: "RESEND_API_KEY missing" };
   }
 
+  console.info("RESEND_CLIENT_CREATED", { transport: "HTTPS fetch", sender: fromEmail() });
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -173,9 +185,16 @@ async function sendEmail({ to, subject, html, replyTo }) {
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) {
+    console.error("EMAIL_SENT_FAILED", {
+      to,
+      subject,
+      status: response.status,
+      providerMessage: data?.message || response.statusText,
+    });
     console.warn("[CLINVARA email] send failed", { status: response.status, data });
     return { sent: false, warning: data?.message || response.statusText };
   }
+  console.info("EMAIL_SENT_SUCCESS", { to, subject, providerId: data?.id || "" });
   return { sent: true };
 }
 

@@ -15,10 +15,15 @@ export async function sendEmailEvent(
   eventName: EmailEventName,
   payload: Record<string, unknown>,
 ) {
+  const endpoint = apiUrl("/api/emails/event");
+  console.info("EMAIL_TRIGGERED", { eventName, endpoint });
   const token = await firebaseAuth.currentUser?.getIdToken().catch(() => "");
-  if (!token) return { sent: false, warning: "No signed-in Firebase user" };
+  if (!token) {
+    console.error("EMAIL_SENT_FAILED", { eventName, reason: "No signed-in Firebase user" });
+    return { sent: false, warning: "No signed-in Firebase user" };
+  }
 
-  const response = await fetch(apiUrl("/api/emails/event"), {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -28,8 +33,19 @@ export async function sendEmailEvent(
   }).catch(() => null);
 
   if (!response?.ok) {
+    console.error("EMAIL_SENT_FAILED", {
+      eventName,
+      endpoint,
+      status: response?.status || 0,
+    });
     return { sent: false, warning: "Email event skipped" };
   }
 
-  return response.json().catch(() => ({ sent: false }));
+  const result = await response.json().catch(() => ({ emailSent: false }));
+  console.info(result.emailSent ? "EMAIL_SENT_SUCCESS" : "EMAIL_SENT_FAILED", {
+    eventName,
+    endpoint,
+    warning: result.warning || "",
+  });
+  return result;
 }

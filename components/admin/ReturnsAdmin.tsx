@@ -6,6 +6,8 @@ import { AdminTable } from "@/components/admin/AdminTable";
 import { Header } from "@/components/admin/ProductsAdmin";
 import { listReturns, updateReturn } from "@/lib/admin/firestore";
 import type { AdminReturn } from "@/lib/admin/types";
+import { firebaseAuth } from "@/lib/firebase/client";
+import { apiUrl } from "@/lib/api/client";
 import {
   allowedReturnTransitions,
   normalizeReturnStatus,
@@ -85,7 +87,21 @@ export function ReturnsAdmin() {
   async function updateStatus(item: AdminReturn, status: ReturnStatus) {
     const current = normalizeReturnStatus(item.status);
     if (!allowedReturnTransitions(current).includes(status)) return;
-    await updateReturn(item.id, { status });
+    const token = await firebaseAuth.currentUser?.getIdToken().catch(() => "");
+    const response = token
+      ? await fetch(apiUrl("/api/returns/admin-update"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ returnId: item.id, status }),
+        }).catch(() => null)
+      : null;
+
+    if (!response?.ok) {
+      await updateReturn(item.id, { status });
+    }
     await refresh();
   }
 

@@ -326,6 +326,11 @@ app.post("/emails/event", async (req, res) => {
   }
 
   const { eventName, order, returnRequest } = req.body || {};
+  console.info("EMAIL_TRIGGERED", {
+    eventName,
+    source: "POST /emails/event",
+    resendConfigured: Boolean(process.env.RESEND_API_KEY),
+  });
   const customerEvents = new Set([
     "orderPlaced",
     "orderCancelled",
@@ -344,6 +349,42 @@ app.post("/emails/event", async (req, res) => {
     : await sendAdminEmail(eventName, payload);
 
   return res.json({ ok: true, emailSent: result.sent, warning: result.warning || "" });
+});
+
+app.post("/returns/admin-update", async (req, res) => {
+  if (!(await isAdminUser(req))) {
+    return res.status(403).json({ error: "Admin access required." });
+  }
+
+  const returnId = String(req.body?.returnId || "").trim();
+  const status = String(req.body?.status || "").trim();
+  if (!returnId || !status) {
+    return res.status(400).json({ error: "Return ID and status are required." });
+  }
+
+  const db = admin.firestore();
+  const ref = db.collection("returns").doc(returnId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) return res.status(404).json({ error: "Return not found." });
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await ref.set({ status, updatedAt: now }, { merge: true });
+  const returnRequest = { id: snapshot.id, ...(snapshot.data() || {}), status };
+
+  console.info("EMAIL_TRIGGERED", {
+    eventName: status === "approved" ? "returnApproved" : status === "refunded" ? "refundProcessed" : "none",
+    source: "POST /returns/admin-update",
+    returnId,
+  });
+
+  const emailResult =
+    status === "approved"
+      ? await sendCustomerEmail("returnApproved", { returnRequest })
+      : status === "refunded"
+        ? await sendCustomerEmail("refundProcessed", { returnRequest })
+        : { sent: false };
+
+  return res.json({ ok: true, emailSent: emailResult.sent });
 });
 
 app.post("/orders/admin-update", async (req, res) => {
