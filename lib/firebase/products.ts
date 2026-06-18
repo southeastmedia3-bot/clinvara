@@ -131,6 +131,35 @@ function normalizeProduct(doc: FirestoreDocument): Product {
   };
 }
 
+function dedupeProducts(products: Product[]) {
+  const bySlug = new Map<string, Product>();
+
+  for (const product of products) {
+    const key = product.slug || product.id;
+    const existing = bySlug.get(key);
+
+    if (!existing) {
+      bySlug.set(key, product);
+      continue;
+    }
+
+    const existingScore =
+      Number(existing.active !== false) +
+      Number(existing.stock || 0) +
+      Number(existing.featured || existing.badge?.toUpperCase() === "BESTSELLER");
+    const nextScore =
+      Number(product.active !== false) +
+      Number(product.stock || 0) +
+      Number(product.featured || product.badge?.toUpperCase() === "BESTSELLER");
+
+    if (nextScore >= existingScore) {
+      bySlug.set(key, product);
+    }
+  }
+
+  return Array.from(bySlug.values());
+}
+
 async function readCollection(path: string) {
   const response = await fetch(endpoint(path), {
     next: { revalidate: 120 },
@@ -143,7 +172,9 @@ async function readCollection(path: string) {
 export async function getStorefrontProducts() {
   try {
     const docs = await readCollection("products");
-    const products = docs.map(normalizeProduct).filter((product) => product.active !== false);
+    const products = dedupeProducts(
+      docs.map(normalizeProduct).filter((product) => product.active !== false),
+    );
     return products.length ? products : allProducts;
   } catch {
     return allProducts;

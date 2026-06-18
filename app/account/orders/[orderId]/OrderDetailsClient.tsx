@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
-import { Check, Circle, Download, RotateCcw } from "lucide-react";
-import { firebaseDb } from "@/lib/firebase/client";
+import { Check, Circle, Download, RotateCcw, XCircle } from "lucide-react";
+import { firebaseAuth, firebaseDb } from "@/lib/firebase/client";
 import { useAuthStore } from "@/lib/store/authStore";
 import { formatINR } from "@/lib/utils";
+import { apiUrl } from "@/lib/api/client";
 import {
   normalizeOrderStatus,
   orderStatusIndex,
@@ -156,6 +157,7 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
   const [returnReason, setReturnReason] = useState<ReturnReason>("Damaged Product");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnMessage, setReturnMessage] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === "#return-item") {
@@ -218,6 +220,12 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
     order?.publicOrderStatus || order?.orderStatus || order?.status,
   );
   const currentIndex = orderStatusIndex(currentStatus);
+  const canCancelOrder =
+    Boolean(order) &&
+    ["placed", "waiting_confirmation", "confirmed"].includes(currentStatus) &&
+    !["rejected", "cancelled", "refunded"].includes(
+      String(order?.orderStatus || order?.publicOrderStatus || order?.status || ""),
+    );
   const deliveryEstimate = useMemo(() => {
     if (!order) return null;
     if (order.estimatedDeliveryLabel) {
@@ -288,6 +296,43 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
     setReturnNotes("");
     setShowReturnForm(false);
     setReturnMessage("Return request submitted. Our team will review it shortly.");
+  };
+
+  const cancelOrder = async () => {
+    if (!order || cancelLoading) return;
+    setReturnMessage("");
+    setCancelLoading(true);
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const response = await fetch(apiUrl("/api/orders/customer-cancel"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        setReturnMessage(data?.error || "This order can no longer be cancelled.");
+        return;
+      }
+      setOrder((current) =>
+        current
+          ? {
+              ...current,
+              status: "cancelled",
+              orderStatus: "cancelled",
+              publicOrderStatus: "cancelled",
+              cancelledAt: new Date().toISOString(),
+            }
+          : current,
+      );
+      setReturnMessage("Order cancelled. Your order status has been updated.");
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -376,6 +421,17 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
             <Download className="h-4 w-4" />
             Download Invoice
           </button>
+          {canCancelOrder && (
+            <button
+              type="button"
+              onClick={cancelOrder}
+              disabled={cancelLoading}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-red-700 px-5 text-sm font-semibold text-red-700 transition hover:bg-red-700 hover:text-white disabled:cursor-wait disabled:opacity-60"
+            >
+              <XCircle className="h-4 w-4" />
+              {cancelLoading ? "Cancelling..." : "Cancel Order"}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {

@@ -8,6 +8,80 @@ import { BackButton } from "@/components/ui/BackButton";
 
 type Props = { params: { slug: string } };
 
+function cleanMarkdownText(value: string) {
+  return value.replace(/\*\*/g, "").replace(/^\*|\*$/g, "");
+}
+
+function renderArticleSection(section: string, sectionIndex: number) {
+  const chunks = section.split(/\n{2,}/).filter(Boolean);
+
+  return chunks.map((chunk, chunkIndex) => {
+    const key = `${sectionIndex}-${chunkIndex}`;
+    const lines = chunk.split("\n").filter(Boolean);
+
+    if (lines.every((line) => line.trim().startsWith("|"))) {
+      return (
+        <div key={key} className="overflow-x-auto rounded-2xl border border-[var(--brand-border)] bg-white">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <tbody>
+              {lines
+                .filter((line) => !/^\|\s*-/.test(line))
+                .map((line, rowIndex) => (
+                  <tr key={`${key}-row-${rowIndex}`} className="border-b border-[var(--brand-border)] last:border-0">
+                    {line
+                      .split("|")
+                      .map((cell) => cell.trim())
+                      .filter(Boolean)
+                      .map((cell, cellIndex) => (
+                        <td key={`${key}-cell-${cellIndex}`} className="px-4 py-3 align-top">
+                          {cleanMarkdownText(cell)}
+                        </td>
+                      ))}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (lines.every((line) => line.trim().startsWith("- "))) {
+      return (
+        <ul key={key} className="space-y-2 pl-5 text-[16px] leading-8 text-[var(--brand-text-muted)]">
+          {lines.map((line, index) => (
+            <li key={`${key}-item-${index}`} className="list-disc pl-2">
+              {cleanMarkdownText(line.replace(/^- /, ""))}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    return lines.map((line, lineIndex) => {
+      const lineKey = `${key}-${lineIndex}`;
+      if (line.startsWith("### ")) {
+        return (
+          <h3 key={lineKey} className="pt-4 font-display text-2xl font-semibold leading-tight text-black">
+            {cleanMarkdownText(line.replace(/^### /, ""))}
+          </h3>
+        );
+      }
+      if (line.startsWith("## ")) {
+        return (
+          <h2 key={lineKey} className="pt-8 font-display text-3xl font-semibold leading-tight text-black">
+            {cleanMarkdownText(line.replace(/^## /, ""))}
+          </h2>
+        );
+      }
+      return (
+        <p key={lineKey} className="text-[16px] leading-8 text-[var(--brand-text-muted)]">
+          {cleanMarkdownText(line)}
+        </p>
+      );
+    });
+  });
+}
+
 export function generateStaticParams() {
   return blogs.map((b) => ({ slug: b.slug }));
 }
@@ -60,7 +134,7 @@ export default function BlogPostPage({ params }: Props) {
   };
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
+    <article className="mx-auto max-w-[820px] px-4 py-12 lg:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -69,7 +143,7 @@ export default function BlogPostPage({ params }: Props) {
       <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-accent)]">
         {post.tag}
       </p>
-      <h1 className="mt-2 font-display text-4xl font-semibold leading-tight">
+      <h1 className="mt-2 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">
         {post.title}
       </h1>
       <p className="mt-2 text-sm text-[var(--brand-mid-gray)]">{post.date}</p>
@@ -83,11 +157,11 @@ export default function BlogPostPage({ params }: Props) {
           className="object-cover"
         />
       </div>
-      <div className="prose prose-sm mt-8 max-w-none space-y-4 text-[15px] leading-relaxed text-[var(--brand-text-muted)]">
-        <p className="text-base text-black">{post.excerpt}</p>
-        {(post.content ?? []).map((para) => (
-          <p key={para.slice(0, 24)}>{para}</p>
-        ))}
+      <div className="mt-10 space-y-6">
+        <p className="border-l-2 border-black pl-5 text-lg leading-8 text-black">
+          {post.excerpt}
+        </p>
+        {(post.content ?? []).map((section, index) => renderArticleSection(section, index))}
       </div>
       <section className="mt-10 border-t border-[var(--brand-border)] pt-6">
         <h2 className="font-display text-2xl font-semibold">

@@ -42,6 +42,11 @@ const shopColumns = {
 };
 
 const featured = bestSellers[0];
+const headerActionClass =
+  "group relative inline-flex h-10 w-10 items-center justify-center rounded-[14px] border border-black/10 bg-white/95 text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-black/30 hover:bg-[#f8f6f1] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)] active:translate-y-0";
+const headerIconClass = "h-[18px] w-[18px] stroke-[1.8] transition-transform duration-200 group-hover:scale-105";
+const headerBadgeClass =
+  "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-black px-1 text-[10px] font-semibold leading-none text-white shadow-sm";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -55,7 +60,7 @@ export function Navbar() {
   const cartCount = useCartStore((s) =>
     s.items.reduce((n, i) => n + i.quantity, 0),
   );
-  const wishCount = useWishlistStore((s) => s.productIds.length);
+  const wishCount = useWishlistStore((s) => s.count());
   const openCart = useCartStore((s) => s.openCart);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -187,33 +192,33 @@ export function Navbar() {
             <button
               type="button"
               aria-label="Open search"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)]"
+              className={headerActionClass}
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-[18px] w-[18px]" />
+              <Search className={headerIconClass} />
             </button>
             <button
               type="button"
               aria-label="Open cart"
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)]"
+              className={headerActionClass}
               onClick={() => openCart()}
             >
-              <ShoppingBag className="h-[18px] w-[18px]" />
+              <ShoppingBag className={headerIconClass} />
               {cartCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand-accent)] px-1 text-[10px] font-bold text-white">
+                <span className={headerBadgeClass}>
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
             </button>
             <Link
               href="/wishlist"
-              className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)] sm:inline-flex"
+              className={`${headerActionClass} hidden sm:inline-flex`}
               aria-label="Open wishlist"
             >
-              <Heart className="h-[18px] w-[18px]" />
-              <Sparkles className="absolute right-1 top-1 h-2.5 w-2.5" />
+              <Heart className={headerIconClass} />
+              <Sparkles className="absolute right-1 top-1 h-2.5 w-2.5 stroke-[1.8] opacity-80" />
               {wishCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[10px] font-bold text-white">
+                <span className={headerBadgeClass}>
                   {wishCount > 99 ? "99+" : wishCount}
                 </span>
               )}
@@ -222,10 +227,10 @@ export function Navbar() {
               type="button"
               aria-label="Open account"
               aria-expanded={accountOpen}
-              className="hidden h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-[var(--brand-primary)] shadow-sm transition hover:border-black hover:bg-[var(--brand-off-white)] sm:inline-flex"
+              className={`${headerActionClass} hidden sm:inline-flex`}
               onClick={() => setAccountOpen(true)}
             >
-              <User className="h-[18px] w-[18px]" />
+              <User className={headerIconClass} />
             </button>
           </div>
         </nav>

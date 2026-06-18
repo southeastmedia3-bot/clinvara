@@ -433,6 +433,62 @@ app.post("/orders/admin-update", async (req, res) => {
   return res.json({ ok: true, emailSent: emailResult.sent });
 });
 
+app.post("/orders/customer-cancel", async (req, res) => {
+  const authHeader = String(req.headers.authorization || "");
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const decoded = token ? await admin.auth().verifyIdToken(token).catch(() => null) : null;
+  if (!decoded?.uid) {
+    return res.status(401).json({ error: "Sign in is required." });
+  }
+
+  const orderId = String(req.body?.orderId || "").trim();
+  if (!orderId) return res.status(400).json({ error: "Order ID is required." });
+
+  const db = admin.firestore();
+  const ref = db.collection("orders").doc(orderId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) return res.status(404).json({ error: "Order not found." });
+
+  const order = snapshot.data() || {};
+  const ownerId = order.userId || order.uid || order.customerId;
+  if (ownerId !== decoded.uid) {
+    return res.status(403).json({ error: "This order does not belong to your account." });
+  }
+
+  const status = String(order.publicOrderStatus || order.orderStatus || order.status || "placed")
+    .toLowerCase()
+    .replace("pending_admin_confirmation", "waiting_confirmation")
+    .replace("waiting_for_confirmation", "waiting_confirmation");
+  const cancellable = ["placed", "waiting_confirmation", "confirmed"].includes(status);
+  if (!cancellable) {
+    return res.status(400).json({ error: "This order can no longer be cancelled." });
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const update = {
+    status: "cancelled",
+    orderStatus: "cancelled",
+    publicOrderStatus: "cancelled",
+    adminDecision: order.adminDecision === "accepted" ? "accepted" : "rejected",
+    cancellationReason: String(req.body?.reason || "Cancelled by customer").slice(0, 240),
+    cancelledAt: now,
+    updatedAt: now,
+  };
+  const batch = db.batch();
+  batch.set(ref, update, { merge: true });
+  batch.set(
+    db.collection("customers").doc(String(ownerId)).collection("orders").doc(snapshot.id),
+    {
+      ...update,
+      id: snapshot.id,
+    },
+    { merge: true },
+  );
+  await batch.commit();
+
+  return res.json({ ok: true, order: { id: snapshot.id, ...update } });
+});
+
 app.get("/social/instagram-feed", async (_req, res) => {
   const payload = await getInstagramFeed();
   return res.status(200).json(payload);

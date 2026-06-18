@@ -475,7 +475,7 @@ export function InventoryAdmin() {
               </p>
             </div>
             <div className="flex rounded-full border border-[var(--brand-border)] bg-white p-1 text-xs font-semibold">
-              {[5, 10].map((limit) => (
+              {[3, 5].map((limit) => (
                 <button
                   key={limit}
                   type="button"

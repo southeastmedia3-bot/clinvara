@@ -18,6 +18,10 @@ export default function WishlistClient() {
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const addItem = useCartStore((state) => state.addItem);
   const { showToast } = useToast();
+  const savedProductIds = useMemo(
+    () => Array.from(new Set(productIds.map((id) => String(id).trim()).filter(Boolean))),
+    [productIds],
+  );
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -31,10 +35,10 @@ export default function WishlistClient() {
   }, []);
 
   const wishlistProducts = useMemo(
-    () => products.filter((product) => productIds.includes(product.id)),
-    [productIds, products],
+    () => products.filter((product) => savedProductIds.includes(product.id)),
+    [savedProductIds, products],
   );
-  const missingSavedCount = Math.max(0, productIds.length - wishlistProducts.length);
+  const missingSavedCount = Math.max(0, savedProductIds.length - wishlistProducts.length);
 
   return (
     <main className="mx-auto max-w-[1180px] px-4 py-12 lg:px-8">

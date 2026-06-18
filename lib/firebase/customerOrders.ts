@@ -77,6 +77,9 @@ export function orderDateLabel(value: unknown) {
 }
 
 export function customerOrderStatus(order: CustomerOrderRecord) {
+  if (order.orderStatus === "cancelled" || order.publicOrderStatus === "cancelled" || order.status === "cancelled") {
+    return "Cancelled";
+  }
   if (order.adminDecision === "pending") return "Waiting for confirmation";
   if (order.adminDecision === "rejected" || order.orderStatus === "rejected") return "Rejected";
   return orderStatusLabel(order.publicOrderStatus || order.orderStatus || order.status);
