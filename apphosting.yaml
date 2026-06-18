@@ -161,6 +161,11 @@ env:
       - BUILD
       - RUNTIME
 
+  - variable: RESEND_FROM_EMAIL
+    value: "CLINVARA <noreply@clinvara.global>"
+    availability:
+      - RUNTIME
+
   - variable: GROQ_API_KEY
     secret: "GROQ_API_KEY"
     availability:

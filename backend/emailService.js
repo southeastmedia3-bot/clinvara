@@ -1,12 +1,13 @@
 const SUPPORT_EMAIL = "clinvaraglobal@gmail.com";
 const SUPPORT_PHONE = "+91 72071 18111";
+const AUTOMATED_SENDER = "CLINVARA <noreply@clinvara.global>";
 
 function contactEmail() {
   return process.env.CONTACT_TO_EMAIL || SUPPORT_EMAIL;
 }
 
 function fromEmail() {
-  return process.env.RESEND_FROM_EMAIL || `CLINVARA <${SUPPORT_EMAIL}>`;
+  return process.env.RESEND_FROM_EMAIL || AUTOMATED_SENDER;
 }
 
 function money(value) {
