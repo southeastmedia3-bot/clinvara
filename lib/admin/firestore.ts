@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { firebaseDb } from "@/lib/firebase/client";
 import { allProducts } from "@/lib/data/products";
+import { canonicalProductName } from "@/lib/data/productBranding";
 import type {
   AdminCoupon,
   AdminCustomer,
@@ -38,13 +39,20 @@ function withId<T>(id: string, data: T) {
   return { id, ...(data as Record<string, unknown>) } as T & { id: string };
 }
 
+function withCanonicalProductName(product: AdminProduct): AdminProduct {
+  return {
+    ...product,
+    name: canonicalProductName(product.slug || product.id, product.name),
+  };
+}
+
 export const defaultSettings: StoreSettings = defaultStoreSettings;
 
 export async function listProducts(): Promise<AdminProduct[]> {
   const snapshot = await getDocs(collection(firebaseDb, "products"));
-  const firestoreProducts = snapshot.docs.map((entry) =>
+  const firestoreProducts = (snapshot.docs.map((entry) =>
     withId(entry.id, entry.data()),
-  ) as AdminProduct[];
+  ) as AdminProduct[]).map(withCanonicalProductName);
 
   if (!firestoreProducts.length) {
     return allProducts.map((product) => ({
@@ -59,7 +67,9 @@ export async function listProducts(): Promise<AdminProduct[]> {
 
   const bySlug = new Map<string, AdminProduct>();
   allProducts.forEach((product) => bySlug.set(product.slug, product));
-  firestoreProducts.forEach((product) => bySlug.set(product.slug || product.id, product));
+  firestoreProducts.forEach((product) =>
+    bySlug.set(product.slug || product.id, withCanonicalProductName(product)),
+  );
 
   return Array.from(bySlug.values());
 }

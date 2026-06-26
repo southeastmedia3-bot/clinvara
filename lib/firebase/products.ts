@@ -7,6 +7,7 @@ import { reviews as staticReviews } from "@/lib/data/reviews";
 import type { Product, Review } from "@/lib/types";
 import type { StoreSettings } from "@/lib/admin/types";
 import { defaultStoreSettings } from "@/lib/data/settings";
+import { canonicalProductName } from "@/lib/data/productBranding";
 
 type FirestoreValue = {
   stringValue?: string;
@@ -103,7 +104,10 @@ function normalizeProduct(doc: FirestoreDocument): Product {
 
   return {
     id: String(data.id || fallback?.id || id),
-    name: String(data.name || fallback?.name || "CLINVARA Product"),
+    name: canonicalProductName(
+      slug,
+      String(data.name || fallback?.name || "CLINVARA Product"),
+    ),
     concern: String(data.concern || concerns.join(" · ") || fallback?.concern || ""),
     concerns,
     concernSlugs: stringArray(data.concernSlugs, fallback?.concernSlugs || []),
