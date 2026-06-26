@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types";
 export const allProducts: Product[] = [
   {
     id: "1",
-    name: "Niacinamide 10% Face Serum",
+    name: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
     concern: "Oiliness · Uneven Tone",
     concerns: ["Oiliness", "Pores", "Uneven Tone"],
     concernSlugs: ["oiliness", "pore-minimizing", "uneven-tone"],
@@ -48,13 +48,13 @@ export const allProducts: Product[] = [
       "/images/products/niacinamide-serum-alt.jpg",
     ],
     galleryAlt: [
-      "Niacinamide 10% Face Serum bottle",
-      "Niacinamide 10% Face Serum bottle and texture detail",
+      "CLINVARA Acne Reset Serum bottle",
+      "CLINVARA Acne Reset Serum bottle and texture detail",
     ],
   },
   {
     id: "2",
-    name: "Natural Moisturizing Factors + HA Cleanser",
+    name: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
     concern: "Hydration · Gentle Cleanse",
     concerns: ["Dryness", "Dehydration", "Sensitive Skin"],
     concernSlugs: ["dryness-dehydration", "sensitive-skin", "barrier-repair"],
@@ -102,8 +102,8 @@ export const allProducts: Product[] = [
       "/images/products/cleanser-nmf-alt.jpg",
     ],
     galleryAlt: [
-      "Natural Moisturizing Factors + HA Cleanser product tube",
-      "NMF + HA Cleanser texture and product detail",
+      "CLINVARA Clear Cleanse product tube",
+      "CLINVARA Clear Cleanse texture and product detail",
     ],
   },
   {
@@ -162,7 +162,7 @@ export const allProducts: Product[] = [
   },
   {
     id: "4",
-    name: "Ceramide Moisture",
+    name: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
     concern: "Barrier Repair · Hydration",
     concerns: ["Barrier Repair", "Dryness", "Sensitivity"],
     concernSlugs: ["barrier-repair", "dryness-dehydration", "sensitive-skin"],
@@ -210,9 +210,85 @@ export const allProducts: Product[] = [
       "/images/products/ceramide-moisture-alt.jpg",
     ],
     galleryAlt: [
-      "Ceramide Moisture cream tube",
-      "Ceramide Moisture texture and product detail",
+      "CLINVARA Barrier Restore Gel tube",
+      "CLINVARA Barrier Restore Gel texture and product detail",
     ],
+  },
+  {
+    id: "5",
+    name: "CLINVARA Shield SPF 50+ (Sunscreen)",
+    concern: "Sun Protection · UV Damage",
+    concerns: [
+      "Sun Protection",
+      "UV Damage",
+      "Tanning",
+      "Photoaging",
+      "Pigmentation Prevention",
+    ],
+    concernSlugs: [
+      "sun-protection",
+      "uv-damage",
+      "tanning",
+      "photoaging",
+      "pigmentation-prevention",
+    ],
+    price: 599,
+    mrp: 799,
+    sizes: ["50ml"],
+    image: "",
+    imageHover: "",
+    slug: "shield-spf-50-sunscreen",
+    badge: "NEW",
+    rating: 4.8,
+    reviewCount: 0,
+    dispatchTimeDays: 1,
+    category: "sunscreen",
+    stock: 0,
+    lowStockThreshold: 5,
+    availability: "out_of_stock",
+    featured: false,
+    active: true,
+    description:
+      "CLINVARA Shield SPF 50+ is a lightweight daily sunscreen formulated to provide broad-spectrum protection against UVA and UVB rays. It helps defend the skin from sunburn, tanning, pigmentation, and premature ageing while maintaining hydration. The non-greasy formula blends easily, absorbs quickly, and is suitable for everyday use under makeup or on its own.",
+    ingredients:
+      "Zinc Oxide, Titanium Dioxide, Niacinamide, Ceramides, Hyaluronic Acid, Vitamin E, Glycerin.",
+    keyIngredients: [
+      {
+        name: "Zinc Oxide",
+        benefit: "Helps provide broad-spectrum mineral UV protection.",
+      },
+      {
+        name: "Titanium Dioxide",
+        benefit: "Supports daily UVA and UVB protection.",
+      },
+      {
+        name: "Niacinamide",
+        benefit: "Helps support an even-looking, comfortable finish.",
+      },
+      {
+        name: "Ceramides",
+        benefit: "Support the skin barrier during daily sun-care routines.",
+      },
+      {
+        name: "Hyaluronic Acid",
+        benefit: "Adds lightweight hydration without heaviness.",
+      },
+      {
+        name: "Vitamin E",
+        benefit: "Provides antioxidant support for everyday exposure.",
+      },
+      {
+        name: "Glycerin",
+        benefit: "Helps maintain a soft, hydrated feel.",
+      },
+    ],
+    howToUse:
+      "Apply generously to the face and neck 15-20 minutes before sun exposure. Reapply every two hours or after swimming, sweating, or towel drying. For external use only. Avoid direct contact with eyes. Discontinue use if irritation occurs. Keep out of reach of children. Store in a cool, dry place away from direct sunlight.",
+    gallery: [],
+    galleryAlt: [],
+    seoTitle: "CLINVARA Shield SPF 50+ | Broad Spectrum Sunscreen PA++++",
+    seoDescription:
+      "Protect your skin daily with CLINVARA Shield SPF 50+ PA++++ Sunscreen. Lightweight, non-greasy, broad-spectrum UV protection for all skin types.",
   },
 ];
 
@@ -230,6 +306,7 @@ export const categoryFilters = [
   { id: "serums", label: "Serums" },
   { id: "moisturizers", label: "Moisturizers" },
   { id: "cleansers", label: "Cleansers" },
+  { id: "sunscreen", label: "Sunscreen" },
 ] as const;
 
 export const concernPills = [
@@ -240,6 +317,9 @@ export const concernPills = [
   { label: "Sensitive Skin", slug: "sensitive-skin" },
   { label: "Barrier Repair", slug: "barrier-repair" },
   { label: "Pore Minimizing", slug: "pore-minimizing" },
+  { label: "Sun Protection", slug: "sun-protection" },
+  { label: "UV Damage", slug: "uv-damage" },
+  { label: "Tanning", slug: "tanning" },
 ] as const;
 
 const concernMatch: Record<string, string[]> = {
@@ -250,6 +330,11 @@ const concernMatch: Record<string, string[]> = {
   pigmentation: ["Pigmentation", "Dark Spots"],
   "barrier-repair": ["Barrier"],
   "pore-minimizing": ["Pores", "Pore"],
+  "sun-protection": ["Sun Protection"],
+  "uv-damage": ["UV Damage"],
+  tanning: ["Tanning"],
+  photoaging: ["Photoaging"],
+  "pigmentation-prevention": ["Pigmentation Prevention"],
 };
 
 export function productMatchesConcernSlug(
@@ -270,7 +355,7 @@ export function productMatchesCategoryParam(
   param: string,
 ) {
   if (param === "skin-body") {
-    return ["serums", "moisturizers", "cleansers"].includes(product.category);
+    return ["serums", "moisturizers", "cleansers", "sunscreen"].includes(product.category);
   }
   if (param === "hair") return false;
   if (param === "bath") return product.category === "cleansers";

@@ -3,7 +3,7 @@ import type { HeroSlide } from "@/lib/types";
 export const heroSlides: HeroSlide[] = [
   {
     badge: "BESTSELLER",
-    title: "Niacinamide 10% Face Serum",
+    title: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
     subtitle:
       "With matmarine, zinc, and acetyl glucosamine. Regulates sebum and evens tone.",
     benefits: ["ALL SKIN TYPES", "30ML", "DERMATOLOGIST TESTED"],
@@ -25,7 +25,7 @@ export const heroSlides: HeroSlide[] = [
   },
   {
     badge: "BARRIER CARE",
-    title: "Ceramide Moisture",
+    title: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
     subtitle:
       "Natural Moisturizing Factors + HA. Strengthens barrier and locks in hydration.",
     benefits: ["CERAMIDES", "SURFACE HYDRATION", "50ML"],

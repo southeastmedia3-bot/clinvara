@@ -19,6 +19,11 @@ function absoluteUrl(path: string) {
   return `${siteUrl}${path}`;
 }
 
+function productImages(product: Awaited<ReturnType<typeof getStorefrontProductBySlug>>) {
+  if (!product) return [];
+  return (product.gallery?.length ? product.gallery : [product.image]).filter(Boolean);
+}
+
 export function generateStaticParams() {
   return allProducts.map((p) => ({ slug: p.slug }));
 }
@@ -43,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `${product.description} Shop ${product.name} by CLINVARA for ${product.concerns.join(
       ", "
     )}.`;
+  const images = productImages(product);
 
   return {
     title,
@@ -69,21 +75,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: `/shop/${product.slug}`,
       type: "website",
-      images: [
-        {
-          url: product.image,
-          width: 1200,
-          height: 1200,
-          alt: product.galleryAlt?.[0] || product.name,
-        },
-      ],
+      images: images.map((image, index) => ({
+        url: image,
+        width: 1200,
+        height: 1200,
+        alt: product.galleryAlt?.[index] || product.name,
+      })),
     },
 
     twitter: {
       card: "summary_large_image",
       title: `${product.name} | CLINVARA`,
       description,
-      images: [product.image],
+      images,
     },
   };
 }
@@ -98,7 +102,7 @@ export default async function ProductPage({ params }: Props) {
   const relatedArticles = getBlogsForProduct(product.slug);
 
   const productUrl = `${siteUrl}/shop/${product.slug}`;
-  const imageUrl = absoluteUrl(product.image);
+  const images = productImages(product).map((image) => absoluteUrl(image));
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -106,9 +110,7 @@ export default async function ProductPage({ params }: Props) {
 
     name: product.name,
 
-    image: product.gallery?.length
-      ? product.gallery.map((image) => absoluteUrl(image))
-      : [imageUrl],
+    image: images.length ? images : undefined,
 
     description: product.description,
 

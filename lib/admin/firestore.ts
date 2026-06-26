@@ -57,7 +57,11 @@ export async function listProducts(): Promise<AdminProduct[]> {
     }));
   }
 
-  return firestoreProducts;
+  const bySlug = new Map<string, AdminProduct>();
+  allProducts.forEach((product) => bySlug.set(product.slug, product));
+  firestoreProducts.forEach((product) => bySlug.set(product.slug || product.id, product));
+
+  return Array.from(bySlug.values());
 }
 
 export async function saveProduct(product: AdminProduct) {

@@ -3,7 +3,7 @@
 The storefront now reads `products` from Firestore first and falls back to
 `lib/data/products.ts` only when Firestore is empty or unavailable.
 
-To seed the original four products safely with Firebase Admin SDK:
+To seed the latest CLINVARA product catalog safely with Firebase Admin SDK:
 
 ```bash
 set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\service-account.json
@@ -26,10 +26,11 @@ can be run again without creating duplicates.
 
 Recommended Firestore document IDs:
 
-- `1` or `niacinamide-10-zinc-serum`
-- `2` or `nmf-ha-cleanser`
-- `3` or `deep-pigmentation-cream`
-- `4` or `ceramide-moisture`
+- `niacinamide-10-zinc-serum`
+- `nmf-ha-cleanser`
+- `deep-pigmentation-cream`
+- `ceramide-moisture`
+- `shield-spf-50-sunscreen`
 
 Do not duplicate products with new random IDs unless the product is genuinely new.
 If a product should disappear from the storefront without deleting history, set

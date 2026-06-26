@@ -93,8 +93,13 @@ function normalizeProduct(doc: FirestoreDocument): Product {
 
   const slug = String(data.slug || fallback?.slug || id);
   const concerns = stringArray(data.concerns, fallback?.concerns || []);
-  const image = String(data.image || fallback?.image || "/images/products/niacinamide-serum.jpg");
-  const gallery = stringArray(data.gallery, fallback?.gallery || [image]);
+  const image = String(data.image ?? fallback?.image ?? "");
+  const galleryFallback = fallback?.gallery?.length
+    ? fallback.gallery
+    : image
+      ? [image]
+      : [];
+  const gallery = stringArray(data.gallery, galleryFallback).filter(Boolean);
 
   return {
     id: String(data.id || fallback?.id || id),
@@ -173,7 +178,10 @@ export async function getStorefrontProducts() {
   try {
     const docs = await readCollection("products");
     const products = dedupeProducts(
-      docs.map(normalizeProduct).filter((product) => product.active !== false),
+      [
+        ...allProducts,
+        ...docs.map(normalizeProduct),
+      ].filter((product) => product.active !== false),
     );
     return products.length ? products : allProducts;
   } catch {

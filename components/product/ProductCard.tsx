@@ -122,7 +122,7 @@ export function ProductCard({
       <Link href={`/shop/${product.slug}`} className="block">
         <div className="relative aspect-square bg-[#f8f7f4] p-7 transition duration-300 group-hover:bg-[#f2f0ea]">
           <SafeImage
-            src={hover ? product.imageHover : product.image}
+            src={hover && product.imageHover ? product.imageHover : product.image}
             alt={product.name}
             label={product.name}
             fill

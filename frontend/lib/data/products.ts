@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types";
 export const allProducts: Product[] = [
   {
     id: "1",
-    name: "Niacinamide 10% Face Serum",
+    name: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
     concern: "Oiliness · Uneven Tone",
     concerns: ["Oiliness", "Pores", "Uneven Tone"],
     concernSlugs: ["oiliness", "pore-minimizing", "uneven-tone"],
@@ -29,7 +29,7 @@ export const allProducts: Product[] = [
   },
   {
     id: "2",
-    name: "Natural Moisturizing Factors + HA Cleanser",
+    name: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
     concern: "Hydration · Gentle Cleanse",
     concerns: ["Dryness", "Dehydration", "Sensitive Skin"],
     concernSlugs: ["dryness-dehydration", "sensitive-skin", "barrier-repair"],
@@ -79,7 +79,7 @@ export const allProducts: Product[] = [
   },
   {
     id: "4",
-    name: "Ceramide Moisture",
+    name: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
     concern: "Barrier Repair · Hydration",
     concerns: ["Barrier Repair", "Dryness", "Sensitivity"],
     concernSlugs: ["barrier-repair", "dryness-dehydration", "sensitive-skin"],

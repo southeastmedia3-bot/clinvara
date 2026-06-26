@@ -39,8 +39,11 @@ export function ProductDetail({
   reviews?: Review[];
   relatedArticles?: BlogPost[];
 }) {
-  const gallery = product.gallery ?? [product.image, product.imageHover];
-  const [activeImage, setActiveImage] = useState(gallery[0]);
+  const gallery = (product.gallery?.length
+    ? product.gallery
+    : [product.image, product.imageHover]
+  ).filter(Boolean);
+  const [activeImage, setActiveImage] = useState(gallery[0] || "");
   const [size, setSize] = useState(product.sizes[0] ?? "30ml");
   const [qty, setQty] = useState(1);
   const [openSection, setOpenSection] = useState<string | null>("ingredients");
@@ -113,32 +116,34 @@ export function ProductDetail({
               className="object-contain"
             />
           </div>
-          <div className="mt-4 flex gap-2 overflow-x-auto">
-            {gallery.map((src, index) => (
-              <button
-                key={src}
-                type="button"
-                onClick={() => setActiveImage(src)}
-                className={`relative h-20 w-20 shrink-0 border-2 bg-white p-1 ${
-                  activeImage === src
-                    ? "border-black"
-                    : "border-[var(--brand-border)]"
-                }`}
-              >
-                <SafeImage
-                  src={src}
-                  alt={
-                    product.galleryAlt?.[index] ??
-                    `${product.name} product image ${index + 1}`
-                  }
-                  label={product.name}
-                  fill
-                  sizes="80px"
-                  className="object-contain"
-                />
-              </button>
-            ))}
-          </div>
+          {gallery.length > 0 && (
+            <div className="mt-4 flex gap-2 overflow-x-auto">
+              {gallery.map((src, index) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setActiveImage(src)}
+                  className={`relative h-20 w-20 shrink-0 border-2 bg-white p-1 ${
+                    activeImage === src
+                      ? "border-black"
+                      : "border-[var(--brand-border)]"
+                  }`}
+                >
+                  <SafeImage
+                    src={src}
+                    alt={
+                      product.galleryAlt?.[index] ??
+                      `${product.name} product image ${index + 1}`
+                    }
+                    label={product.name}
+                    fill
+                    sizes="80px"
+                    className="object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

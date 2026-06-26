@@ -8,7 +8,7 @@ export const reviews: Review[] = [
     rating: 5,
     title: "Works nicely on my skin.",
     body: "Been using the Niacinamide serum for 6 weeks. Oiliness is under control and my tone looks more even. Highly recommend!",
-    productName: "Niacinamide 10% Face Serum",
+    productName: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
     productSlug: "/shop/niacinamide-10-zinc-serum",
   },
   {
@@ -18,7 +18,7 @@ export const reviews: Review[] = [
     rating: 5,
     title: "Gentle, never strips.",
     body: "The NMF cleanser leaves my skin soft—not tight. Perfect morning and night cleanse.",
-    productName: "Natural Moisturizing Factors + HA Cleanser",
+    productName: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
     productSlug: "/shop/nmf-ha-cleanser",
   },
   {
@@ -37,8 +37,8 @@ export const reviews: Review[] = [
     date: "December 2024",
     rating: 5,
     title: "Barrier feels restored.",
-    body: "Ceramide Moisture fixed my flaky patches without feeling heavy. Calm, hydrated skin all day.",
-    productName: "Ceramide Moisture",
+    body: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer) fixed my flaky patches without feeling heavy. Calm, hydrated skin all day.",
+    productName: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
     productSlug: "/shop/ceramide-moisture",
   },
 ];
