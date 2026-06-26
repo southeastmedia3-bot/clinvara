@@ -27,6 +27,7 @@ import {
   returnStatusSteps,
   type ReturnReason,
 } from "@/lib/returns/status";
+import { canonicalProductName } from "@/lib/data/productBranding";
 
 type OrderItem = {
   productId?: string;
@@ -214,7 +215,10 @@ export default function OrderDetailsClient({ orderId }: { orderId: string }) {
     };
   }, [isAuthenticated, orderId, user]);
 
-  const items = order?.items?.length ? order.items : order?.products || [];
+  const items = (order?.items?.length ? order.items : order?.products || []).map((item) => ({
+    ...item,
+    name: canonicalProductName(item.slug || item.productId, item.name),
+  }));
   const address = order?.shippingAddress || order?.address;
   const currentStatus = normalizeOrderStatus(
     order?.publicOrderStatus || order?.orderStatus || order?.status,

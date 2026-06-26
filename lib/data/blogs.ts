@@ -274,3 +274,10 @@ export const blogs: BlogPost[] = [
 export function getBlogBySlug(slug: string) {
   return blogs.find((b) => b.slug === slug);
 }
+
+function blogTime(post: BlogPost) {
+  const parsed = Date.parse(post.date);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export const sortedBlogs = [...blogs].sort((a, b) => blogTime(b) - blogTime(a));

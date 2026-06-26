@@ -18,17 +18,20 @@ export function AnnouncementBar({
   const items = initialAnnouncements.length ? initialAnnouncements : announcements;
 
   const next = useCallback(() => {
+    if (items.length <= 1) return;
     setIndex((i) => (i + 1) % items.length);
   }, [items.length]);
 
   const prev = useCallback(() => {
+    if (items.length <= 1) return;
     setIndex((i) => (i - 1 + items.length) % items.length);
   }, [items.length]);
 
   useEffect(() => {
+    if (items.length <= 1) return;
     const id = window.setInterval(next, INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [next]);
+  }, [items.length, next]);
 
   const current = items[index] || announcements[0];
 
@@ -38,14 +41,16 @@ export function AnnouncementBar({
       role="region"
       aria-label="Promotional announcements"
     >
-      <button
-        type="button"
-        aria-label="Previous offer"
-        onClick={() => prev()}
-        className="absolute left-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
-      >
-        <ChevronLeft className="h-[18px] w-[18px]" />
-      </button>
+      {items.length > 1 && (
+        <button
+          type="button"
+          aria-label="Previous offer"
+          onClick={() => prev()}
+          className="absolute left-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
+        >
+          <ChevronLeft className="h-[18px] w-[18px]" />
+        </button>
+      )}
 
       <div className="mx-10 max-w-[90vw] overflow-hidden text-center md:mx-16">
         <AnimatePresence mode="wait">
@@ -66,14 +71,16 @@ export function AnnouncementBar({
         </AnimatePresence>
       </div>
 
-      <button
-        type="button"
-        aria-label="Next offer"
-        onClick={() => next()}
-        className="absolute right-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
-      >
-        <ChevronRight className="h-[18px] w-[18px]" />
-      </button>
+      {items.length > 1 && (
+        <button
+          type="button"
+          aria-label="Next offer"
+          onClick={() => next()}
+          className="absolute right-3 hidden rounded-full p-1 opacity-90 transition hover:bg-white/15 hover:opacity-100 md:inline-flex"
+        >
+          <ChevronRight className="h-[18px] w-[18px]" />
+        </button>
+      )}
     </div>
   );
 }

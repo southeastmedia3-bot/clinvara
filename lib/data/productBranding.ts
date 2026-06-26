@@ -1,5 +1,13 @@
 const renamedProducts: Record<string, { current: string; previous: string[] }> = {
+  "1": {
+    current: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
+    previous: ["Niacinamide 10% Face Serum"],
+  },
   "nmf-ha-cleanser": {
+    current: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
+    previous: ["Natural Moisturizing Factors + HA Cleanser", "NMF + HA Cleanser"],
+  },
+  "2": {
     current: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
     previous: ["Natural Moisturizing Factors + HA Cleanser", "NMF + HA Cleanser"],
   },
@@ -7,9 +15,29 @@ const renamedProducts: Record<string, { current: string; previous: string[] }> =
     current: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
     previous: ["Niacinamide 10% Face Serum"],
   },
+  "3": {
+    current: "Deep Pigmentation Cream",
+    previous: [],
+  },
+  "deep-pigmentation-cream": {
+    current: "Deep Pigmentation Cream",
+    previous: [],
+  },
   "ceramide-moisture": {
     current: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
     previous: ["Ceramide Moisture"],
+  },
+  "4": {
+    current: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
+    previous: ["Ceramide Moisture"],
+  },
+  "5": {
+    current: "CLINVARA Shield SPF 50+ (Sunscreen)",
+    previous: [],
+  },
+  "shield-spf-50-sunscreen": {
+    current: "CLINVARA Shield SPF 50+ (Sunscreen)",
+    previous: [],
   },
 };
 

@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { firebaseDb } from "@/lib/firebase/client";
 import { orderStatusLabel } from "@/lib/orders/status";
 import type { CustomerAddress } from "@/lib/firebase/customerData";
+import { canonicalProductName } from "@/lib/data/productBranding";
 
 export type CustomerOrderItem = {
   productId?: string;
@@ -53,7 +54,11 @@ export function displayOrderId(order: CustomerOrderRecord) {
 }
 
 export function orderItems(order: CustomerOrderRecord) {
-  return order.items?.length ? order.items : order.products || [];
+  const items = order.items?.length ? order.items : order.products || [];
+  return items.map((item) => ({
+    ...item,
+    name: canonicalProductName(item.slug || item.productId, item.name),
+  }));
 }
 
 export function orderTimestamp(value: unknown) {

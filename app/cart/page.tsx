@@ -12,6 +12,7 @@ import { readCustomerProfile } from "@/lib/firebase/customerData";
 import { createOrder } from "@/lib/firebase/orders";
 import { getDeliveryEstimate } from "@/lib/delivery/estimate";
 import { allProducts } from "@/lib/data/products";
+import { canonicalProductName } from "@/lib/data/productBranding";
 
 type CheckoutAddress = {
   fullName?: string;
@@ -60,13 +61,21 @@ export default function CartPage() {
   }, [refreshLatestPrices]);
 
   const subtotal = cartTotal(items);
+  const displayItems = useMemo(
+    () =>
+      items.map((item) => ({
+        ...item,
+        name: canonicalProductName(item.slug || item.productId, item.name),
+      })),
+    [items],
+  );
   const freeGiftThreshold = 999;
   const giftRemaining = Math.max(0, freeGiftThreshold - subtotal);
   const giftProgress = Math.min(100, Math.round((subtotal / freeGiftThreshold) * 100));
   const recommendedProducts = useMemo(() => {
-    const inCart = new Set(items.map((item) => item.productId));
+    const inCart = new Set(displayItems.map((item) => item.productId));
     return allProducts.filter((product) => !inCart.has(product.id)).slice(0, 4);
-  }, [items]);
+  }, [displayItems]);
 
   const completeAddresses = useMemo(
     () => savedAddresses.filter(hasCompleteAddress),
@@ -75,7 +84,7 @@ export default function CartPage() {
   const selectedShippingAddress =
     selectedAddressIndex === null ? null : completeAddresses[selectedAddressIndex] ?? null;
   const checkoutDeliveryEstimate = getDeliveryEstimate({
-    dispatchTimeDays: Math.max(1, ...items.map((item) => Number(item.dispatchTimeDays ?? 1))),
+    dispatchTimeDays: Math.max(1, ...displayItems.map((item) => Number(item.dispatchTimeDays ?? 1))),
     address: selectedShippingAddress,
   });
 
@@ -165,7 +174,7 @@ export default function CartPage() {
               </div>
 
               <ul className="space-y-4">
-                {items.map((item) => (
+                {displayItems.map((item) => (
                   <li
                     key={`${item.productId}-${item.size}`}
                     className="flex flex-col gap-4 rounded-2xl border border-[var(--brand-border)] bg-white p-4 sm:flex-row"

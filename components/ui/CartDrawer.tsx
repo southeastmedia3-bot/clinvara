@@ -12,6 +12,7 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatINR } from "@/lib/utils";
 import { getDeliveryEstimate } from "@/lib/delivery/estimate";
+import { canonicalProductName } from "@/lib/data/productBranding";
 
 const FREE_SHIPPING = 999;
 
@@ -66,6 +67,10 @@ export function CartDrawer() {
   }, [isOpen]);
 
   const subtotal = cartTotal(items);
+  const displayItems = items.map((item) => ({
+    ...item,
+    name: canonicalProductName(item.slug || item.productId, item.name),
+  }));
   const count = cartCount(items);
   const remaining = Math.max(0, freeShippingThreshold - subtotal);
 
@@ -108,13 +113,13 @@ export function CartDrawer() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4">
-              {items.length === 0 ? (
+              {displayItems.length === 0 ? (
                 <p className="text-sm text-[var(--brand-text-muted)]">
                   Your cart is empty. Explore the shop to build your routine.
                 </p>
               ) : (
                 <ul className="space-y-4">
-                  {items.map((item) => (
+                  {displayItems.map((item) => (
                     <li
                       key={`${item.productId}-${item.size}`}
                       className="flex gap-3 border-b border-[var(--brand-border)] pb-4"

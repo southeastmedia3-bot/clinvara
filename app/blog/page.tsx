@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { blogs } from "@/lib/data/blogs";
+import { blogs, sortedBlogs } from "@/lib/data/blogs";
 import { SafeImage } from "@/components/shared/SafeImage";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function BlogListingPage() {
         Evidence-led education for smarter skincare choices.
       </p>
       <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {blogs.map((post) => (
+        {sortedBlogs.map((post) => (
           <article key={post.slug} className="group">
             <Link href={`/blog/${post.slug}`}>
               <div className="relative mb-4 aspect-video overflow-hidden bg-[var(--brand-light-gray)]">

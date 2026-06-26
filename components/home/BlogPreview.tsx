@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { blogs } from "@/lib/data/blogs";
+import { sortedBlogs } from "@/lib/data/blogs";
 import { SafeImage } from "@/components/shared/SafeImage";
 
 export function BlogPreview() {
@@ -9,7 +9,7 @@ export function BlogPreview() {
         From The Clinvara Journal
       </h2>
       <div className="grid gap-6 md:grid-cols-3">
-        {blogs.map((post) => (
+        {sortedBlogs.map((post) => (
           <article key={post.slug} className="group">
             <Link href={`/blog/${post.slug}`}>
               <div className="relative mb-4 aspect-video overflow-hidden bg-[var(--brand-light-gray)]">
