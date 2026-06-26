@@ -10,6 +10,15 @@ import { Badge } from "@/components/ui/Badge";
 
 const AUTO_MS = 5000;
 
+function heroTitleParts(title: string) {
+  const cleanTitle = title.replace("â„¢", "™");
+  const match = cleanTitle.match(/^(.*?)\s*\((Powered by .*?)\)$/);
+  return {
+    primary: match?.[1] || cleanTitle,
+    secondary: match?.[2] || "",
+  };
+}
+
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -29,41 +38,51 @@ export function HeroCarousel() {
   }, [next, paused, index]);
 
   const slide = heroSlides[index];
+  const title = heroTitleParts(slide.title);
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-[var(--brand-off-white)] md:min-h-[580px] xl:min-h-[620px]"
+      className="relative w-full overflow-hidden bg-[var(--brand-off-white)] md:h-[80vh] md:min-h-[520px] md:max-h-[680px]"
       aria-label="Featured products"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="relative mx-auto max-w-[1440px] md:min-h-[580px] xl:min-h-[620px]">
+      <div className="relative mx-auto max-w-[1440px] md:h-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.href}
             initial={false}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="grid items-stretch md:min-h-[580px] md:grid-cols-[55fr_45fr] xl:min-h-[620px]"
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="grid md:h-full md:grid-cols-[46fr_54fr]"
           >
             <div
-              className="order-2 flex flex-col justify-center px-6 py-12 md:order-1 md:px-20 md:py-16 lg:px-24 xl:px-[100px]"
-              style={{ backgroundColor: slide.bgColor }}
+              className="order-2 flex flex-col justify-center px-6 py-10 md:order-1 md:px-14 md:py-12 lg:px-20 xl:px-24"
+              style={{
+                background: `radial-gradient(circle at 12% 18%, rgba(255,255,255,0.72), transparent 38%), ${slide.bgColor}`,
+              }}
             >
-              <div className="max-w-[560px]">
-                <Badge className="mb-6 w-fit bg-white">{slide.badge}</Badge>
-                <h1 className="font-display text-[clamp(42px,7vw,80px)] font-medium leading-[0.98] tracking-[-0.03em] md:text-[clamp(56px,6vw,76px)] xl:text-[80px]">
-                  {slide.title}
+              <div className="max-w-[520px]">
+                <Badge className="mb-5 w-fit rounded-full bg-white/70 px-4 py-1.5 text-[10px] tracking-[0.18em] shadow-sm">
+                  {slide.badge}
+                </Badge>
+                <h1 className="font-display max-w-[520px] text-[38px] font-medium leading-[1.02] tracking-[-0.03em] text-black sm:text-[44px] md:text-[48px] lg:text-[54px] xl:text-[58px]">
+                  {title.primary}
                 </h1>
-                <p className="mt-7 max-w-[500px] text-[18px] font-normal leading-[1.7] text-[var(--brand-text-muted)]">
+                {title.secondary && (
+                  <p className="mt-2 font-display text-[28px] font-medium leading-[1.04] tracking-[-0.025em] text-black/85 sm:text-[32px] md:text-[36px] lg:text-[40px]">
+                    {title.secondary}
+                  </p>
+                )}
+                <p className="mt-5 max-w-[430px] text-[16px] font-normal leading-[1.75] text-[var(--brand-text-muted)] md:text-[18px]">
                   {slide.subtitle}
                 </p>
-                <div className="mt-6 flex max-w-[500px] flex-wrap gap-3 text-[var(--brand-secondary)]">
+                <div className="mt-5 flex max-w-[430px] flex-wrap gap-2.5 text-[var(--brand-secondary)]">
                   {slide.benefits.map((b) => (
                     <span
                       key={b}
-                      className="rounded-full border border-[#DDDDDD] px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.08em]"
+                      className="rounded-full border border-black/10 bg-white/35 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.11em] backdrop-blur transition hover:border-black/30 hover:bg-white/60"
                     >
                       {b}
                     </span>
@@ -71,34 +90,38 @@ export function HeroCarousel() {
                 </div>
                 <Link
                   href={slide.href}
-                  className="mt-8 inline-flex min-h-11 items-center border-b border-current pb-0.5 pr-3 text-[12px] font-semibold uppercase tracking-[0.25em]"
+                  className="mt-7 inline-flex min-h-12 w-fit items-center gap-3 rounded-full border border-black bg-black px-6 text-[12px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_14px_32px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-black hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
                 >
                   {slide.cta}
+                  <span aria-hidden="true">→</span>
                 </Link>
               </div>
             </div>
 
             <div
-              className="order-1 relative flex h-[260px] items-center justify-center md:order-2 md:min-h-[580px] xl:min-h-[620px]"
+              className="order-1 relative flex h-[340px] items-center justify-center px-6 py-8 md:order-2 md:h-full md:px-12 lg:px-16"
               style={{
-                background: `radial-gradient(circle at center, #ffffff 0%, ${slide.bgColor} 70%)`,
+                background: `radial-gradient(circle at 50% 45%, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.48) 42%, ${slide.bgColor} 78%)`,
               }}
             >
-              <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="relative h-[200px] w-full max-w-lg md:h-[380px]"
-              >
-                <SafeImage
-                  src={slide.image}
-                  alt={slide.title}
-                  label={slide.title}
-                  fill
-                  priority
-                  sizes="(max-width:768px) 100vw, 50vw"
-                  className="object-contain"
-                />
-              </motion.div>
+              <div className="relative flex h-full w-full max-w-[620px] items-center justify-center rounded-[34px] border border-white/70 bg-white/35 p-7 shadow-[0_30px_90px_rgba(0,0,0,0.10)] backdrop-blur-sm md:h-[74%] md:min-h-[410px] md:p-10">
+                <div className="pointer-events-none absolute inset-8 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.86),transparent_68%)]" />
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative h-full max-h-[460px] min-h-[250px] w-full"
+                >
+                  <SafeImage
+                    src={slide.image}
+                    alt={slide.title}
+                    label={slide.title}
+                    fill
+                    priority
+                    sizes="(max-width:768px) 100vw, 52vw"
+                    className="object-contain drop-shadow-[0_22px_34px_rgba(0,0,0,0.18)]"
+                  />
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>
