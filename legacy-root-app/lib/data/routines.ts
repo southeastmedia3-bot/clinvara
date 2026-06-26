@@ -7,7 +7,7 @@ export const routines: Routine[] = [
     description: "Cleanse, treat, and hydrate without heaviness.",
     steps: [
       { label: "CLINVARA Clear Cleanse", slug: "nmf-ha-cleanser" },
-      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium™)", slug: "niacinamide-10-zinc-serum" },
+      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium)", slug: "niacinamide-10-zinc-serum" },
       { label: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)", slug: "ceramide-moisture" },
     ],
   },
@@ -35,7 +35,7 @@ export const routines: Routine[] = [
     description: "Target dark spots and uneven tone.",
     steps: [
       { label: "CLINVARA Clear Cleanse", slug: "nmf-ha-cleanser" },
-      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium™)", slug: "niacinamide-10-zinc-serum" },
+      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium)", slug: "niacinamide-10-zinc-serum" },
       { label: "Deep Pigmentation Cream", slug: "deep-pigmentation-cream" },
     ],
   },
@@ -55,7 +55,7 @@ export const routines: Routine[] = [
     steps: [
       { label: "CLINVARA Clear Cleanse", slug: "nmf-ha-cleanser" },
       { label: "Deep Pigmentation Cream", slug: "deep-pigmentation-cream" },
-      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium™)", slug: "niacinamide-10-zinc-serum" },
+      { label: "CLINVARA Acne Reset Serum (Powered by Acnesium)", slug: "niacinamide-10-zinc-serum" },
     ],
   },
 ];

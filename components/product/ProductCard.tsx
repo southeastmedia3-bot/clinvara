@@ -64,7 +64,7 @@ export function ProductCard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:border-black hover:shadow-xl ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:z-10 hover:-translate-y-1 hover:border-black hover:shadow-xl ${
         layout === "scroll"
           ? "min-w-[72vw] snap-start sm:min-w-0"
           : ""
@@ -120,7 +120,7 @@ export function ProductCard({
       </button>
 
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-square bg-[#f8f7f4] p-7 transition duration-300 group-hover:bg-[#f2f0ea]">
+        <div className="relative aspect-[4/3] bg-[#f8f7f4] p-5 transition duration-300 group-hover:bg-[#f2f0ea] md:p-6">
           <SafeImage
             src={hover && product.imageHover ? product.imageHover : product.image}
             alt={product.name}
@@ -145,7 +145,7 @@ export function ProductCard({
         </div>
       </Link>
 
-      <div className="space-y-3 px-5 pb-5 pt-4">
+      <div className="flex flex-1 flex-col space-y-2.5 px-4 pb-4 pt-3.5 md:px-5 md:pb-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
             {product.category}
@@ -160,16 +160,16 @@ export function ProductCard({
         </div>
 
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="font-display line-clamp-2 min-h-[52px] text-[22px] font-semibold leading-[1.15] text-zinc-950 hover:underline">
+          <h3 className="font-display line-clamp-2 min-h-[44px] text-[18px] font-semibold leading-[1.16] text-zinc-950 hover:underline md:min-h-[50px] md:text-[21px]">
             {product.name}
           </h3>
         </Link>
 
-        <p className="min-h-[34px] text-[12px] leading-relaxed text-zinc-500">
+        <p className="min-h-[30px] text-[12px] leading-relaxed text-zinc-500">
           {product.concern}
         </p>
 
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 pt-0.5">
           <span className="text-[18px] font-semibold text-black">
             {formatINR(product.price)}
           </span>
@@ -183,7 +183,7 @@ export function ProductCard({
           type="button"
           onClick={onAdd}
           disabled={outOfStock}
-          className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
+          className="mt-auto flex h-[46px] w-full items-center justify-center gap-2 rounded-full border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
         >
           <ShoppingBag className="h-4 w-4" />
           {outOfStock ? "Out of Stock" : "Quick Add"}

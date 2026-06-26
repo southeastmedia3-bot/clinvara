@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types";
 export const allProducts: Product[] = [
   {
     id: "1",
-    name: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
+    name: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
     concern: "Oiliness · Uneven Tone",
     concerns: ["Oiliness", "Pores", "Uneven Tone"],
     concernSlugs: ["oiliness", "pore-minimizing", "uneven-tone"],

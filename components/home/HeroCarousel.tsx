@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/Badge";
 const AUTO_MS = 5000;
 
 function heroTitleParts(title: string) {
-  const cleanTitle = title.replace("â„¢", "™");
+  const cleanTitle = title.replace(
+    /(?:\u2122|\u00e2\u201e\u00a2|\u00c3\u00a2\u20ac\u017e\u00c2\u00a2|\(TM\))/g,
+    "",
+  );
   const match = cleanTitle.match(/^(.*?)\s*\((Powered by .*?)\)$/);
   return {
     primary: match?.[1] || cleanTitle,
@@ -104,12 +107,12 @@ export function HeroCarousel() {
                 background: `radial-gradient(circle at 50% 45%, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.48) 42%, ${slide.bgColor} 78%)`,
               }}
             >
-              <div className="relative flex h-full w-full max-w-[620px] items-center justify-center rounded-[34px] border border-white/70 bg-white/35 p-7 shadow-[0_30px_90px_rgba(0,0,0,0.10)] backdrop-blur-sm md:h-[74%] md:min-h-[410px] md:p-10">
-                <div className="pointer-events-none absolute inset-8 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.86),transparent_68%)]" />
+              <div className="relative flex h-full w-full max-w-[620px] items-center justify-center rounded-[34px] border border-white/70 bg-white/35 p-4 shadow-[0_30px_90px_rgba(0,0,0,0.10)] backdrop-blur-sm md:h-[74%] md:min-h-[410px] md:p-6">
+                <div className="pointer-events-none absolute inset-5 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.86),transparent_68%)]" />
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative h-full max-h-[460px] min-h-[250px] w-full"
+                  className="relative h-full max-h-[500px] min-h-[280px] w-full"
                 >
                   <SafeImage
                     src={slide.image}
@@ -118,7 +121,7 @@ export function HeroCarousel() {
                     fill
                     priority
                     sizes="(max-width:768px) 100vw, 52vw"
-                    className="object-contain drop-shadow-[0_22px_34px_rgba(0,0,0,0.18)]"
+                    className="scale-[1.18] object-contain object-center drop-shadow-[0_22px_34px_rgba(0,0,0,0.18)]"
                   />
                 </motion.div>
               </div>

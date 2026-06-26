@@ -1,4 +1,4 @@
-﻿# CLINVARA Developer Handover
+# CLINVARA Developer Handover
 
 CLINVARA is a production-oriented clinical skincare ecommerce site built with Next.js, Firebase, Firestore, Firebase Authentication, Firebase Functions, and Firebase App Hosting.
 
@@ -456,7 +456,7 @@ Current local fallback products:
 
 | Slug | Display name | Status |
 | --- | --- | --- |
-| `niacinamide-10-zinc-serum` | CLINVARA Acne Reset Serum (Powered by Acnesium(TM)) | Active |
+| `niacinamide-10-zinc-serum` | CLINVARA Acne Reset Serum (Powered by Acnesium) | Active |
 | `nmf-ha-cleanser` | CLINVARA Clear Cleanse (Anti-Acne Face Wash) | Active |
 | `deep-pigmentation-cream` | Deep Pigmentation Cream | Active |
 | `ceramide-moisture` | CLINVARA Barrier Restore Gel (Ceramide Moisturizer) | Active |

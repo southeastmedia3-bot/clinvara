@@ -6,7 +6,7 @@ const admin = require("../backend/node_modules/firebase-admin");
 const products = [
   {
     id: "1",
-    name: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
+    name: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
     slug: "niacinamide-10-zinc-serum",
     category: "serums",
     price: 599,

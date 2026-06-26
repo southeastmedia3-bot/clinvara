@@ -8,7 +8,7 @@ export const reviews: Review[] = [
     rating: 5,
     title: "Works nicely on my skin.",
     body: "Been using the Niacinamide serum for 6 weeks. Oiliness is under control and my tone looks more even. Highly recommend!",
-    productName: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
+    productName: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
     productSlug: "/shop/niacinamide-10-zinc-serum",
   },
   {

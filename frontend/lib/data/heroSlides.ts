@@ -3,7 +3,7 @@ import type { HeroSlide } from "@/lib/types";
 export const heroSlides: HeroSlide[] = [
   {
     badge: "BESTSELLER",
-    title: "CLINVARA Acne Reset Serum (Powered by Acnesium™)",
+    title: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
     subtitle:
       "With matmarine, zinc, and acetyl glucosamine. Regulates sebum and evens tone.",
     benefits: ["ALL SKIN TYPES", "30ML", "DERMATOLOGIST TESTED"],
