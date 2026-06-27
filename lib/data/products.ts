@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/types";
+import { canonicalProductSlug } from "@/lib/data/productBranding";
 
 /** Catalog aligned with CLINVARA product photography */
 export const allProducts: Product[] = [
@@ -13,7 +14,7 @@ export const allProducts: Product[] = [
     sizes: ["30ml"],
     image: "/images/products/niacinamide-serum.jpg",
     imageHover: "/images/products/niacinamide-serum-alt.jpg",
-    slug: "niacinamide-10-zinc-serum",
+    slug: "acne-reset-serum",
     badge: "BESTSELLER",
     rating: 4.7,
     reviewCount: 24,
@@ -63,7 +64,7 @@ export const allProducts: Product[] = [
     sizes: ["100ml", "200ml"],
     image: "/images/products/cleanser-nmf.jpg",
     imageHover: "/images/products/cleanser-nmf-alt.jpg",
-    slug: "nmf-ha-cleanser",
+    slug: "clear-cleanse-face-wash",
     badge: "",
     rating: 4.6,
     reviewCount: 19,
@@ -171,7 +172,7 @@ export const allProducts: Product[] = [
     sizes: ["50ml"],
     image: "/images/products/ceramide-moisture.jpg",
     imageHover: "/images/products/ceramide-moisture-alt.jpg",
-    slug: "ceramide-moisture",
+    slug: "barrier-restore-gel",
     badge: "BESTSELLER",
     rating: 4.8,
     reviewCount: 31,
@@ -299,7 +300,8 @@ export const bestSellers = bestSellerIds
   .filter((p): p is Product => Boolean(p));
 
 export function getProductBySlug(slug: string) {
-  return allProducts.find((p) => p.slug === slug);
+  const canonicalSlug = canonicalProductSlug(slug);
+  return allProducts.find((p) => p.slug === canonicalSlug);
 }
 
 export const categoryFilters = [

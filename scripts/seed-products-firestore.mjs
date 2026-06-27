@@ -7,7 +7,7 @@ const products = [
   {
     id: "1",
     name: "CLINVARA Acne Reset Serum (Powered by Acnesium)",
-    slug: "niacinamide-10-zinc-serum",
+    slug: "acne-reset-serum",
     category: "serums",
     price: 599,
     mrp: 799,
@@ -44,7 +44,7 @@ const products = [
   {
     id: "2",
     name: "CLINVARA Clear Cleanse (Anti-Acne Face Wash)",
-    slug: "nmf-ha-cleanser",
+    slug: "clear-cleanse-face-wash",
     category: "cleansers",
     price: 449,
     mrp: 549,
@@ -120,7 +120,7 @@ const products = [
   {
     id: "4",
     name: "CLINVARA Barrier Restore Gel (Ceramide Moisturizer)",
-    slug: "ceramide-moisture",
+    slug: "barrier-restore-gel",
     category: "moisturizers",
     price: 549,
     mrp: 699,

@@ -26,10 +26,10 @@ can be run again without creating duplicates.
 
 Recommended Firestore document IDs:
 
-- `niacinamide-10-zinc-serum`
-- `nmf-ha-cleanser`
+- `acne-reset-serum`
+- `clear-cleanse-face-wash`
 - `deep-pigmentation-cream`
-- `ceramide-moisture`
+- `barrier-restore-gel`
 - `shield-spf-50-sunscreen`
 
 Do not duplicate products with new random IDs unless the product is genuinely new.

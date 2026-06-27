@@ -4,36 +4,36 @@ import type { BlogPost, Product } from "@/lib/types";
 
 export const blogProductLinks: Record<string, string[]> = {
   "skincare-layering-order": [
-    "nmf-ha-cleanser",
-    "niacinamide-10-zinc-serum",
-    "ceramide-moisture",
+    "clear-cleanse-face-wash",
+    "acne-reset-serum",
+    "barrier-restore-gel",
     "deep-pigmentation-cream",
   ],
-  "niacinamide-vs-vitamin-c": ["niacinamide-10-zinc-serum", "deep-pigmentation-cream"],
-  "damaged-skin-barrier-signs": ["ceramide-moisture", "nmf-ha-cleanser"],
-  "how-to-repair-damaged-skin-barrier": ["ceramide-moisture", "nmf-ha-cleanser"],
-  "niacinamide-benefits-indian-skin": ["niacinamide-10-zinc-serum"],
+  "niacinamide-vs-vitamin-c": ["acne-reset-serum", "deep-pigmentation-cream"],
+  "damaged-skin-barrier-signs": ["barrier-restore-gel", "clear-cleanse-face-wash"],
+  "how-to-repair-damaged-skin-barrier": ["barrier-restore-gel", "clear-cleanse-face-wash"],
+  "niacinamide-benefits-indian-skin": ["acne-reset-serum"],
   "best-ingredients-hyperpigmentation-dark-spots": [
     "deep-pigmentation-cream",
-    "niacinamide-10-zinc-serum",
+    "acne-reset-serum",
   ],
-  "ceramides-vs-hyaluronic-acid": ["ceramide-moisture", "nmf-ha-cleanser"],
+  "ceramides-vs-hyaluronic-acid": ["barrier-restore-gel", "clear-cleanse-face-wash"],
   "morning-vs-night-skincare-routine": [
-    "nmf-ha-cleanser",
-    "niacinamide-10-zinc-serum",
-    "ceramide-moisture",
+    "clear-cleanse-face-wash",
+    "acne-reset-serum",
+    "barrier-restore-gel",
     "deep-pigmentation-cream",
   ],
 };
 
 export const productBlogLinks: Record<string, string[]> = {
-  "niacinamide-10-zinc-serum": [
+  "acne-reset-serum": [
     "niacinamide-benefits-indian-skin",
     "niacinamide-vs-vitamin-c",
     "best-ingredients-hyperpigmentation-dark-spots",
     "skincare-layering-order",
   ],
-  "nmf-ha-cleanser": [
+  "clear-cleanse-face-wash": [
     "how-to-repair-damaged-skin-barrier",
     "damaged-skin-barrier-signs",
     "ceramides-vs-hyaluronic-acid",
@@ -44,7 +44,7 @@ export const productBlogLinks: Record<string, string[]> = {
     "niacinamide-benefits-indian-skin",
     "morning-vs-night-skincare-routine",
   ],
-  "ceramide-moisture": [
+  "barrier-restore-gel": [
     "how-to-repair-damaged-skin-barrier",
     "damaged-skin-barrier-signs",
     "ceramides-vs-hyaluronic-acid",

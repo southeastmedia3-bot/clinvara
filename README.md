@@ -456,10 +456,10 @@ Current local fallback products:
 
 | Slug | Display name | Status |
 | --- | --- | --- |
-| `niacinamide-10-zinc-serum` | CLINVARA Acne Reset Serum (Powered by Acnesium) | Active |
-| `nmf-ha-cleanser` | CLINVARA Clear Cleanse (Anti-Acne Face Wash) | Active |
+| `acne-reset-serum` | CLINVARA Acne Reset Serum (Powered by Acnesium) | Active |
+| `clear-cleanse-face-wash` | CLINVARA Clear Cleanse (Anti-Acne Face Wash) | Active |
 | `deep-pigmentation-cream` | Deep Pigmentation Cream | Active |
-| `ceramide-moisture` | CLINVARA Barrier Restore Gel (Ceramide Moisturizer) | Active |
+| `barrier-restore-gel` | CLINVARA Barrier Restore Gel (Ceramide Moisturizer) | Active |
 | `shield-spf-50-sunscreen` | CLINVARA Shield SPF 50+ (Sunscreen) | Out of stock, no image yet |
 
 Important catalog behavior:

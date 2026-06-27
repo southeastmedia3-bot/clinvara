@@ -7,7 +7,7 @@ import { reviews as staticReviews } from "@/lib/data/reviews";
 import type { Product, Review } from "@/lib/types";
 import type { StoreSettings } from "@/lib/admin/types";
 import { defaultStoreSettings } from "@/lib/data/settings";
-import { canonicalProductName } from "@/lib/data/productBranding";
+import { canonicalProductName, canonicalProductSlug } from "@/lib/data/productBranding";
 
 type FirestoreValue = {
   stringValue?: string;
@@ -88,11 +88,13 @@ function keyIngredients(value: unknown, fallback?: Product["keyIngredients"]) {
 function normalizeProduct(doc: FirestoreDocument): Product {
   const id = documentId(doc.name);
   const data = readFields(doc.fields);
+  const rawSlug = String(data.slug || id);
+  const canonicalSlug = canonicalProductSlug(rawSlug);
   const fallback =
-    getStaticProductBySlug(String(data.slug || "")) ||
+    getStaticProductBySlug(canonicalSlug || rawSlug) ||
     allProducts.find((product) => product.id === String(data.id || id));
 
-  const slug = String(data.slug || fallback?.slug || id);
+  const slug = canonicalProductSlug(String(data.slug || fallback?.slug || id));
   const concerns = stringArray(data.concerns, fallback?.concerns || []);
   const image = String(data.image ?? fallback?.image ?? "");
   const galleryFallback = fallback?.gallery?.length
@@ -194,8 +196,12 @@ export async function getStorefrontProducts() {
 }
 
 export async function getStorefrontProductBySlug(slug: string) {
+  const canonicalSlug = canonicalProductSlug(slug);
   const products = await getStorefrontProducts();
-  return products.find((product) => product.slug === slug) || getStaticProductBySlug(slug);
+  return (
+    products.find((product) => product.slug === canonicalSlug) ||
+    getStaticProductBySlug(canonicalSlug)
+  );
 }
 
 export async function getStorefrontBestSellers() {

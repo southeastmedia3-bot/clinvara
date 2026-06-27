@@ -4,7 +4,7 @@ exports.allProducts = [
     concern: "Oiliness - Uneven Tone",
     concerns: ["Oiliness", "Pores", "Uneven Tone"],
     price: 599,
-    slug: "niacinamide-10-zinc-serum",
+    slug: "acne-reset-serum",
     description:
       "With matmarine, zinc, and acetyl glucosamine. Regulates sebum and evens tone for all skin types.",
     ingredients:
@@ -15,7 +15,7 @@ exports.allProducts = [
     concern: "Hydration - Gentle Cleanse",
     concerns: ["Dryness", "Dehydration", "Sensitive Skin"],
     price: 449,
-    slug: "nmf-ha-cleanser",
+    slug: "clear-cleanse-face-wash",
     description:
       "Surface hydration formula with Natural Moisturizing Factors and hyaluronic acid. Clinical formulations with integrity.",
     ingredients:
@@ -37,7 +37,7 @@ exports.allProducts = [
     concern: "Barrier Repair - Hydration",
     concerns: ["Barrier Repair", "Dryness", "Sensitivity"],
     price: 549,
-    slug: "ceramide-moisture",
+    slug: "barrier-restore-gel",
     description:
       "Ceramide moisture with Natural Moisturizing Factors + HA. Surface hydration formula for comfortable, resilient skin.",
     ingredients:
