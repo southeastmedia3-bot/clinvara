@@ -12,6 +12,15 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { isLowStock, isOutOfStock } from "@/lib/productAvailability";
 
+function splitDisplayName(name: string) {
+  const match = name.match(/^(.*?)\s+(\([^)]*\))$/);
+
+  return {
+    primary: match?.[1] ?? name,
+    qualifier: match?.[2] ?? "",
+  };
+}
+
 export function ProductCard({
   product,
   layout = "grid",
@@ -31,6 +40,7 @@ export function ProductCard({
   const size = product.sizes[0] ?? "30ml";
   const outOfStock = isOutOfStock(product);
   const lowStock = isLowStock(product);
+  const displayName = splitDisplayName(product.name);
 
   const onAdd = () => {
     if (outOfStock) {
@@ -161,7 +171,12 @@ export function ProductCard({
 
         <Link href={`/shop/${product.slug}`}>
           <h3 className="font-display line-clamp-2 min-h-[42px] text-[17px] font-semibold leading-[1.15] text-zinc-950 hover:underline md:min-h-[46px] md:text-[20px]">
-            {product.name}
+            <span>{displayName.primary}</span>
+            {displayName.qualifier ? (
+              <span className="block text-[0.9em] leading-[1.12]">
+                {displayName.qualifier}
+              </span>
+            ) : null}
           </h3>
         </Link>
 
