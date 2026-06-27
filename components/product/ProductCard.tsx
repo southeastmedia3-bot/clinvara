@@ -120,14 +120,14 @@ export function ProductCard({
       </button>
 
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-[3/4] overflow-hidden bg-[#f8f7f4] transition duration-300 group-hover:bg-[#f2f0ea]">
+        <div className="relative h-[300px] overflow-hidden bg-[#f8f7f4] transition duration-300 group-hover:bg-[#f2f0ea] sm:h-[330px] lg:h-[360px]">
           <SafeImage
             src={hover && product.imageHover ? product.imageHover : product.image}
             alt={product.name}
             label={product.name}
             fill
             sizes="(max-width:768px) 72vw, 25vw"
-            className="object-cover object-center transition duration-500 group-hover:scale-[1.025]"
+            className="object-cover object-center transition duration-500 group-hover:scale-[1.02]"
           />
 
           {flying && (
@@ -145,7 +145,7 @@ export function ProductCard({
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col space-y-2.5 px-4 pb-4 pt-3.5 md:px-5 md:pb-5">
+      <div className="flex flex-1 flex-col space-y-2 px-4 pb-4 pt-3 md:px-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
             {product.category}
@@ -160,16 +160,16 @@ export function ProductCard({
         </div>
 
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="font-display line-clamp-2 min-h-[44px] text-[18px] font-semibold leading-[1.16] text-zinc-950 hover:underline md:min-h-[50px] md:text-[21px]">
+          <h3 className="font-display line-clamp-2 min-h-[42px] text-[17px] font-semibold leading-[1.15] text-zinc-950 hover:underline md:min-h-[46px] md:text-[20px]">
             {product.name}
           </h3>
         </Link>
 
-        <p className="min-h-[30px] text-[12px] leading-relaxed text-zinc-500">
+        <p className="min-h-[26px] text-[12px] leading-snug text-zinc-500">
           {product.concern}
         </p>
 
-        <div className="flex items-baseline gap-2 pt-0.5">
+        <div className="flex items-baseline gap-2">
           <span className="text-[18px] font-semibold text-black">
             {formatINR(product.price)}
           </span>
@@ -183,7 +183,7 @@ export function ProductCard({
           type="button"
           onClick={onAdd}
           disabled={outOfStock}
-          className="mt-auto flex h-[46px] w-full items-center justify-center gap-2 rounded-full border border-black bg-black text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
+          className="mt-auto flex h-[42px] w-full items-center justify-center gap-2 rounded-full border border-black bg-black text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600"
         >
           <ShoppingBag className="h-4 w-4" />
           {outOfStock ? "Out of Stock" : "Quick Add"}
