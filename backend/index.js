@@ -423,6 +423,19 @@ app.post("/orders/admin-update", async (req, res) => {
     };
   }
 
+  if (action === "status") {
+    const status = String(update.orderStatus || update.publicOrderStatus || "");
+    if (status === "in_transit" || status === "shipped") {
+      update.shippedAt = update.shippedAt || now;
+    }
+    if (status === "delivered") {
+      update.deliveredAt = update.deliveredAt || now;
+    }
+    if (status === "cancelled") {
+      update.cancelledAt = update.cancelledAt || now;
+    }
+  }
+
   const ownerId = existing.userId || existing.uid || existing.customerId;
   const batch = db.batch();
   batch.set(ref, update, { merge: true });
@@ -435,18 +448,6 @@ app.post("/orders/admin-update", async (req, res) => {
       },
       { merge: true },
     );
-  }
-  if (action === "status") {
-    const status = String(update.orderStatus || update.publicOrderStatus || "");
-    if (status === "in_transit" || status === "shipped") {
-      update.shippedAt = update.shippedAt || now;
-    }
-    if (status === "delivered") {
-      update.deliveredAt = update.deliveredAt || now;
-    }
-    if (status === "cancelled") {
-      update.cancelledAt = update.cancelledAt || now;
-    }
   }
   await batch.commit();
   const nextSnapshot = await ref.get();

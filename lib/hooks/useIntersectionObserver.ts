@@ -16,7 +16,7 @@ export function useIntersectionObserver<T extends Element>(
     }, options);
     obs.observe(el);
     return () => obs.disconnect();
-  }, [options?.root, options?.rootMargin, options?.threshold]);
+  }, [options]);
 
   return { ref, isIntersecting };
 }

@@ -51,6 +51,14 @@ export default function AccountClient() {
   const setLoginOpen = useAuthStore((s) => s.setLoginModalOpen);
   const setRegisterOpen = useAuthStore((s) => s.setRegisterModalOpen);
   const wishIds = useWishlistStore((s) => s.productIds);
+  const userUid = user?.uid;
+  const userEmail = user?.email;
+  const userFirstName = user?.firstName;
+  const userLastName = user?.lastName;
+  const userName = user?.name;
+  const userPhone = user?.phone;
+  const userPincode = user?.pincode;
+  const userProvider = user?.provider;
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editing, setEditing] = useState<Address | null>(null);
@@ -75,39 +83,37 @@ export default function AccountClient() {
   useEffect(() => {
     let active = true;
 
-    if (!user?.uid) {
+    if (!userUid) {
       setCheckoutEmail("");
       setAddresses([]);
       setOrderCount(0);
       return;
     }
 
-    const currentUser = user;
-
-    void readCustomerProfile(currentUser.uid).then((profile) => {
+    void readCustomerProfile(userUid).then((profile) => {
       if (!active || !profile) return;
 
       setAddresses(profile.addresses ?? []);
       setCheckoutEmail(profile.checkoutEmail ?? profile.email ?? "");
 
       setAuthenticated(true, {
-        uid: currentUser.uid,
+        uid: userUid,
         name:
-          currentUser.name ||
+          userName ||
           profile.name ||
-          currentUser.email?.split("@")[0] ||
-          currentUser.phone ||
+          userEmail?.split("@")[0] ||
+          userPhone ||
           "CLINVARA member",
-        email: currentUser.email || profile.email || undefined,
-        phone: currentUser.phone || profile.phone || undefined,
-        provider: currentUser.provider || profile.provider || "email",
-        firstName: profile.firstName || currentUser.firstName,
-        lastName: profile.lastName || currentUser.lastName,
-        pincode: profile.pincode || currentUser.pincode,
+        email: userEmail || profile.email || undefined,
+        phone: userPhone || profile.phone || undefined,
+        provider: userProvider || profile.provider || "email",
+        firstName: profile.firstName || userFirstName,
+        lastName: profile.lastName || userLastName,
+        pincode: profile.pincode || userPincode,
       });
     });
 
-    void listCustomerOrders({ uid: currentUser.uid, email: currentUser.email }).then((orders) => {
+    void listCustomerOrders({ uid: userUid, email: userEmail }).then((orders) => {
       if (active) setOrderCount(orders.length);
     });
 
@@ -116,14 +122,14 @@ export default function AccountClient() {
     };
   }, [
     setAuthenticated,
-    user?.email,
-    user?.firstName,
-    user?.lastName,
-    user?.name,
-    user?.phone,
-    user?.pincode,
-    user?.provider,
-    user?.uid,
+    userEmail,
+    userFirstName,
+    userLastName,
+    userName,
+    userPhone,
+    userPincode,
+    userProvider,
+    userUid,
   ]);
 
   const displayName =

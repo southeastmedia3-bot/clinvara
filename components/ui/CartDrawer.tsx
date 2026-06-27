@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import { cartTotal, cartCount } from "@/lib/store/cartStore";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -166,7 +166,7 @@ export function CartDrawer() {
                               )
                             }
                           >
-                            −
+                            <Minus className="mx-auto h-4 w-4" />
                           </button>
                           <span className="w-6 text-center text-sm">
                             {item.quantity}
@@ -183,7 +183,7 @@ export function CartDrawer() {
                               )
                             }
                           >
-                            +
+                            <Plus className="mx-auto h-4 w-4" />
                           </button>
                           <button
                             type="button"
@@ -193,7 +193,7 @@ export function CartDrawer() {
                               removeItem(item.productId, item.size)
                             }
                           >
-                            ×
+                            <X className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
