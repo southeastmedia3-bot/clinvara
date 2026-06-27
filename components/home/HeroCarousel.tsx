@@ -107,7 +107,7 @@ export function HeroCarousel() {
                 background: `radial-gradient(circle at 50% 45%, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.48) 42%, ${slide.bgColor} 78%)`,
               }}
             >
-              <div className="relative flex h-full w-full max-w-[620px] items-center justify-center overflow-hidden rounded-[34px] border border-white/70 bg-white/35 p-0 shadow-[0_30px_90px_rgba(0,0,0,0.10)] backdrop-blur-sm md:h-[74%] md:min-h-[410px]">
+              <div className="relative flex aspect-[3/4] h-[300px] w-auto items-center justify-center overflow-hidden rounded-[34px] border border-white/70 bg-white/35 p-0 shadow-[0_30px_90px_rgba(0,0,0,0.10)] backdrop-blur-sm sm:h-[340px] md:h-[74%] md:min-h-[410px] md:max-h-[540px]">
                 <div className="pointer-events-none absolute inset-4 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.82),transparent_68%)]" />
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
@@ -121,7 +121,7 @@ export function HeroCarousel() {
                     fill
                     priority
                     sizes="(max-width:768px) 100vw, 52vw"
-                    className="scale-[1.42] object-cover object-center drop-shadow-[0_22px_34px_rgba(0,0,0,0.18)] md:scale-[1.5]"
+                    className="object-cover object-center drop-shadow-[0_22px_34px_rgba(0,0,0,0.18)]"
                   />
                 </motion.div>
               </div>

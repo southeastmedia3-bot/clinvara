@@ -120,14 +120,14 @@ export function ProductCard({
       </button>
 
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-[4/3] bg-[#f8f7f4] p-5 transition duration-300 group-hover:bg-[#f2f0ea] md:p-6">
+        <div className="relative aspect-[3/4] overflow-hidden bg-[#f8f7f4] transition duration-300 group-hover:bg-[#f2f0ea]">
           <SafeImage
             src={hover && product.imageHover ? product.imageHover : product.image}
             alt={product.name}
             label={product.name}
             fill
             sizes="(max-width:768px) 72vw, 25vw"
-            className="object-contain transition duration-500 group-hover:scale-[1.04]"
+            className="object-cover object-center transition duration-500 group-hover:scale-[1.025]"
           />
 
           {flying && (
