@@ -72,9 +72,13 @@ export type SkinAnalysisResult = {
 };
 
 export type SkinAnalysisRecord = {
+  id?: string;
   answers: SkinAnalysisAnswers;
   result: SkinAnalysisResult;
   completedAt: string;
+  notes?: string;
+  skinScore?: SkinScoreResult;
+  recommendationVersion?: string;
 };
 
 export const emptySkinAnalysisAnswers: SkinAnalysisAnswers = {
@@ -363,3 +367,4 @@ export function buildSkinAnalysisResult(answers: SkinAnalysisAnswers): SkinAnaly
     tips: unique(tips).slice(0, 5),
   };
 }
+import type { SkinScoreResult } from "@/lib/skin-analysis/score";

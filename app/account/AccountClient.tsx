@@ -10,6 +10,7 @@ import {
   Package,
   Pencil,
   ShieldCheck,
+  Sparkles,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -21,6 +22,9 @@ import {
   type CustomerAddress,
 } from "@/lib/firebase/customerData";
 import { listCustomerOrders } from "@/lib/firebase/customerOrders";
+import { listSkinAnalyses } from "@/lib/firebase/skinAnalysis";
+import { compareSkinScores } from "@/lib/skin-analysis/score";
+import type { SkinAnalysisRecord } from "@/lib/skin-analysis/recommendations";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useWishlistStore } from "@/lib/store/wishlistStore";
 
@@ -65,6 +69,7 @@ export default function AccountClient() {
   const [checkoutEmail, setCheckoutEmail] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
   const [orderCount, setOrderCount] = useState(0);
+  const [skinHistory, setSkinHistory] = useState<SkinAnalysisRecord[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -87,6 +92,7 @@ export default function AccountClient() {
       setCheckoutEmail("");
       setAddresses([]);
       setOrderCount(0);
+      setSkinHistory([]);
       return;
     }
 
@@ -117,6 +123,10 @@ export default function AccountClient() {
       if (active) setOrderCount(orders.length);
     });
 
+    void listSkinAnalyses(userUid).then((items) => {
+      if (active) setSkinHistory(items);
+    });
+
     return () => {
       active = false;
     };
@@ -145,6 +155,21 @@ export default function AccountClient() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+  const latestSkinAnalysis = skinHistory[0];
+  const previousSkinAnalysis = skinHistory[1];
+  const skinComparison =
+    latestSkinAnalysis?.skinScore && previousSkinAnalysis?.skinScore
+      ? compareSkinScores(
+          previousSkinAnalysis.skinScore.breakdown,
+          latestSkinAnalysis.skinScore.breakdown,
+        ).slice(0, 4)
+      : [];
+  const daysSinceSkinAnalysis = latestSkinAnalysis
+    ? Math.floor(
+        (Date.now() - new Date(latestSkinAnalysis.completedAt).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : 0;
 
   const saveAddress = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -183,6 +208,7 @@ export default function AccountClient() {
       setAuthenticated(false);
       setAddresses([]);
       setOrderCount(0);
+      setSkinHistory([]);
       setCheckoutEmail("");
       window.location.href = "/";
     }
@@ -319,6 +345,128 @@ export default function AccountClient() {
             <div key={item.label}>{body}</div>
           );
         })}
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-[var(--brand-border)] bg-white p-6">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+          <div>
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5" />
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-text-muted)]">
+                Skin Health
+              </p>
+            </div>
+            <h2 className="mt-3 font-display text-3xl font-semibold">
+              Skin History and Progress Tracker
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--brand-text-muted)]">
+              Track how your skin profile, concerns, and recommended CLINVARA routine
+              change over time.
+            </p>
+          </div>
+          <Link
+            href="/skin-analysis"
+            className="inline-flex h-11 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+          >
+            {latestSkinAnalysis ? "Retake Analysis" : "Start Analysis"}
+          </Link>
+        </div>
+
+        {latestSkinAnalysis ? (
+          <div className="mt-6 grid gap-5 xl:grid-cols-[0.42fr_0.58fr]">
+            <article className="rounded-2xl bg-[var(--brand-off-white)] p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                Latest Analysis
+              </p>
+              <div className="mt-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-display text-3xl font-semibold">
+                    {latestSkinAnalysis.result.profileTitle}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                    {new Date(latestSkinAnalysis.completedAt).toLocaleDateString("en-IN")}
+                  </p>
+                </div>
+                <span className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white">
+                  {latestSkinAnalysis.skinScore?.overall ?? "--"} / 100
+                </span>
+              </div>
+              <p className="mt-4 text-sm text-[var(--brand-text-muted)]">
+                {latestSkinAnalysis.result.primaryConcerns.join(", ")}
+              </p>
+              {daysSinceSkinAnalysis > 30 && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  It has been over a month since your last skin analysis. Retake it
+                  to refresh your routine.
+                </div>
+              )}
+            </article>
+
+            <article className="rounded-2xl border border-[var(--brand-border)] p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                Compare Analyses
+              </p>
+              {skinComparison.length ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {skinComparison.map((item) => (
+                    <div key={item.field} className="rounded-xl bg-[var(--brand-off-white)] p-4">
+                      <p className="text-sm font-semibold">{item.label}</p>
+                      <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+                        {item.previous} to <span className="font-semibold text-black">{item.current}</span>
+                      </p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-green-check)]">
+                        {item.trend}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-[var(--brand-text-muted)]">
+                  Complete one more analysis to compare your progress over time.
+                </p>
+              )}
+            </article>
+
+            <article className="rounded-2xl border border-[var(--brand-border)] p-5 xl:col-span-2">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                    Skin History
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                    {skinHistory.length} saved {skinHistory.length === 1 ? "analysis" : "analyses"}
+                  </p>
+                </div>
+                <Link href="/skin-analysis" className="text-sm font-semibold underline">
+                  View Details
+                </Link>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {skinHistory.slice(0, 4).map((item) => (
+                  <div key={item.id || item.completedAt} className="rounded-xl bg-[var(--brand-off-white)] p-4">
+                    <p className="text-sm font-semibold">
+                      {new Date(item.completedAt).toLocaleDateString("en-IN")}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--brand-text-muted)]">
+                      {item.result.profileTitle} - {item.skinScore?.overall ?? "--"} / 100
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-xs text-[var(--brand-text-muted)]">
+                      Morning: {item.result.morningRoutine.map((step) => step.label).join(", ")}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs text-[var(--brand-text-muted)]">
+                      Night: {item.result.nightRoutine.map((step) => step.label).join(", ")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        ) : (
+          <div className="mt-6 rounded-2xl border border-dashed border-[var(--brand-border)] p-5 text-sm text-[var(--brand-text-muted)]">
+            No skin analysis saved yet. Start your first analysis to unlock skin
+            history, comparison, and progress tracking.
+          </div>
+        )}
       </section>
 
       <section className="mt-8 grid gap-8 xl:grid-cols-[0.64fr_0.36fr]">

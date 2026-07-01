@@ -7,10 +7,15 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useToast } from "@/components/providers/ToastProvider";
-import { readCustomerProfile, saveCustomerProfile } from "@/lib/firebase/customerData";
+import {
+  createSkinAnalysis,
+  listSkinAnalyses,
+  updateSkinAnalysisNotes,
+} from "@/lib/firebase/skinAnalysis";
 import { isOutOfStock } from "@/lib/productAvailability";
 import type { Product } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
+import { calculateSkinScore, compareSkinScores } from "@/lib/skin-analysis/score";
 import {
   buildSkinAnalysisResult,
   emptySkinAnalysisAnswers,
@@ -24,6 +29,11 @@ import {
 } from "@/lib/skin-analysis/recommendations";
 
 const STORAGE_KEY = "clinvara-skin-analysis";
+
+type LocalSkinAnalysisStore = {
+  latest?: SkinAnalysisRecord;
+  history?: SkinAnalysisRecord[];
+};
 
 const analysisSteps = [
   "Understanding Skin Profile",
@@ -41,6 +51,37 @@ function routineProducts(products: Product[], slugs: string[]) {
   return slugs
     .map((slug) => products.find((product) => product.slug === slug))
     .filter(Boolean) as Product[];
+}
+
+function readLocalHistory() {
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (!stored) return { history: [] as SkinAnalysisRecord[] };
+
+  try {
+    const parsed = JSON.parse(stored) as SkinAnalysisRecord | LocalSkinAnalysisStore;
+    if ("answers" in parsed && "result" in parsed) {
+      return { latest: parsed, history: [parsed] };
+    }
+    return {
+      latest: parsed.latest,
+      history: parsed.history ?? (parsed.latest ? [parsed.latest] : []),
+    };
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return { history: [] as SkinAnalysisRecord[] };
+  }
+}
+
+function writeLocalHistory(record: SkinAnalysisRecord) {
+  const current = readLocalHistory();
+  const history = [
+    record,
+    ...(current.history ?? []).filter(
+      (item) => item.completedAt !== record.completedAt && item.id !== record.id,
+    ),
+  ].slice(0, 12);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ latest: record, history }));
+  return history;
 }
 
 function QuestionOption({
@@ -110,6 +151,9 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
   const [stage, setStage] = useState<"quiz" | "analyzing" | "results">("quiz");
   const [record, setRecord] = useState<SkinAnalysisRecord | null>(null);
   const [previousRecord, setPreviousRecord] = useState<SkinAnalysisRecord | null>(null);
+  const [history, setHistory] = useState<SkinAnalysisRecord[]>([]);
+  const [notes, setNotes] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
 
   const question = skinAnalysisQuestions[stepIndex];
   const progress = ((stepIndex + 1) / skinAnalysisQuestions.length) * 100;
@@ -121,26 +165,41 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
   const combinedPrice = recommendedProducts.reduce((sum, product) => sum + product.price, 0);
   const combinedMrp = recommendedProducts.reduce((sum, product) => sum + product.mrp, 0);
   const savings = Math.max(0, combinedMrp - combinedPrice);
+  const previousForComparison = useMemo(
+    () =>
+      record
+        ? history.find((item) => item.completedAt !== record.completedAt && item.skinScore)
+        : null,
+    [history, record],
+  );
+  const comparison = useMemo(() => {
+    if (!record?.skinScore || !previousForComparison?.skinScore) return [];
+    return compareSkinScores(
+      previousForComparison.skinScore.breakdown,
+      record.skinScore.breakdown,
+    );
+  }, [previousForComparison, record]);
+  const daysSincePrevious = previousRecord
+    ? Math.floor(
+        (Date.now() - new Date(previousRecord.completedAt).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : 0;
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setPreviousRecord(JSON.parse(stored) as SkinAnalysisRecord);
-      } catch {
-        window.localStorage.removeItem(STORAGE_KEY);
-      }
-    }
+    const local = readLocalHistory();
+    setHistory(local.history ?? []);
+    if (local.latest) setPreviousRecord(local.latest);
   }, []);
 
   useEffect(() => {
     if (!user?.uid) return;
 
     let active = true;
-    void readCustomerProfile(user.uid).then((profile) => {
+    void listSkinAnalyses(user.uid).then((items) => {
       if (!active) return;
-      const latest = profile?.skinAnalysis?.latest;
-      if (latest) setPreviousRecord(latest);
+      setHistory(items);
+      if (items[0]) setPreviousRecord(items[0]);
     });
 
     return () => {
@@ -183,20 +242,34 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
       const nextRecord: SkinAnalysisRecord = {
         answers,
         result: buildSkinAnalysisResult(answers),
+        skinScore: calculateSkinScore(answers),
+        notes: "",
+        recommendationVersion: "rules-v1",
         completedAt: new Date().toISOString(),
       };
 
       setRecord(nextRecord);
       setPreviousRecord(nextRecord);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRecord));
+      setNotes("");
+      setHistory(writeLocalHistory(nextRecord));
 
       if (user?.uid) {
-        void saveCustomerProfile(user.uid, {
-          skinAnalysis: {
-            latest: nextRecord,
-            history: [nextRecord],
-          },
-        });
+        void createSkinAnalysis(user.uid, nextRecord)
+          .then((savedRecord) => {
+            setRecord(savedRecord);
+            setPreviousRecord(savedRecord);
+            setHistory((current) => [
+              savedRecord,
+              ...current.filter((item) => item.completedAt !== savedRecord.completedAt),
+            ]);
+            writeLocalHistory(savedRecord);
+          })
+          .catch(() => {
+            showToast({
+              message: "Analysis saved on this device. Sign in again to sync history.",
+              variant: "info",
+            });
+          });
       }
 
       setStage("results");
@@ -208,6 +281,7 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
     setAnswers(emptySkinAnalysisAnswers);
     setStepIndex(0);
     setRecord(null);
+    setNotes("");
     setStage("quiz");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -216,8 +290,47 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
     if (!previousRecord) return;
     setRecord(previousRecord);
     setAnswers(previousRecord.answers);
+    setNotes(previousRecord.notes || "");
     setStage("results");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveNotes() {
+    if (!record) return;
+    const nextRecord = { ...record, notes: notes.trim() };
+    setRecord(nextRecord);
+    setPreviousRecord(nextRecord);
+    setHistory((current) =>
+      current.map((item) =>
+        item.id === nextRecord.id || item.completedAt === nextRecord.completedAt
+          ? nextRecord
+          : item,
+      ),
+    );
+    writeLocalHistory(nextRecord);
+
+    if (!user?.uid || !nextRecord.id) {
+      showToast({
+        message: user?.uid
+          ? "Notes saved locally."
+          : "Notes saved on this device. Sign in for permanent history.",
+        variant: "success",
+      });
+      return;
+    }
+
+    setNotesSaving(true);
+    try {
+      await updateSkinAnalysisNotes(user.uid, nextRecord.id, notes);
+      showToast({ message: "Analysis notes saved.", variant: "success" });
+    } catch {
+      showToast({
+        message: "Notes saved locally. Cloud sync will retry later.",
+        variant: "info",
+      });
+    } finally {
+      setNotesSaving(false);
+    }
   }
 
   function addRoutineToCart() {
@@ -278,13 +391,23 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
           </div>
 
           {previousRecord && stage === "quiz" && (
-            <button
-              type="button"
-              onClick={viewPrevious}
-              className="mt-8 w-full rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] transition hover:bg-black hover:text-white"
-            >
-              View Previous Analysis
-            </button>
+            <div className="mt-8 space-y-3">
+              {daysSincePrevious > 30 && (
+                <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-4 text-sm">
+                  <p className="font-semibold">It has been over a month since your last skin analysis.</p>
+                  <p className="mt-1 text-[var(--brand-text-muted)]">
+                    Retake your analysis to keep your routine aligned with your current skin.
+                  </p>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={viewPrevious}
+                className="w-full rounded-full border border-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] transition hover:bg-black hover:text-white"
+              >
+                View Previous Analysis
+              </button>
+            </div>
           )}
         </div>
 
@@ -417,10 +540,72 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
                 ))}
               </div>
 
+              {record.skinScore && (
+                <section className="mt-8 grid gap-4 md:grid-cols-[0.35fr_0.65fr]">
+                  <div className="rounded-3xl border border-black bg-black p-6 text-white">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                      Overall Skin Score
+                    </p>
+                    <p className="mt-4 font-display text-6xl font-semibold leading-none">
+                      {record.skinScore.overall}
+                    </p>
+                    <p className="mt-2 text-sm text-white/65">out of 100</p>
+                  </div>
+                  <div className="grid gap-3 rounded-3xl border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-5 sm:grid-cols-2">
+                    {Object.entries(record.skinScore.breakdown).map(([key, value]) => (
+                      <div key={key} className="rounded-2xl bg-white p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-text-muted)]">
+                          {key === "barrierHealth"
+                            ? "Barrier Health"
+                            : key === "oilBalance"
+                              ? "Oil Balance"
+                              : key}
+                        </p>
+                        <p className="mt-2 font-semibold">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               <div className="mt-8 grid gap-5 lg:grid-cols-2">
                 <RoutineList title="Morning Routine" steps={result.morningRoutine} />
                 <RoutineList title="Night Routine" steps={result.nightRoutine} />
               </div>
+
+              <section className="mt-8 rounded-3xl border border-[var(--brand-border)] bg-white p-5 md:p-6">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+                      Progress Notes
+                    </p>
+                    <h3 className="mt-2 font-display text-3xl font-semibold">
+                      Add context to this analysis
+                    </h3>
+                  </div>
+                  {!user?.uid && (
+                    <Link href="/account" className="text-sm font-semibold underline">
+                      Sign in for permanent history
+                    </Link>
+                  )}
+                </div>
+                <textarea
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                  rows={4}
+                  maxLength={500}
+                  placeholder="Example: Started sunscreen this week. Breakouts reduced. Skin feels less oily."
+                  className="mt-5 w-full rounded-2xl border border-[var(--brand-border)] px-4 py-3 text-sm outline-none focus:border-black"
+                />
+                <button
+                  type="button"
+                  onClick={() => void saveNotes()}
+                  disabled={notesSaving}
+                  className="mt-4 rounded-full bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-white disabled:opacity-50"
+                >
+                  {notesSaving ? "Saving..." : "Save Notes"}
+                </button>
+              </section>
 
               <section className="mt-8 rounded-3xl border border-[var(--brand-border)] bg-[var(--brand-off-white)] p-5 md:p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
@@ -435,6 +620,116 @@ export default function SkinAnalysisClient({ products }: { products: Product[] }
                   ))}
                 </ul>
               </section>
+
+              {comparison.length > 0 && (
+                <section className="mt-8 rounded-3xl border border-[var(--brand-border)] bg-white p-5 md:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+                    Compare Analyses
+                  </p>
+                  <h3 className="mt-2 font-display text-3xl font-semibold">
+                    Latest vs Previous
+                  </h3>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {comparison.map((item) => (
+                      <div key={item.field} className="rounded-2xl border border-[var(--brand-border)] p-4">
+                        <p className="text-sm font-semibold">{item.label}</p>
+                        <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                          <span className="text-[var(--brand-text-muted)]">{item.previous}</span>
+                          <ArrowRight className="h-4 w-4 text-[var(--brand-mid-gray)]" />
+                          <span className="font-semibold">{item.current}</span>
+                        </div>
+                        <p
+                          className={`mt-3 text-xs font-semibold uppercase tracking-[0.14em] ${
+                            item.trend === "Improved"
+                              ? "text-[var(--brand-green-check)]"
+                              : item.trend === "Needs Attention"
+                                ? "text-amber-700"
+                                : "text-[var(--brand-text-muted)]"
+                          }`}
+                        >
+                          {item.trend}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {history.length > 0 && (
+                <section className="mt-8 rounded-3xl border border-[var(--brand-border)] bg-white p-5 md:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-text-muted)]">
+                    Skin History
+                  </p>
+                  <h3 className="mt-2 font-display text-3xl font-semibold">
+                    Previous Analyses
+                  </h3>
+                  <div className="mt-5 space-y-4">
+                    {history.map((item) => (
+                      <article
+                        key={item.id || item.completedAt}
+                        className="rounded-2xl border border-[var(--brand-border)] p-4"
+                      >
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {new Date(item.completedAt).toLocaleDateString("en-IN")}
+                            </p>
+                            <p className="mt-1 font-display text-2xl font-semibold">
+                              {item.result.profileTitle}
+                            </p>
+                            <p className="mt-2 text-sm text-[var(--brand-text-muted)]">
+                              {item.result.primaryConcerns.join(", ")}
+                            </p>
+                          </div>
+                          <div className="rounded-full bg-[var(--brand-off-white)] px-4 py-2 text-sm font-semibold">
+                            {item.skinScore?.overall ?? "--"} / 100
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+                          <div>
+                            <p className="font-semibold">Morning</p>
+                            <p className="mt-1 text-[var(--brand-text-muted)]">
+                              {item.result.morningRoutine.map((step) => step.label).join(" / ")}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-semibold">Night</p>
+                            <p className="mt-1 text-[var(--brand-text-muted)]">
+                              {item.result.nightRoutine.map((step) => step.label).join(" / ")}
+                            </p>
+                          </div>
+                        </div>
+                        {item.notes && (
+                          <p className="mt-4 rounded-xl bg-[var(--brand-off-white)] p-3 text-sm text-[var(--brand-text-muted)]">
+                            {item.notes}
+                          </p>
+                        )}
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRecord(item);
+                              setAnswers(item.answers);
+                              setNotes(item.notes || "");
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="rounded-full border border-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em]"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            type="button"
+                            onClick={retake}
+                            className="rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white"
+                          >
+                            Retake Analysis
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {recommendedProducts.length > 0 && (
                 <section className="mt-10">

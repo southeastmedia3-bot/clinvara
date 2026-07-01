@@ -69,6 +69,11 @@ service cloud.firestore {
       match /wishlist/{itemId} {
         allow read, create, update, delete: if isOwner(userId) || isAdmin();
       }
+
+      match /skinAnalyses/{analysisId} {
+        allow read, create, update: if isOwner(userId) || isAdmin();
+        allow delete: if isAdmin();
+      }
     }
 
     match /products/{productId} {
