@@ -7,6 +7,7 @@ const baseUrl = "https://clinvara.global";
 const staticRoutes = [
   { route: "", priority: 1, changeFrequency: "weekly" as const },
   { route: "/shop", priority: 0.9, changeFrequency: "weekly" as const },
+  { route: "/skin-analysis", priority: 0.85, changeFrequency: "monthly" as const },
   { route: "/routines", priority: 0.75, changeFrequency: "monthly" as const },
   { route: "/contact", priority: 0.7, changeFrequency: "monthly" as const },
   { route: "/about-us", priority: 0.7, changeFrequency: "monthly" as const },

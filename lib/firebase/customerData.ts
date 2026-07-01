@@ -13,6 +13,7 @@ import type { User } from "firebase/auth";
 import { firebaseDb } from "@/lib/firebase/client";
 import type { AuthUser } from "@/lib/store/authStore";
 import type { CartItem } from "@/lib/types";
+import type { SkinAnalysisRecord } from "@/lib/skin-analysis/recommendations";
 
 export type CustomerAddress = {
   id: string;
@@ -38,6 +39,10 @@ export type CustomerProfile = {
   checkoutEmail?: string;
   addresses?: CustomerAddress[];
   marketingOptIn?: boolean;
+  skinAnalysis?: {
+    latest?: SkinAnalysisRecord;
+    history?: SkinAnalysisRecord[];
+  };
   createdAt?: FieldValue;
   updatedAt?: FieldValue;
 };
